@@ -6,11 +6,54 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  // Get all cost centers
+  app.get("/api/cost-centers", async (req, res) => {
+    try {
+      const costCenters = await storage.getCostCenters();
+      res.json(costCenters);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch cost centers" });
+    }
+  });
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  // Get dashboard summary for a cost center
+  app.get("/api/dashboard/:costCenterId", async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const costCenter = await storage.getCostCenter(costCenterId);
+      
+      if (!costCenter) {
+        return res.status(404).json({ error: "Cost center not found" });
+      }
+      
+      const summary = await storage.getDashboardSummary(costCenterId);
+      res.json(summary);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Get spend categories for a cost center
+  app.get("/api/cost-centers/:costCenterId/categories", async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const categories = await storage.getSpendCategories(costCenterId);
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  // Get expenses for a cost center
+  app.get("/api/cost-centers/:costCenterId/expenses", async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const expenses = await storage.getExpenses(costCenterId);
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch expenses" });
+    }
+  });
 
   return httpServer;
 }
