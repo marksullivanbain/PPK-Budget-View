@@ -56,7 +56,7 @@ export function ExpenseDetails({
     const matchesSearch = searchTerm === "" || 
       exp.lineDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exp.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.postedBy?.toLowerCase().includes(searchTerm.toLowerCase());
+      exp.caseName?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesPeriod = periodFilter === "all" || 
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
@@ -154,7 +154,7 @@ export function ExpenseDetails({
             <span>Line Description</span>
             <span>Spend Type</span>
             <span>Summary Account</span>
-            <span>Posted By</span>
+            <span>Case Name</span>
             <span>Period</span>
             <button 
               onClick={toggleSort}
@@ -195,8 +195,8 @@ export function ExpenseDetails({
                     <span className="text-muted-foreground truncate" title={expense.summaryAccount}>
                       {expense.summaryAccount || '-'}
                     </span>
-                    <span className="text-muted-foreground truncate" title={expense.postedBy}>
-                      {expense.postedBy || '-'}
+                    <span className="text-muted-foreground truncate" title={expense.caseName}>
+                      {expense.caseName || '-'}
                     </span>
                     <span className="text-muted-foreground">
                       {expense.period || '-'}

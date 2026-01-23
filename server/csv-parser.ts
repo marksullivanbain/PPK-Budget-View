@@ -17,6 +17,7 @@ export interface ExpenseRow {
   lineDescription: string;
   summaryAccount: string;
   accountName: string;
+  caseName: string;
   postedBy: string;
   vendorName: string;
   period: string;
@@ -85,6 +86,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
       const coreProgram = fields[2]?.trim();
+      const caseName = fields[21]?.trim() || '';
       const summaryAccount = fields[25]?.trim() || '';
       const accountName = fields[27]?.trim() || '';
       const period = fields[31]?.trim() || '';
@@ -103,6 +105,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
           lineDescription,
           summaryAccount,
           accountName,
+          caseName,
           postedBy,
           vendorName,
           period
