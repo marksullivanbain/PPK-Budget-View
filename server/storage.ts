@@ -369,8 +369,17 @@ export class MemStorage implements IStorage {
       "Other Compensation": "#EAB308",
     };
     
+    const compensationAccounts = [
+      "Salary", 
+      "Bonus (Individual Perf.)", 
+      "Bonus (Firm Perf.)", 
+      "Bonus (Signing)",
+      "Fringe / Benefits",
+      "Other Compensation"
+    ];
+    
     const programSpendBreakdown: ProgramSpendItem[] = Array.from(programGroups.entries())
-      .filter(([_, data]) => data.amount >= 1000)
+      .filter(([category, data]) => data.amount >= 1000 && !compensationAccounts.includes(category))
       .map(([category, data]) => ({
         category,
         itemCount: data.count,
