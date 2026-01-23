@@ -294,6 +294,13 @@ export class MemStorage implements IStorage {
       programCategory: expense.programCategory ?? null,
       month: expense.month,
       year: expense.year,
+      lineDescription: expense.lineDescription ?? null,
+      summaryAccount: expense.summaryAccount ?? null,
+      accountName: expense.accountName ?? null,
+      postedBy: expense.postedBy ?? null,
+      vendorName: expense.vendorName ?? null,
+      period: expense.period ?? null,
+      spendType: expense.spendType ?? null,
     };
     this.expenses.set(id, newExpense);
     return newExpense;

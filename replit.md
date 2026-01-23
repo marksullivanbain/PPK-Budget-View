@@ -35,9 +35,10 @@ shared/
 
 ## Key Features
 - Cost center selection dropdown (16 cost centers from CSV data)
-- KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance
+- KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance (all rounded to nearest dollar)
 - Spend Type Breakdown with progress bars per category
-- Program Spend Breakdown filtered by amount threshold
+- Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k
+- Total Program Spend = Total Spend minus Compensation actual
 - **Expense Details Drill-Down**: Click any category or program to see individual expense line items with search and period filters
 - Dark theme UI matching the original design
 
@@ -45,6 +46,7 @@ shared/
 - Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
 - Expense data: `attached_assets/Full_Practice_Expense_data_(Dec_2025)*.csv` - 5,814 expense records
 - Category mapping: "Program" expenses map to "General" budget category
+- Program grouping: Uses Account Name (column AB) for more granular breakdown
 
 ## API Endpoints
 - `GET /api/cost-centers` - List all cost centers
