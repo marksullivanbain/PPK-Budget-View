@@ -238,7 +238,11 @@ export class MemStorage implements IStorage {
 
   async createCostCenter(costCenter: InsertCostCenter): Promise<CostCenter> {
     const id = randomUUID();
-    const newCostCenter: CostCenter = { ...costCenter, id };
+    const newCostCenter: CostCenter = { 
+      id, 
+      name: costCenter.name, 
+      description: costCenter.description ?? null 
+    };
     this.costCenters.set(id, newCostCenter);
     return newCostCenter;
   }
@@ -277,7 +281,16 @@ export class MemStorage implements IStorage {
 
   async createExpense(expense: InsertExpense): Promise<Expense> {
     const id = randomUUID();
-    const newExpense: Expense = { ...expense, id };
+    const newExpense: Expense = { 
+      id,
+      description: expense.description,
+      amount: expense.amount,
+      categoryId: expense.categoryId,
+      costCenterId: expense.costCenterId,
+      programCategory: expense.programCategory ?? null,
+      month: expense.month,
+      year: expense.year,
+    };
     this.expenses.set(id, newExpense);
     return newExpense;
   }
