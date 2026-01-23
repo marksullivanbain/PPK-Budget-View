@@ -14,6 +14,7 @@ import {
   type ProgramSpendItem
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { parseBudgetCSV, parseExpenseCSV, aggregateData } from "./csv-parser";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -36,12 +37,28 @@ export interface IStorage {
   getDashboardSummary(costCenterId: string): Promise<DashboardSummary>;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  "Compensation": "#3B82F6",
+  "General": "#10B981",
+  "Programs": "#10B981",
+  "Databases": "#8B5CF6",
+  "BCN": "#F59E0B",
+  "Marketing": "#EC4899",
+  "Technology": "#06B6D4",
+  "Training": "#F97316",
+};
+
+function getCategoryColor(name: string): string {
+  return CATEGORY_COLORS[name] || "#6B7280";
+}
+
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private costCenters: Map<string, CostCenter>;
   private spendCategories: Map<string, SpendCategory>;
   private budgets: Map<string, Budget>;
   private expenses: Map<string, Expense>;
+  private costCenterIdMap: Map<string, string>;
 
   constructor() {
     this.users = new Map();
@@ -49,166 +66,132 @@ export class MemStorage implements IStorage {
     this.spendCategories = new Map();
     this.budgets = new Map();
     this.expenses = new Map();
+    this.costCenterIdMap = new Map();
     
-    this.seedData();
+    this.loadCSVData();
   }
 
-  private seedData() {
-    // Create cost centers
-    const maPractice: CostCenter = { id: "cc-1", name: "M&A Practice", description: "Mergers & Acquisitions Practice" };
-    const taxPractice: CostCenter = { id: "cc-2", name: "Tax Practice", description: "Tax Advisory Practice" };
-    const auditPractice: CostCenter = { id: "cc-3", name: "Audit Practice", description: "Audit & Assurance Practice" };
-    
-    this.costCenters.set(maPractice.id, maPractice);
-    this.costCenters.set(taxPractice.id, taxPractice);
-    this.costCenters.set(auditPractice.id, auditPractice);
+  private loadCSVData() {
+    try {
+      const budgetPath = "attached_assets/2025_Budget_by_Category_-_Dec_1769186982996.csv";
+      const expensePath = "attached_assets/Full_Practice_Expense_data_(Dec_2025)_1769187589802.csv";
+      
+      const budgetRows = parseBudgetCSV(budgetPath);
+      const expenseRows = parseExpenseCSV(expensePath);
+      
+      const aggregated = aggregateData(budgetRows, expenseRows);
+      
+      let costCenterIndex = 1;
+      Array.from(aggregated.costCenters.entries()).forEach(([name, data]) => {
+        const id = `cc-${costCenterIndex++}`;
+        this.costCenterIdMap.set(name, id);
+        this.costCenters.set(id, {
+          id,
+          name,
+          description: data.description,
+        });
+      });
+      
+      let categoryIndex = 1;
+      const categoryIdMap = new Map<string, string>();
+      
+      Array.from(aggregated.categoryBudgets.entries()).forEach(([costCenterName, budgetMap]) => {
+        const costCenterId = this.costCenterIdMap.get(costCenterName);
+        if (!costCenterId) return;
+        
+        Array.from(budgetMap.entries()).forEach(([categoryName, budgetAmount]) => {
+          const catKey = `${costCenterName}|${categoryName}`;
+          const catId = `cat-${categoryIndex++}`;
+          categoryIdMap.set(catKey, catId);
+          
+          this.spendCategories.set(catId, {
+            id: catId,
+            name: categoryName,
+            color: getCategoryColor(categoryName),
+            costCenterId,
+          });
+          
+          this.budgets.set(`bud-${catId}`, {
+            id: `bud-${catId}`,
+            categoryId: catId,
+            amount: Math.round(budgetAmount),
+            year: 2025,
+          });
+        });
+      });
+      
+      Array.from(aggregated.categoryActuals.entries()).forEach(([costCenterName, actualMap]) => {
+        const costCenterId = this.costCenterIdMap.get(costCenterName);
+        if (!costCenterId) return;
+        
+        Array.from(actualMap.entries()).forEach(([categoryName, _]) => {
+          const catKey = `${costCenterName}|${categoryName}`;
+          if (!categoryIdMap.has(catKey)) {
+            const catId = `cat-${categoryIndex++}`;
+            categoryIdMap.set(catKey, catId);
+            
+            this.spendCategories.set(catId, {
+              id: catId,
+              name: categoryName,
+              color: getCategoryColor(categoryName),
+              costCenterId,
+            });
+            
+            this.budgets.set(`bud-${catId}`, {
+              id: `bud-${catId}`,
+              categoryId: catId,
+              amount: 0,
+              year: 2025,
+            });
+          }
+        });
+      });
+      
+      let expenseIndex = 1;
+      for (const row of expenseRows) {
+        const costCenterId = this.costCenterIdMap.get(row.practice);
+        if (!costCenterId) continue;
+        
+        const catKey = `${row.practice}|${row.spendType}`;
+        const categoryId = categoryIdMap.get(catKey);
+        if (!categoryId) continue;
+        
+        const expId = `exp-${expenseIndex++}`;
+        this.expenses.set(expId, {
+          id: expId,
+          description: `Expense ${expenseIndex}`,
+          amount: row.amount,
+          categoryId,
+          costCenterId,
+          programCategory: null,
+          month: 12,
+          year: 2025,
+        });
+      }
+      
+      console.log(`Loaded ${this.costCenters.size} cost centers, ${this.spendCategories.size} categories, ${this.expenses.size} expenses`);
+      
+    } catch (error) {
+      console.error("Error loading CSV data, falling back to seed data:", error);
+      this.seedFallbackData();
+    }
+  }
 
-    // Create spend categories for M&A Practice
+  private seedFallbackData() {
+    const maPractice: CostCenter = { id: "cc-1", name: "M&A Practice", description: "Mergers & Acquisitions Practice" };
+    this.costCenters.set(maPractice.id, maPractice);
+
     const categories: SpendCategory[] = [
       { id: "cat-1", name: "Compensation", color: "#3B82F6", costCenterId: "cc-1" },
-      { id: "cat-2", name: "Marketing", color: "#F59E0B", costCenterId: "cc-1" },
-      { id: "cat-3", name: "Program - General", color: "#10B981", costCenterId: "cc-1" },
+      { id: "cat-2", name: "General", color: "#10B981", costCenterId: "cc-1" },
     ];
-    
     categories.forEach(cat => this.spendCategories.set(cat.id, cat));
 
-    // Create budgets for 2025 - matching the screenshot values
-    // Compensation: $274,592, Marketing: $37,500, Program - General: $11,000
-    // Note: Screenshot total budget $328,092 may include other categories
     const budgetData: Budget[] = [
       { id: "bud-1", categoryId: "cat-1", amount: 274592, year: 2025 },
-      { id: "bud-2", categoryId: "cat-2", amount: 37500, year: 2025 },
-      { id: "bud-3", categoryId: "cat-3", amount: 11000, year: 2025 },
+      { id: "bud-2", categoryId: "cat-2", amount: 16000, year: 2025 },
     ];
-    
     budgetData.forEach(bud => this.budgets.set(bud.id, bud));
-
-    // Create expenses - matching the screenshot values
-    // Total Spend: $298,641.21
-    const expenseData: Expense[] = [
-      // Compensation expenses (112 items totaling $232,742)
-      ...this.generateFixedExpenses("cat-1", "cc-1", 232742, 112, null),
-      // Marketing expenses (13 items totaling $35,361.21)
-      ...this.generateFixedExpenses("cat-2", "cc-1", 35361.21, 13, null),
-      // Program - General expenses (67 items totaling $30,538 to match breakdown)
-      ...this.generateProgramExpenses("cat-3", "cc-1"),
-    ];
-    
-    expenseData.forEach(exp => this.expenses.set(exp.id, exp));
-
-    // Add Tax Practice data
-    const taxCategories: SpendCategory[] = [
-      { id: "cat-4", name: "Compensation", color: "#3B82F6", costCenterId: "cc-2" },
-      { id: "cat-5", name: "Technology", color: "#8B5CF6", costCenterId: "cc-2" },
-      { id: "cat-6", name: "Training", color: "#EC4899", costCenterId: "cc-2" },
-    ];
-    taxCategories.forEach(cat => this.spendCategories.set(cat.id, cat));
-
-    const taxBudgets: Budget[] = [
-      { id: "bud-4", categoryId: "cat-4", amount: 180000, year: 2025 },
-      { id: "bud-5", categoryId: "cat-5", amount: 45000, year: 2025 },
-      { id: "bud-6", categoryId: "cat-6", amount: 25000, year: 2025 },
-    ];
-    taxBudgets.forEach(bud => this.budgets.set(bud.id, bud));
-
-    const taxExpenses: Expense[] = [
-      ...this.generateFixedExpenses("cat-4", "cc-2", 165000, 85, null),
-      ...this.generateFixedExpenses("cat-5", "cc-2", 42000, 28, "Software Licenses"),
-      ...this.generateFixedExpenses("cat-6", "cc-2", 18500, 15, "Certifications"),
-    ];
-    taxExpenses.forEach(exp => this.expenses.set(exp.id, exp));
-  }
-
-  private generateFixedExpenses(categoryId: string, costCenterId: string, total: number, count: number, programCategory: string | null): Expense[] {
-    const expenses: Expense[] = [];
-    const amountPerItem = total / count;
-    
-    for (let i = 0; i < count; i++) {
-      expenses.push({
-        id: randomUUID(),
-        description: `Expense item ${i + 1}`,
-        amount: amountPerItem,
-        categoryId,
-        costCenterId,
-        programCategory,
-        month: 12,
-        year: 2025,
-      });
-    }
-    
-    return expenses;
-  }
-
-  private generateProgramExpenses(categoryId: string, costCenterId: string): Expense[] {
-    const expenses: Expense[] = [];
-    // Total for Program - General should be $25,738 with 67 items
-    // Breakdown displayed in Program Spend panel (over $1k):
-    // Professional Services: 6 items
-    // Travel (Transportation): 6 items
-    // Other: 40 items
-    // Plus additional small items: 15 items
-    
-    // Professional Services: 6 items, scaled proportionally
-    const profServicesTotal = 10500; // ~41% of program spend
-    for (let i = 0; i < 6; i++) {
-      expenses.push({
-        id: randomUUID(),
-        description: `Professional Services ${i + 1}`,
-        amount: profServicesTotal / 6,
-        categoryId,
-        costCenterId,
-        programCategory: "Professional Services",
-        month: 12,
-        year: 2025,
-      });
-    }
-    
-    // Travel (Transportation): 6 items
-    const travelTotal = 7200;
-    for (let i = 0; i < 6; i++) {
-      expenses.push({
-        id: randomUUID(),
-        description: `Travel expense ${i + 1}`,
-        amount: travelTotal / 6,
-        categoryId,
-        costCenterId,
-        programCategory: "Travel (Transportation)",
-        month: 12,
-        year: 2025,
-      });
-    }
-    
-    // Other: 40 items
-    const otherTotal = 5500;
-    for (let i = 0; i < 40; i++) {
-      expenses.push({
-        id: randomUUID(),
-        description: `Other expense ${i + 1}`,
-        amount: otherTotal / 40,
-        categoryId,
-        costCenterId,
-        programCategory: "Other",
-        month: 12,
-        year: 2025,
-      });
-    }
-    
-    // Small miscellaneous items (15 items, under $1k total each)
-    const miscTotal = 2538; // Remaining to reach $25,738
-    for (let i = 0; i < 15; i++) {
-      expenses.push({
-        id: randomUUID(),
-        description: `Miscellaneous ${i + 1}`,
-        amount: miscTotal / 15,
-        categoryId,
-        costCenterId,
-        programCategory: "Supplies",
-        month: 12,
-        year: 2025,
-      });
-    }
-    
-    return expenses;
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -299,7 +282,6 @@ export class MemStorage implements IStorage {
     const categories = await this.getSpendCategories(costCenterId);
     const expenses = await this.getExpenses(costCenterId);
     
-    // Calculate spend type breakdown
     const spendTypeBreakdown: SpendTypeBreakdown[] = [];
     let totalActual = 0;
     let totalBudget = 0;
@@ -314,7 +296,7 @@ export class MemStorage implements IStorage {
       totalBudget += budget;
       
       const variance = budget - actual;
-      const percentUsed = budget > 0 ? Math.round((actual / budget) * 100) : 0;
+      const percentUsed = budget > 0 ? Math.round((actual / budget) * 100) : (actual > 0 ? 100 : 0);
       
       spendTypeBreakdown.push({
         categoryId: category.id,
@@ -329,7 +311,8 @@ export class MemStorage implements IStorage {
       });
     }
     
-    // Calculate program spend breakdown (from Program - General category)
+    spendTypeBreakdown.sort((a, b) => b.actual - a.actual);
+    
     const programCategoryExpenses = expenses.filter(e => e.programCategory);
     const programGroups = new Map<string, { count: number; amount: number }>();
     
