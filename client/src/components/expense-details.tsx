@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, Search } from "lucide-react";
+import { X, Search, ArrowDown, ArrowUp } from "lucide-react";
 import type { ExpenseDetail } from "@shared/schema";
 
 interface ExpenseDetailsProps {
@@ -38,6 +38,7 @@ export function ExpenseDetails({
 }: ExpenseDetailsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
+  const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
 
   const { data: expenses, isLoading } = useQuery<ExpenseDetail[]>({
     queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue }],
@@ -51,7 +52,7 @@ export function ExpenseDetails({
     enabled: !!costCenterId && !!filterValue,
   });
 
-  const filteredExpenses = expenses?.filter(exp => {
+  const filteredExpenses = (expenses?.filter(exp => {
     const matchesSearch = searchTerm === "" || 
       exp.lineDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exp.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,7 +62,15 @@ export function ExpenseDetails({
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
     
     return matchesSearch && matchesPeriod;
-  }) ?? [];
+  }) ?? []).sort((a, b) => {
+    return sortDirection === 'desc' 
+      ? Math.abs(b.amount) - Math.abs(a.amount)
+      : Math.abs(a.amount) - Math.abs(b.amount);
+  });
+
+  const toggleSort = () => {
+    setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
+  };
 
   const uniquePeriods = Array.from(new Set(expenses?.map(e => e.period).filter(Boolean) ?? []));
 
@@ -147,7 +156,18 @@ export function ExpenseDetails({
             <span>Summary Account</span>
             <span>Posted By</span>
             <span>Period</span>
-            <span className="text-right">Amount (USD)</span>
+            <button 
+              onClick={toggleSort}
+              className="flex items-center justify-end gap-1 cursor-pointer hover:text-foreground transition-colors"
+              data-testid="button-sort-amount"
+            >
+              <span>Amount (USD)</span>
+              {sortDirection === 'desc' ? (
+                <ArrowDown className="w-3.5 h-3.5" />
+              ) : (
+                <ArrowUp className="w-3.5 h-3.5" />
+              )}
+            </button>
           </div>
 
           <ScrollArea className="max-h-[400px]">
