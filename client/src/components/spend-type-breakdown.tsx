@@ -68,10 +68,10 @@ export function SpendTypeBreakdown({
                 
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Actual: <span className="text-foreground font-medium">{formatCurrency(item.actual)}</span>
+                    Actual: <span className="text-foreground font-medium">{formatCurrency(Math.round(item.actual))}</span>
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    Budget: {formatCurrency(item.budget)}
+                    Budget: {formatCurrency(Math.round(item.budget))}
                   </span>
                 </div>
                 
@@ -105,13 +105,13 @@ export function SpendTypeBreakdown({
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Total Actual</span>
           <span className="text-sm font-semibold text-foreground" data-testid="text-total-actual">
-            {formatCurrency(totalActual)}
+            {formatCurrency(Math.round(totalActual))}
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Total Budget</span>
           <span className="text-sm font-semibold text-foreground" data-testid="text-total-budget">
-            {formatCurrency(totalBudget)}
+            {formatCurrency(Math.round(totalBudget))}
           </span>
         </div>
         <div className="flex items-center justify-between">

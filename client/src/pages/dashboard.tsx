@@ -156,13 +156,13 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <KpiCard
                 title="Total Spend"
-                value={formatCurrency(dashboardData.totalSpend)}
+                value={formatCurrency(Math.round(dashboardData.totalSpend))}
                 subtitle="Actual expenses"
                 icon="dollar"
               />
               <KpiCard
                 title="Total Budget"
-                value={formatCurrency(dashboardData.totalBudget)}
+                value={formatCurrency(Math.round(dashboardData.totalBudget))}
                 subtitle="Annual budget"
                 icon="settings"
               />
