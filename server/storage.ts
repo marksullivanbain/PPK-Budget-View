@@ -253,6 +253,10 @@ export class MemStorage implements IStorage {
   }
 
   async getSpendCategories(costCenterId: string): Promise<SpendCategory[]> {
+    if (costCenterId === "all") {
+      // Return all categories for aggregation
+      return Array.from(this.spendCategories.values());
+    }
     return Array.from(this.spendCategories.values()).filter(
       cat => cat.costCenterId === costCenterId
     );
@@ -279,6 +283,9 @@ export class MemStorage implements IStorage {
   }
 
   async getExpenses(costCenterId: string): Promise<Expense[]> {
+    if (costCenterId === "all") {
+      return Array.from(this.expenses.values());
+    }
     return Array.from(this.expenses.values()).filter(
       expense => expense.costCenterId === costCenterId
     );
@@ -316,40 +323,86 @@ export class MemStorage implements IStorage {
     let totalActual = 0;
     let totalBudget = 0;
     
-    for (const category of categories) {
-      const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
-      const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-      const budgets = await this.getBudgets(category.id);
-      const budget = budgets.find(b => b.year === 2025)?.amount || 0;
+    if (costCenterId === "all") {
+      // Aggregate by category name across all cost centers
+      const categoryAggregates = new Map<string, { 
+        actual: number; 
+        budget: number; 
+        itemCount: number; 
+        color: string;
+        categoryIds: string[];
+      }>();
       
-      totalActual += actual;
-      totalBudget += budget;
+      for (const category of categories) {
+        const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
+        const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const budgets = await this.getBudgets(category.id);
+        const budget = budgets.find(b => b.year === 2025)?.amount || 0;
+        
+        const existing = categoryAggregates.get(category.name) || { 
+          actual: 0, budget: 0, itemCount: 0, color: category.color, categoryIds: [] 
+        };
+        existing.actual += actual;
+        existing.budget += budget;
+        existing.itemCount += categoryExpenses.length;
+        existing.categoryIds.push(category.id);
+        categoryAggregates.set(category.name, existing);
+      }
       
-      const variance = budget - actual;
-      const percentUsed = budget > 0 ? Math.round((actual / budget) * 100) : (actual > 0 ? 100 : 0);
-      
-      spendTypeBreakdown.push({
-        categoryId: category.id,
-        categoryName: category.name,
-        color: category.color,
-        actual,
-        budget,
-        itemCount: categoryExpenses.length,
-        percentUsed,
-        variance: Math.abs(variance),
-        isOverBudget: variance < 0,
-      });
+      for (const [name, data] of Array.from(categoryAggregates.entries())) {
+        totalActual += data.actual;
+        totalBudget += data.budget;
+        
+        const variance = data.budget - data.actual;
+        const percentUsed = data.budget > 0 ? Math.round((data.actual / data.budget) * 100) : (data.actual > 0 ? 100 : 0);
+        
+        spendTypeBreakdown.push({
+          categoryId: name, // Use name as ID for "all" view
+          categoryName: name,
+          color: data.color,
+          actual: data.actual,
+          budget: data.budget,
+          itemCount: data.itemCount,
+          percentUsed,
+          variance: Math.abs(variance),
+          isOverBudget: variance < 0,
+        });
+      }
+    } else {
+      for (const category of categories) {
+        const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
+        const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const budgets = await this.getBudgets(category.id);
+        const budget = budgets.find(b => b.year === 2025)?.amount || 0;
+        
+        totalActual += actual;
+        totalBudget += budget;
+        
+        const variance = budget - actual;
+        const percentUsed = budget > 0 ? Math.round((actual / budget) * 100) : (actual > 0 ? 100 : 0);
+        
+        spendTypeBreakdown.push({
+          categoryId: category.id,
+          categoryName: category.name,
+          color: category.color,
+          actual,
+          budget,
+          itemCount: categoryExpenses.length,
+          percentUsed,
+          variance: Math.abs(variance),
+          isOverBudget: variance < 0,
+        });
+      }
     }
     
     spendTypeBreakdown.sort((a, b) => b.actual - a.actual);
     
-    // Find the Compensation category ID to exclude those expenses
-    const compensationCategory = categories.find(c => c.name === "Compensation");
-    const compensationCategoryId = compensationCategory?.id;
+    // Find Compensation category IDs to exclude those expenses
+    const compensationCategoryIds = categories.filter(c => c.name === "Compensation").map(c => c.id);
     
     // Only include expenses that have an accountName AND are not in the Compensation category
     const accountNameExpenses = expenses.filter(e => 
-      e.accountName && e.categoryId !== compensationCategoryId
+      e.accountName && !compensationCategoryIds.includes(e.categoryId)
     );
     const programGroups = new Map<string, { count: number; amount: number }>();
     
@@ -427,20 +480,30 @@ export class MemStorage implements IStorage {
     filterType: 'category' | 'program', 
     filterValue: string
   ): Promise<ExpenseDetail[]> {
-    const expenses = Array.from(this.expenses.values()).filter(
-      expense => expense.costCenterId === costCenterId
-    );
+    const expenses = costCenterId === "all" 
+      ? Array.from(this.expenses.values())
+      : Array.from(this.expenses.values()).filter(
+          expense => expense.costCenterId === costCenterId
+        );
     
     let filtered: Expense[];
     
     if (filterType === 'category') {
-      const category = Array.from(this.spendCategories.values()).find(
-        cat => cat.id === filterValue
-      );
-      if (category) {
-        filtered = expenses.filter(exp => exp.categoryId === filterValue);
+      if (costCenterId === "all") {
+        // For "all" view, filterValue is the category name
+        const categoryIds = Array.from(this.spendCategories.values())
+          .filter(cat => cat.name === filterValue)
+          .map(cat => cat.id);
+        filtered = expenses.filter(exp => categoryIds.includes(exp.categoryId));
       } else {
-        filtered = [];
+        const category = Array.from(this.spendCategories.values()).find(
+          cat => cat.id === filterValue
+        );
+        if (category) {
+          filtered = expenses.filter(exp => exp.categoryId === filterValue);
+        } else {
+          filtered = [];
+        }
       }
     } else {
       filtered = expenses.filter(exp => exp.accountName === filterValue);

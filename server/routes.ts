@@ -20,10 +20,13 @@ export async function registerRoutes(
   app.get("/api/dashboard/:costCenterId", async (req, res) => {
     try {
       const { costCenterId } = req.params;
-      const costCenter = await storage.getCostCenter(costCenterId);
       
-      if (!costCenter) {
-        return res.status(404).json({ error: "Cost center not found" });
+      // Allow "all" as a special case for combined view
+      if (costCenterId !== "all") {
+        const costCenter = await storage.getCostCenter(costCenterId);
+        if (!costCenter) {
+          return res.status(404).json({ error: "Cost center not found" });
+        }
       }
       
       const summary = await storage.getDashboardSummary(costCenterId);

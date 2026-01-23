@@ -22,6 +22,9 @@ export function CostCenterSelector({ costCenters, selectedId, onSelect }: CostCe
           <SelectValue placeholder="Select cost center" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="all" data-testid="option-cost-center-all">
+            All Practices
+          </SelectItem>
           {costCenters.map((center) => (
             <SelectItem key={center.id} value={center.id} data-testid={`option-cost-center-${center.id}`}>
               {center.name}
