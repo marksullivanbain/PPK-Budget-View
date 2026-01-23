@@ -178,6 +178,7 @@ export class MemStorage implements IStorage {
           year: 2025,
           lineDescription: row.lineDescription,
           summaryAccount: row.summaryAccount,
+          accountName: row.accountName,
           postedBy: row.postedBy,
           vendorName: row.vendorName,
           period: row.period,
@@ -337,14 +338,14 @@ export class MemStorage implements IStorage {
     const compensationCategory = categories.find(c => c.name === "Compensation");
     const compensationCategoryId = compensationCategory?.id;
     
-    // Only include expenses that have a summaryAccount AND are not in the Compensation category
-    const summaryAccountExpenses = expenses.filter(e => 
-      e.summaryAccount && e.categoryId !== compensationCategoryId
+    // Only include expenses that have an accountName AND are not in the Compensation category
+    const accountNameExpenses = expenses.filter(e => 
+      e.accountName && e.categoryId !== compensationCategoryId
     );
     const programGroups = new Map<string, { count: number; amount: number }>();
     
-    for (const expense of summaryAccountExpenses) {
-      const key = expense.summaryAccount!;
+    for (const expense of accountNameExpenses) {
+      const key = expense.accountName!;
       const existing = programGroups.get(key) || { count: 0, amount: 0 };
       existing.count += 1;
       existing.amount += expense.amount;
@@ -433,14 +434,14 @@ export class MemStorage implements IStorage {
         filtered = [];
       }
     } else {
-      filtered = expenses.filter(exp => exp.summaryAccount === filterValue);
+      filtered = expenses.filter(exp => exp.accountName === filterValue);
     }
     
     return filtered.map(exp => ({
       id: exp.id,
       lineDescription: exp.lineDescription || exp.description,
       spendType: exp.spendType || '',
-      summaryAccount: exp.summaryAccount || '',
+      summaryAccount: exp.accountName || exp.summaryAccount || '',
       postedBy: exp.postedBy || '',
       period: exp.period || `Dec 2025`,
       amount: exp.amount,
