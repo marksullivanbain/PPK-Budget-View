@@ -67,6 +67,7 @@ export const expenses = pgTable("expenses", {
   summaryAccount: text("summary_account"),
   accountName: text("account_name"),
   caseName: text("case_name"),
+  documentDescription: text("document_description"),
   postedBy: text("posted_by"),
   vendorName: text("vendor_name"),
   period: text("period"),
@@ -115,6 +116,7 @@ export interface ExpenseDetail {
   spendType: string;
   summaryAccount: string;
   caseName: string;
+  documentDescription: string;
   period: string;
   amount: number;
   vendorName: string;

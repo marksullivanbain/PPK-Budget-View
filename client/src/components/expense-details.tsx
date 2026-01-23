@@ -56,7 +56,7 @@ export function ExpenseDetails({
     const matchesSearch = searchTerm === "" || 
       exp.lineDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exp.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.caseName?.toLowerCase().includes(searchTerm.toLowerCase());
+      exp.documentDescription?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesPeriod = periodFilter === "all" || 
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
