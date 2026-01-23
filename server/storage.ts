@@ -333,7 +333,14 @@ export class MemStorage implements IStorage {
     
     spendTypeBreakdown.sort((a, b) => b.actual - a.actual);
     
-    const summaryAccountExpenses = expenses.filter(e => e.summaryAccount);
+    // Find the Compensation category ID to exclude those expenses
+    const compensationCategory = categories.find(c => c.name === "Compensation");
+    const compensationCategoryId = compensationCategory?.id;
+    
+    // Only include expenses that have a summaryAccount AND are not in the Compensation category
+    const summaryAccountExpenses = expenses.filter(e => 
+      e.summaryAccount && e.categoryId !== compensationCategoryId
+    );
     const programGroups = new Map<string, { count: number; amount: number }>();
     
     for (const expense of summaryAccountExpenses) {
@@ -388,7 +395,9 @@ export class MemStorage implements IStorage {
       }))
       .sort((a, b) => b.amount - a.amount);
     
-    const totalProgramSpend = programSpendBreakdown.reduce((sum, item) => sum + item.amount, 0);
+    // Total program spend = Total spend minus Compensation
+    const compensationActual = spendTypeBreakdown.find(s => s.categoryName === "Compensation")?.actual || 0;
+    const totalProgramSpend = Math.round(totalActual - compensationActual);
     const variance = totalBudget - totalActual;
     
     return {
