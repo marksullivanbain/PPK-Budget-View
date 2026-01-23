@@ -11,7 +11,8 @@ import {
   type InsertExpense,
   type DashboardSummary,
   type SpendTypeBreakdown,
-  type ProgramSpendItem
+  type ProgramSpendItem,
+  type ExpenseDetail
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { parseBudgetCSV, parseExpenseCSV, aggregateData } from "./csv-parser";
@@ -35,6 +36,8 @@ export interface IStorage {
   createExpense(expense: InsertExpense): Promise<Expense>;
   
   getDashboardSummary(costCenterId: string): Promise<DashboardSummary>;
+  
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string): Promise<ExpenseDetail[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -166,13 +169,19 @@ export class MemStorage implements IStorage {
         const expId = `exp-${expenseIndex++}`;
         this.expenses.set(expId, {
           id: expId,
-          description: `Expense ${expenseIndex}`,
+          description: row.lineDescription || `Expense ${expenseIndex}`,
           amount: row.amount,
           categoryId,
           costCenterId,
           programCategory: row.coreProgram,
           month: 12,
           year: 2025,
+          lineDescription: row.lineDescription,
+          summaryAccount: row.summaryAccount,
+          postedBy: row.postedBy,
+          vendorName: row.vendorName,
+          period: row.period,
+          spendType: row.spendType,
         });
       }
       
@@ -366,6 +375,42 @@ export class MemStorage implements IStorage {
       programSpendBreakdown,
       totalProgramSpend,
     };
+  }
+
+  async getExpenseDetails(
+    costCenterId: string, 
+    filterType: 'category' | 'program', 
+    filterValue: string
+  ): Promise<ExpenseDetail[]> {
+    const expenses = Array.from(this.expenses.values()).filter(
+      expense => expense.costCenterId === costCenterId
+    );
+    
+    let filtered: Expense[];
+    
+    if (filterType === 'category') {
+      const category = Array.from(this.spendCategories.values()).find(
+        cat => cat.id === filterValue
+      );
+      if (category) {
+        filtered = expenses.filter(exp => exp.categoryId === filterValue);
+      } else {
+        filtered = [];
+      }
+    } else {
+      filtered = expenses.filter(exp => exp.programCategory === filterValue);
+    }
+    
+    return filtered.map(exp => ({
+      id: exp.id,
+      lineDescription: exp.lineDescription || exp.description,
+      spendType: exp.spendType || '',
+      summaryAccount: exp.summaryAccount || '',
+      postedBy: exp.postedBy || '',
+      period: exp.period || `Dec 2025`,
+      amount: exp.amount,
+      vendorName: exp.vendorName || '',
+    })).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   }
 }
 

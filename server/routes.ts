@@ -55,5 +55,30 @@ export async function registerRoutes(
     }
   });
 
+  // Get expense details for drill-down (filtered by category or program)
+  app.get("/api/cost-centers/:costCenterId/expense-details", async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const { filterType, filterValue } = req.query;
+      
+      if (!filterType || !filterValue) {
+        return res.status(400).json({ error: "filterType and filterValue are required" });
+      }
+      
+      if (filterType !== 'category' && filterType !== 'program') {
+        return res.status(400).json({ error: "filterType must be 'category' or 'program'" });
+      }
+      
+      const details = await storage.getExpenseDetails(
+        costCenterId, 
+        filterType as 'category' | 'program', 
+        filterValue as string
+      );
+      res.json(details);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch expense details" });
+    }
+  });
+
   return httpServer;
 }

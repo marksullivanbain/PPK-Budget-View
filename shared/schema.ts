@@ -62,6 +62,13 @@ export const expenses = pgTable("expenses", {
   programCategory: text("program_category"), // e.g., Professional Services, Travel, Other
   month: integer("month").notNull(), // 1-12
   year: integer("year").notNull(),
+  // Detail fields for drill-down view
+  lineDescription: text("line_description"),
+  summaryAccount: text("summary_account"),
+  postedBy: text("posted_by"),
+  vendorName: text("vendor_name"),
+  period: text("period"),
+  spendType: text("spend_type"),
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
@@ -97,4 +104,16 @@ export interface DashboardSummary {
   spendTypeBreakdown: SpendTypeBreakdown[];
   programSpendBreakdown: ProgramSpendItem[];
   totalProgramSpend: number;
+}
+
+// Expense detail for drill-down view
+export interface ExpenseDetail {
+  id: string;
+  lineDescription: string;
+  spendType: string;
+  summaryAccount: string;
+  postedBy: string;
+  period: string;
+  amount: number;
+  vendorName: string;
 }

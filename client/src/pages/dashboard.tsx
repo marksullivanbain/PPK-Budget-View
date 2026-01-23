@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { KpiCard } from "@/components/kpi-card";
 import { SpendTypeBreakdown } from "@/components/spend-type-breakdown";
 import { ProgramSpendBreakdown } from "@/components/program-spend-breakdown";
+import { ExpenseDetails } from "@/components/expense-details";
 import { CostCenterSelector } from "@/components/cost-center-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -82,11 +83,38 @@ export default function Dashboard() {
   }
 
   const handleSpendCategoryClick = (categoryId: string) => {
-    setSelectedSpendCategory(prev => prev === categoryId ? null : categoryId);
+    if (selectedSpendCategory === categoryId) {
+      setSelectedSpendCategory(null);
+    } else {
+      setSelectedSpendCategory(categoryId);
+      setSelectedProgramCategory(null);
+    }
   };
 
   const handleProgramCategoryClick = (category: string) => {
-    setSelectedProgramCategory(prev => prev === category ? null : category);
+    if (selectedProgramCategory === category) {
+      setSelectedProgramCategory(null);
+    } else {
+      setSelectedProgramCategory(category);
+      setSelectedSpendCategory(null);
+    }
+  };
+
+  const clearFilter = () => {
+    setSelectedSpendCategory(null);
+    setSelectedProgramCategory(null);
+  };
+
+  const getSelectedSpendCategoryInfo = () => {
+    if (!selectedSpendCategory || !dashboardData) return null;
+    const category = dashboardData.spendTypeBreakdown.find(c => c.categoryId === selectedSpendCategory);
+    return category ? { label: category.categoryName, color: category.color } : null;
+  };
+
+  const getSelectedProgramInfo = () => {
+    if (!selectedProgramCategory || !dashboardData) return null;
+    const program = dashboardData.programSpendBreakdown.find(p => p.category === selectedProgramCategory);
+    return program ? { label: program.category, color: program.color } : null;
   };
 
   const isLoading = costCentersLoading || dashboardLoading || !dashboardData;
@@ -154,7 +182,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <SpendTypeBreakdown
                 data={dashboardData.spendTypeBreakdown}
                 totalActual={dashboardData.totalSpend}
@@ -170,6 +198,28 @@ export default function Dashboard() {
                 selectedCategory={selectedProgramCategory}
               />
             </div>
+
+            {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
+              <ExpenseDetails
+                costCenterId={selectedCostCenterId}
+                filterType="category"
+                filterValue={selectedSpendCategory}
+                filterLabel={getSelectedSpendCategoryInfo()!.label}
+                filterColor={getSelectedSpendCategoryInfo()!.color}
+                onClearFilter={clearFilter}
+              />
+            )}
+
+            {selectedProgramCategory && getSelectedProgramInfo() && (
+              <ExpenseDetails
+                costCenterId={selectedCostCenterId}
+                filterType="program"
+                filterValue={selectedProgramCategory}
+                filterLabel={getSelectedProgramInfo()!.label}
+                filterColor={getSelectedProgramInfo()!.color}
+                onClearFilter={clearFilter}
+              />
+            )}
           </>
         )}
       </div>

@@ -13,6 +13,12 @@ export interface ExpenseRow {
   normalizedSpendType: string;
   coreProgram: string | null;
   amount: number;
+  // Detail fields
+  lineDescription: string;
+  summaryAccount: string;
+  postedBy: string;
+  vendorName: string;
+  period: string;
 }
 
 function parseNumber(value: string): number {
@@ -78,6 +84,11 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
       const coreProgram = fields[2]?.trim();
+      const summaryAccount = fields[25]?.trim() || '';
+      const period = fields[31]?.trim() || '';
+      const lineDescription = fields[38]?.trim() || '';
+      const postedBy = fields[40]?.trim() || '';
+      const vendorName = fields[54]?.trim() || '';
       const amount = parseNumber(fields[64]);
       
       if (practice && spendType) {
@@ -86,7 +97,12 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
           spendType, 
           normalizedSpendType: normalizeCategory(spendType),
           coreProgram: coreProgram && coreProgram !== "z.Not Program" ? coreProgram : null,
-          amount 
+          amount,
+          lineDescription,
+          summaryAccount,
+          postedBy,
+          vendorName,
+          period
         });
       }
     }
