@@ -148,13 +148,20 @@ export class MemStorage implements IStorage {
       });
       
       let expenseIndex = 1;
+      let skippedExpenses = 0;
       for (const row of expenseRows) {
         const costCenterId = this.costCenterIdMap.get(row.practice);
-        if (!costCenterId) continue;
+        if (!costCenterId) {
+          skippedExpenses++;
+          continue;
+        }
         
-        const catKey = `${row.practice}|${row.spendType}`;
+        const catKey = `${row.practice}|${row.normalizedSpendType}`;
         const categoryId = categoryIdMap.get(catKey);
-        if (!categoryId) continue;
+        if (!categoryId) {
+          skippedExpenses++;
+          continue;
+        }
         
         const expId = `exp-${expenseIndex++}`;
         this.expenses.set(expId, {
@@ -163,10 +170,14 @@ export class MemStorage implements IStorage {
           amount: row.amount,
           categoryId,
           costCenterId,
-          programCategory: null,
+          programCategory: row.coreProgram,
           month: 12,
           year: 2025,
         });
+      }
+      
+      if (skippedExpenses > 0) {
+        console.log(`Skipped ${skippedExpenses} expenses due to missing category mappings`);
       }
       
       console.log(`Loaded ${this.costCenters.size} cost centers, ${this.spendCategories.size} categories, ${this.expenses.size} expenses`);

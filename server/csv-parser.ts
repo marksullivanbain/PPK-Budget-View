@@ -7,9 +7,11 @@ interface BudgetRow {
   month12Amount: number;
 }
 
-interface ExpenseRow {
+export interface ExpenseRow {
   practice: string;
   spendType: string;
+  normalizedSpendType: string;
+  coreProgram: string | null;
   amount: number;
 }
 
@@ -75,10 +77,17 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
     if (fields.length >= 65) {
       const practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
+      const coreProgram = fields[2]?.trim();
       const amount = parseNumber(fields[64]);
       
       if (practice && spendType) {
-        rows.push({ practice, spendType, amount });
+        rows.push({ 
+          practice, 
+          spendType, 
+          normalizedSpendType: normalizeCategory(spendType),
+          coreProgram: coreProgram && coreProgram !== "z.Not Program" ? coreProgram : null,
+          amount 
+        });
       }
     }
   }
@@ -92,7 +101,7 @@ export interface AggregatedData {
   categoryActuals: Map<string, Map<string, number>>;
 }
 
-function normalizeCategory(category: string): string {
+export function normalizeCategory(category: string): string {
   const normalized = category.trim();
   if (normalized === "Program" || normalized === "Programs") {
     return "General";
