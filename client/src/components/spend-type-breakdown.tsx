@@ -22,7 +22,7 @@ function formatCurrency(amount: number): string {
 
 function formatVariance(amount: number, isOverBudget: boolean): string {
   const prefix = isOverBudget ? "-" : "+";
-  return `${prefix}${formatCurrency(Math.abs(amount))} ${isOverBudget ? "over" : "under"}`;
+  return `${prefix}${formatCurrency(Math.round(Math.abs(amount)))} ${isOverBudget ? "over" : "under"}`;
 }
 
 export function SpendTypeBreakdown({ 
