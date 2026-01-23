@@ -333,11 +333,11 @@ export class MemStorage implements IStorage {
     
     spendTypeBreakdown.sort((a, b) => b.actual - a.actual);
     
-    const programCategoryExpenses = expenses.filter(e => e.programCategory);
+    const summaryAccountExpenses = expenses.filter(e => e.summaryAccount);
     const programGroups = new Map<string, { count: number; amount: number }>();
     
-    for (const expense of programCategoryExpenses) {
-      const key = expense.programCategory!;
+    for (const expense of summaryAccountExpenses) {
+      const key = expense.summaryAccount!;
       const existing = programGroups.get(key) || { count: 0, amount: 0 };
       existing.count += 1;
       existing.amount += expense.amount;
@@ -347,9 +347,26 @@ export class MemStorage implements IStorage {
     const programColors: Record<string, string> = {
       "Professional Services": "#F59E0B",
       "Travel (Transportation)": "#8B5CF6",
+      "Travel (Meals)": "#A855F7",
+      "Travel (Hotel)": "#7C3AED",
+      "Travel (Other)": "#6D28D9",
       "Other": "#10B981",
       "Software Licenses": "#3B82F6",
       "Certifications": "#EC4899",
+      "Fringe / Benefits": "#14B8A6",
+      "Salary": "#3B82F6",
+      "Bonus (Individual Perf.)": "#F97316",
+      "Bonus (Firm Perf.)": "#FB923C",
+      "Bonus (Signing)": "#FDBA74",
+      "Technology": "#06B6D4",
+      "Office Services": "#84CC16",
+      "Dues/Memberships": "#22C55E",
+      "Communication": "#0EA5E9",
+      "Research and Data Services": "#6366F1",
+      "Events and Meetings": "#D946EF",
+      "Recruitment": "#F43F5E",
+      "Occupancy": "#78716C",
+      "Other Compensation": "#EAB308",
     };
     
     const programSpendBreakdown: ProgramSpendItem[] = Array.from(programGroups.entries())
@@ -398,7 +415,7 @@ export class MemStorage implements IStorage {
         filtered = [];
       }
     } else {
-      filtered = expenses.filter(exp => exp.programCategory === filterValue);
+      filtered = expenses.filter(exp => exp.summaryAccount === filterValue);
     }
     
     return filtered.map(exp => ({
