@@ -87,6 +87,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
       const coreProgram = fields[2]?.trim();
+      const caseGroupName = fields[19]?.trim() || '';
       const caseName = fields[21]?.trim() || '';
       const summaryAccount = fields[25]?.trim() || '';
       const accountName = fields[27]?.trim() || '';
@@ -97,11 +98,14 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const vendorName = fields[54]?.trim() || '';
       const amount = parseNumber(fields[64]);
       
+      // Check if Case Group Name ends with "- DBs" to categorize as Databases
+      const isDatabase = caseGroupName.endsWith('- DBs');
+      
       if (practice && spendType) {
         rows.push({ 
           practice, 
           spendType, 
-          normalizedSpendType: normalizeCategory(spendType),
+          normalizedSpendType: isDatabase ? 'Databases' : normalizeCategory(spendType),
           coreProgram: coreProgram && coreProgram !== "z.Not Program" ? coreProgram : null,
           amount,
           lineDescription,
@@ -169,7 +173,8 @@ export function aggregateData(budgetRows: BudgetRow[], expenseRows: ExpenseRow[]
       categoryActuals.set(row.practice, new Map());
     }
     
-    const normalizedType = normalizeCategory(row.spendType);
+    // Use pre-computed normalizedSpendType which includes Databases detection
+    const normalizedType = row.normalizedSpendType;
     const actualMap = categoryActuals.get(row.practice)!;
     const currentActual = actualMap.get(normalizedType) || 0;
     actualMap.set(normalizedType, currentActual + row.amount);
