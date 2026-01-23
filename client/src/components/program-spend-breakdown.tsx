@@ -29,8 +29,8 @@ export function ProgramSpendBreakdown({
   return (
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-program-spend-breakdown">
       <div className="flex flex-col gap-1 mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Summary Account Breakdown</h3>
-        <p className="text-sm text-muted-foreground">Click an account to filter expense details (showing accounts over $1k)</p>
+        <h3 className="text-lg font-semibold text-foreground">Program Spend Breakdown</h3>
+        <p className="text-sm text-muted-foreground">Click a category to filter expense details (showing categories over $1k)</p>
       </div>
       
       <ScrollArea className="flex-1 -mx-1 px-1">
