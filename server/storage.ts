@@ -593,15 +593,12 @@ export class MemStorage implements IStorage {
       // Calculate actual spend for this month
       const actual = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
       
-      // Calculate budget for this month
+      // Calculate budget for this month using the monthlyBudgets map
       let monthBudget = 0;
       for (const category of categories) {
-        const catBudgets = await this.getBudgets(category.id);
-        for (const budget of catBudgets) {
-          const budgetData = budget as any;
-          if (budgetData.monthlyAmounts && Array.isArray(budgetData.monthlyAmounts)) {
-            monthBudget += budgetData.monthlyAmounts[month - 1] || 0;
-          }
+        const monthlyAmounts = this.monthlyBudgets.get(category.id);
+        if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
+          monthBudget += monthlyAmounts[month - 1] || 0;
         }
       }
       
