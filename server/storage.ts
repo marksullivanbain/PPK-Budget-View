@@ -745,16 +745,39 @@ export class MemStorage implements IStorage {
   }
 
   async getIPTeamsData(practice: string | null, month: number): Promise<IPTeamData> {
-    // Filter by practice if specified
-    let entries = this.ipTeamEntries;
-    if (practice && practice !== 'all') {
-      entries = entries.filter(e => e.costCenter === practice);
-    }
+    // Helper to check if practice matches (handles missing "Practice" suffix)
+    const practiceMatches = (value: string, targetPractice: string): boolean => {
+      if (!value || value === 'n/a') return false;
+      const normalized = value.trim().toLowerCase();
+      const target = targetPractice.toLowerCase();
+      // Exact match or match with "Practice" suffix added
+      return normalized === target || 
+             normalized + ' practice' === target ||
+             normalized === target.replace(' practice', '');
+    };
     
-    // Split by type
-    const traditionalRows = entries.filter(e => e.type === 'Traditional');
-    const interlockRows = entries.filter(e => e.type === 'Interlock');
-    const rotationsRows = entries.filter(e => e.type === 'Rotations');
+    // Split by type first
+    const allTraditional = this.ipTeamEntries.filter(e => e.type === 'Traditional');
+    const allInterlock = this.ipTeamEntries.filter(e => e.type === 'Interlock');
+    const allRotations = this.ipTeamEntries.filter(e => e.type === 'Rotations');
+    
+    let traditionalRows = allTraditional;
+    let interlockRows = allInterlock;
+    let rotationsRows = allRotations;
+    
+    // Filter by practice if specified
+    if (practice && practice !== 'all') {
+      // Traditional and Rotations filter by costCenter (column A)
+      traditionalRows = allTraditional.filter(e => e.costCenter === practice);
+      rotationsRows = allRotations.filter(e => e.costCenter === practice);
+      
+      // Interlock filters by columns B, C, D (interlock1, interlock2, interlock3)
+      interlockRows = allInterlock.filter(e => 
+        practiceMatches(e.interlock1, practice) ||
+        practiceMatches(e.interlock2, practice) ||
+        practiceMatches(e.interlock3, practice)
+      );
+    }
     
     // Helper to calculate YTD through month
     const calcYTD = (amounts: number[], throughMonth: number): number => {
@@ -801,13 +824,14 @@ export class MemStorage implements IStorage {
       monthlyAmounts: rotationsMonthly,
     };
     
-    // Grand total
-    const grandMonthly = sumMonthly(entries);
+    // Grand total (combine all filtered rows)
+    const allFilteredRows = [...traditionalRows, ...interlockRows, ...rotationsRows];
+    const grandMonthly = sumMonthly(allFilteredRows);
     const grandTotal: IPTeamSummary = {
       costCenter: practice || 'All',
       type: 'Total',
       ytdActual: calcYTD(grandMonthly, month),
-      estimatedBudget: entries.reduce((sum, r) => sum + r.cy25, 0),
+      estimatedBudget: allFilteredRows.reduce((sum, r) => sum + r.cy25, 0),
       monthlyAmounts: grandMonthly,
     };
     
