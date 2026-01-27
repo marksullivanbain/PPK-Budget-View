@@ -90,7 +90,7 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function normalizeBudgetPracticeName(practice: string): string {
+function normalizePracticeName(practice: string): string {
   const normalized = practice.trim();
   // HC Practice → HLS Practice
   if (normalized === 'HC Practice') return 'HLS Practice';
@@ -98,6 +98,22 @@ function normalizeBudgetPracticeName(practice: string): string {
   if (normalized === 'Strategy & Transformation Practice') return 'S&T Practice';
   // Vector Practice → AIS Practice
   if (normalized === 'Vector Practice') return 'AIS Practice';
+  // Bain Futures Practice → S&T Practice
+  if (normalized === 'Bain Futures Practice') return 'S&T Practice';
+  // Transform & Chg Practice → S&T Practice
+  if (normalized === 'Transform & Chg Practice') return 'S&T Practice';
+  // DE&I Practice → Further Practice
+  if (normalized === 'DE&I Practice') return 'Further Practice';
+  // SI Practice → Further Practice
+  if (normalized === 'SI Practice') return 'Further Practice';
+  // CME Practice → TMT Practice
+  if (normalized === 'CME Practice') return 'TMT Practice';
+  // I&D Practice → AIS Practice
+  if (normalized === 'I&D Practice') return 'AIS Practice';
+  // Practice Area Prgrm Office → Practice Area Program Office (normalize spelling)
+  if (normalized === 'Practice Area Prgrm Office') return 'Practice Area Program Office';
+  // Industry Marketing - should be mapped by marketing mapping, if still here map to Other Industry
+  if (normalized === 'Industry Marketing') return 'Other Industry';
   return normalized;
 }
 
@@ -116,7 +132,7 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
       const month12Amount = parseNumber(fields[29]);
       
       // Normalize practice names (consolidate duplicates)
-      costCenter = normalizeBudgetPracticeName(costCenter);
+      costCenter = normalizePracticeName(costCenter);
       
       if (costCenter && type) {
         rows.push({ costCenter, type, month12Amount });
@@ -147,17 +163,6 @@ function getSpendTypeFromAccountType(accountType: string): string {
     return 'Compensation';
   }
   return 'Program';
-}
-
-function normalizePracticeName(practice: string): string {
-  const normalized = practice.trim();
-  // HC Practice → HLS Practice
-  if (normalized === 'HC Practice') return 'HLS Practice';
-  // Strategy & Transformation Practice → S&T Practice
-  if (normalized === 'Strategy & Transformation Practice') return 'S&T Practice';
-  // Vector Practice → AIS Practice
-  if (normalized === 'Vector Practice') return 'AIS Practice';
-  return normalized;
 }
 
 export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string, string>): ExpenseRow[] {

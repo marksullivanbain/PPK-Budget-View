@@ -38,7 +38,7 @@ shared/
 ## Key Features
 - **Authentication**: Users must log in via Replit Auth (Google, GitHub, email, etc.)
 - **Access Control**: Users only see practices they're assigned to in the security access table
-- Cost center selection dropdown (16 cost centers from CSV data)
+- Cost center selection dropdown (19 cost centers from CSV data)
 - KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance (all rounded to nearest dollar)
 - Spend Type Breakdown with progress bars per category
 - Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k
@@ -55,20 +55,30 @@ shared/
 
 ## Data Source
 - Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
-- Expense data: `attached_assets/Full_Practice_Expense_data_(Dec_2025)*.csv` - 5,814 expense records
+- Expense data: `attached_assets/Full_Practice_Expense_data_(2025)*.csv` - Full year 2025, 53,413 expense records (~40MB)
 - Marketing mapping: `attached_assets/Replit_Marketing_Mapping_Table_*.csv` - Maps Case Group IDs to practices
 
-## Expense Column Mapping (no manual columns needed)
-- **Practice**: Column Q (index 16) - overridden by marketing mapping when Case Group ID matches
-- **Spend Type**: Column Y (index 24) - Account Type: "Comp" → Compensation, else → Program
-- **Category**: Column S (index 18) - Case Group Code determines subcategory:
+## Expense Column Mapping (Full Year 2025 file format)
+- **Practice**: Column L (index 11) - Cost Center Name - overridden by marketing mapping when Case Group ID matches
+- **Spend Type**: Column T (index 19) - Account Type: "Comp" → Compensation, else → Program
+- **Category**: Column N (index 13) - Case Group Code determines subcategory:
   - XXXX0201 = General
   - XXXX0203 = Databases
   - XXXX0204 = BCN
   - XXXX0205 = IP
   - Fallback: "Program" expenses map to "General" budget category
 - Marketing practice mapping: Expenses with matching Case Group IDs are automatically assigned to practices (e.g., 56500008 → M&A Practice)
-- Program grouping: Uses Account Name (column AB) for more granular breakdown
+- Program grouping: Uses Account Name (column W, index 22) for more granular breakdown
+
+## Practice Consolidation Mapping
+The following practices are consolidated for reporting:
+- HC Practice → HLS Practice
+- Strategy & Transformation Practice, Bain Futures Practice, Transform & Chg Practice → S&T Practice
+- Vector Practice, I&D Practice → AIS Practice
+- DE&I Practice, SI Practice → Further Practice
+- CME Practice → TMT Practice
+- Practice Area Prgrm Office → Practice Area Program Office (spelling normalization)
+- Industry Marketing (fallback) → Other Industry
 
 ## API Endpoints
 - `GET /api/cost-centers` - List all cost centers
