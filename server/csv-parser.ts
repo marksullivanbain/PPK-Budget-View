@@ -3,8 +3,8 @@ import * as path from 'path';
 
 interface BudgetRow {
   costCenter: string;
-  type: string;
-  month12Amount: number;
+  type: string;  // Compensation, General, Databases, BCN, IP, Marketing
+  annualAmount: number;
 }
 
 // Marketing mapping: Case Group ID -> Practice Cost Center
@@ -120,22 +120,46 @@ function normalizePracticeName(practice: string): string {
 export function parseBudgetCSV(filePath: string): BudgetRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
-  const lines = content.split('\n').filter(line => line.trim());
+  // Remove BOM if present
+  const cleanContent = content.replace(/^\uFEFF/, '');
+  const lines = cleanContent.split('\n').filter(line => line.trim());
   
   const rows: BudgetRow[] = [];
   
+  // New format columns (0-indexed):
+  // Column I (8) = Cost Center Name
+  // Column J (9) = Case Group - determines category (0201=General, 0203=Databases, 0204=BCN, 0205=IP)
+  // Column N (13) = Cost Type (Compensation vs Programs)
+  // Columns 17-28 (16-27) = Monthly amounts (1-12)
+  
   for (let i = 1; i < lines.length; i++) {
     const fields = parseCSVLine(lines[i]);
-    if (fields.length >= 30) {
-      let costCenter = fields[0]?.trim();
-      const type = fields[1]?.trim();
-      const month12Amount = parseNumber(fields[29]);
+    if (fields.length >= 28) {
+      let costCenter = fields[8]?.trim();  // Cost Center Name (Column I)
+      const caseGroup = fields[9]?.trim();  // Case Group (Column J)
+      const costType = fields[13]?.trim();  // Cost Type (Column N)
+      
+      // Sum all 12 monthly amounts (columns 17-28, indices 16-27)
+      let annualAmount = 0;
+      for (let m = 16; m <= 27; m++) {
+        annualAmount += parseNumber(fields[m]);
+      }
       
       // Normalize practice names (consolidate duplicates)
       costCenter = normalizePracticeName(costCenter);
       
+      // Determine category type from case group code or cost type
+      let type: string;
+      if (costType === 'Compensation') {
+        type = 'Compensation';
+      } else {
+        // Use case group ending to determine category
+        const category = getCategoryFromCaseGroupCode(caseGroup);
+        type = category || 'General';
+      }
+      
       if (costCenter && type) {
-        rows.push({ costCenter, type, month12Amount });
+        rows.push({ costCenter, type, annualAmount });
       }
     }
   }
@@ -283,7 +307,7 @@ export function aggregateData(budgetRows: BudgetRow[], expenseRows: ExpenseRow[]
     const normalizedType = normalizeCategory(row.type);
     const budgetMap = categoryBudgets.get(row.costCenter)!;
     const currentBudget = budgetMap.get(normalizedType) || 0;
-    budgetMap.set(normalizedType, currentBudget + row.month12Amount);
+    budgetMap.set(normalizedType, currentBudget + row.annualAmount);
   }
   
   for (const row of expenseRows) {

@@ -54,9 +54,15 @@ shared/
 - If user's email is not in the table, they see no practices
 
 ## Data Source
-- Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
+- Budget data: `attached_assets/2025_Budget_by_Category_*.csv` - Full year 2025 budget (sums 12 monthly columns)
 - Expense data: `attached_assets/Full_Practice_Expense_data_(2025)*.csv` - Full year 2025, 53,413 expense records (~40MB)
 - Marketing mapping: `attached_assets/Replit_Marketing_Mapping_Table_*.csv` - Maps Case Group IDs to practices
+
+## Budget Column Mapping (Full Year 2025 file format)
+- **Practice**: Column I (index 8) - Cost Center Name
+- **Category**: Column J (index 9) - Case Group determines subcategory (0201=General, 0203=Databases, 0204=BCN, 0205=IP)
+- **Cost Type**: Column N (index 13) - Compensation vs Programs
+- **Monthly Amounts**: Columns 17-28 (indices 16-27) - 12 monthly budget values, summed for annual total
 
 ## Expense Column Mapping (Full Year 2025 file format)
 - **Practice**: Column L (index 11) - Cost Center Name - overridden by marketing mapping when Case Group ID matches
