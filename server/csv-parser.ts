@@ -90,6 +90,17 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
+function normalizeBudgetPracticeName(practice: string): string {
+  const normalized = practice.trim();
+  // HC Practice → HLS Practice
+  if (normalized === 'HC Practice') return 'HLS Practice';
+  // Strategy & Transformation Practice → S&T Practice
+  if (normalized === 'Strategy & Transformation Practice') return 'S&T Practice';
+  // Vector Practice → AIS Practice
+  if (normalized === 'Vector Practice') return 'AIS Practice';
+  return normalized;
+}
+
 export function parseBudgetCSV(filePath: string): BudgetRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
@@ -100,9 +111,12 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
   for (let i = 1; i < lines.length; i++) {
     const fields = parseCSVLine(lines[i]);
     if (fields.length >= 30) {
-      const costCenter = fields[0]?.trim();
+      let costCenter = fields[0]?.trim();
       const type = fields[1]?.trim();
       const month12Amount = parseNumber(fields[29]);
+      
+      // Normalize practice names (consolidate duplicates)
+      costCenter = normalizeBudgetPracticeName(costCenter);
       
       if (costCenter && type) {
         rows.push({ costCenter, type, month12Amount });
@@ -133,6 +147,17 @@ function getSpendTypeFromAccountType(accountType: string): string {
     return 'Compensation';
   }
   return 'Program';
+}
+
+function normalizePracticeName(practice: string): string {
+  const normalized = practice.trim();
+  // HC Practice → HLS Practice
+  if (normalized === 'HC Practice') return 'HLS Practice';
+  // Strategy & Transformation Practice → S&T Practice
+  if (normalized === 'Strategy & Transformation Practice') return 'S&T Practice';
+  // Vector Practice → AIS Practice
+  if (normalized === 'Vector Practice') return 'AIS Practice';
+  return normalized;
 }
 
 export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string, string>): ExpenseRow[] {
@@ -170,6 +195,9 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
         practice = marketingMapping.get(caseGroupCode)!;
         marketingMappedCount++;
       }
+      
+      // Normalize practice names (consolidate duplicates)
+      practice = normalizePracticeName(practice);
       
       // Map category based on case group code (column S) for non-Compensation items
       let normalizedSpendType = spendType;
