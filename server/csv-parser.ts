@@ -23,6 +23,7 @@ export interface ExpenseRow {
   postedBy: string;
   vendorName: string;
   period: string;
+  sapInvoiceDocUrl: string;
 }
 
 function parseNumber(value: string): number {
@@ -98,6 +99,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const lineDescription = fields[38]?.trim() || '';
       const postedBy = fields[40]?.trim() || '';
       const vendorName = fields[54]?.trim() || '';
+      const sapInvoiceDocUrl = fields[60]?.trim() || '';
       const amount = parseNumber(fields[64]);
       
       // Check if Case Group Name ends with "- DBs" to categorize as Databases
@@ -118,7 +120,8 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
           documentDescription,
           postedBy,
           vendorName,
-          period
+          period,
+          sapInvoiceDocUrl
         });
       }
     }

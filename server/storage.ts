@@ -186,6 +186,7 @@ export class MemStorage implements IStorage {
           vendorName: row.vendorName,
           period: row.period,
           spendType: row.spendType,
+          sapInvoiceDocUrl: row.sapInvoiceDocUrl,
         });
       }
       
@@ -314,6 +315,7 @@ export class MemStorage implements IStorage {
       vendorName: expense.vendorName ?? null,
       period: expense.period ?? null,
       spendType: expense.spendType ?? null,
+      sapInvoiceDocUrl: expense.sapInvoiceDocUrl ?? null,
     };
     this.expenses.set(id, newExpense);
     return newExpense;
@@ -524,6 +526,7 @@ export class MemStorage implements IStorage {
       period: exp.period || `Dec 2025`,
       amount: exp.amount,
       vendorName: exp.vendorName || '',
+      sapInvoiceDocUrl: exp.sapInvoiceDocUrl || '',
     })).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   }
 }

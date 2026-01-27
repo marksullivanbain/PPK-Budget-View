@@ -150,7 +150,7 @@ export function ExpenseDetails({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_100px_140px_140px_70px_100px] gap-4 py-2 border-b border-border text-sm font-medium text-muted-foreground">
+          <div className="grid grid-cols-[180px_90px_120px_120px_60px_80px_1fr] gap-3 py-2 border-b border-border text-sm font-medium text-muted-foreground">
             <span>Line Description</span>
             <span>Case Code</span>
             <span>Case Name</span>
@@ -161,13 +161,14 @@ export function ExpenseDetails({
               className="flex items-center justify-end gap-1 cursor-pointer hover:text-foreground transition-colors"
               data-testid="button-sort-amount"
             >
-              <span>Amount (USD)</span>
+              <span>Amount</span>
               {sortDirection === 'desc' ? (
                 <ArrowDown className="w-3.5 h-3.5" />
               ) : (
                 <ArrowUp className="w-3.5 h-3.5" />
               )}
             </button>
+            <span>SAP Invoice Doc URL</span>
           </div>
 
           <ScrollArea className="max-h-[400px]">
@@ -180,7 +181,7 @@ export function ExpenseDetails({
                 filteredExpenses.map((expense) => (
                   <div 
                     key={expense.id}
-                    className="grid grid-cols-[1fr_100px_140px_140px_70px_100px] gap-4 py-3 border-b border-border text-sm hover-elevate rounded-md"
+                    className="grid grid-cols-[180px_90px_120px_120px_60px_80px_1fr] gap-3 py-3 border-b border-border text-sm hover-elevate rounded-md"
                     data-testid={`row-expense-${expense.id}`}
                   >
                     <span className="text-foreground font-medium truncate" title={expense.lineDescription}>
@@ -200,6 +201,19 @@ export function ExpenseDetails({
                     </span>
                     <span className={`text-right font-medium ${expense.amount < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                       {expense.amount < 0 ? '-' : ''}{formatCurrency(expense.amount)}
+                    </span>
+                    <span className="text-muted-foreground truncate">
+                      {expense.sapInvoiceDocUrl ? (
+                        <a 
+                          href={expense.sapInvoiceDocUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View
+                        </a>
+                      ) : '-'}
                     </span>
                   </div>
                 ))

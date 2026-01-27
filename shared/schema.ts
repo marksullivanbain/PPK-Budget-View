@@ -73,6 +73,7 @@ export const expenses = pgTable("expenses", {
   vendorName: text("vendor_name"),
   period: text("period"),
   spendType: text("spend_type"),
+  sapInvoiceDocUrl: text("sap_invoice_doc_url"),
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
@@ -122,4 +123,5 @@ export interface ExpenseDetail {
   period: string;
   amount: number;
   vendorName: string;
+  sapInvoiceDocUrl: string;
 }
