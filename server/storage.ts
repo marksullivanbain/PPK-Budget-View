@@ -88,6 +88,7 @@ export class MemStorage implements IStorage {
       const aggregated = aggregateData(budgetRows, expenseRows);
       
       let costCenterIndex = 1;
+      const costCenterNames: string[] = [];
       Array.from(aggregated.costCenters.entries()).forEach(([name, data]) => {
         const id = `cc-${costCenterIndex++}`;
         this.costCenterIdMap.set(name, id);
@@ -96,7 +97,9 @@ export class MemStorage implements IStorage {
           name,
           description: data.description,
         });
+        costCenterNames.push(name);
       });
+      console.log('Cost centers loaded:', costCenterNames.sort().join(', '));
       
       let categoryIndex = 1;
       const categoryIdMap = new Map<string, string>();

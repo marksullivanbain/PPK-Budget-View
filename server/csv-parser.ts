@@ -172,8 +172,8 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
     const fields = parseCSVLine(lines[i]);
     if (fields.length >= 60) {
       // Full year 2025 file column indices (0-indexed):
-      // Practice: Column 9 (Sub-Function)
-      let practice = fields[9]?.trim() || '';
+      // Practice: Column 11 (Cost Center Name) - Column L
+      let practice = fields[11]?.trim() || '';
       // Account Type: Column 19 (Account Type) - determines Comp vs Program
       const accountType = fields[19]?.trim() || '';
       const spendType = getSpendTypeFromAccountType(accountType);
