@@ -170,25 +170,26 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
   
   for (let i = 1; i < lines.length; i++) {
     const fields = parseCSVLine(lines[i]);
-    if (fields.length >= 65) {
-      // Use column Q (index 16) for Practice instead of column A
-      let practice = fields[16]?.trim() || '';
-      // Use column Y (index 24) for Account Type to determine Comp vs Program
-      const accountType = fields[24]?.trim() || '';
+    if (fields.length >= 60) {
+      // Full year 2025 file column indices (0-indexed):
+      // Practice: Column 9 (Sub-Function)
+      let practice = fields[9]?.trim() || '';
+      // Account Type: Column 19 (Account Type) - determines Comp vs Program
+      const accountType = fields[19]?.trim() || '';
       const spendType = getSpendTypeFromAccountType(accountType);
-      // Use column S (index 18) for Case Group - program categorization
-      const caseGroupCode = fields[18]?.trim() || '';
-      const caseCode = fields[20]?.trim() || '';
-      const caseName = fields[21]?.trim() || '';
-      const summaryAccount = fields[25]?.trim() || '';
-      const accountName = fields[27]?.trim() || '';
-      const period = fields[31]?.trim() || '';
-      const documentDescription = fields[35]?.trim() || '';
-      const lineDescription = fields[38]?.trim() || '';
-      const postedBy = fields[40]?.trim() || '';
-      const vendorName = fields[54]?.trim() || '';
-      const sapInvoiceDocUrl = fields[60]?.trim() || '';
-      const amount = parseNumber(fields[64]);
+      // Case Group Code: Column 13 (Case Group)
+      const caseGroupCode = fields[13]?.trim() || '';
+      const caseCode = fields[15]?.trim() || '';
+      const caseName = fields[16]?.trim() || '';
+      const summaryAccount = fields[20]?.trim() || '';
+      const accountName = fields[22]?.trim() || '';
+      const period = fields[26]?.trim() || '';
+      const documentDescription = fields[30]?.trim() || '';
+      const lineDescription = fields[33]?.trim() || '';
+      const postedBy = fields[35]?.trim() || '';
+      const vendorName = fields[49]?.trim() || '';
+      const sapInvoiceDocUrl = fields[55]?.trim() || '';
+      const amount = parseNumber(fields[59]);
       
       // Check if Case Group Code maps to a practice via marketing mapping
       if (marketingMapping && caseGroupCode && marketingMapping.has(caseGroupCode)) {
