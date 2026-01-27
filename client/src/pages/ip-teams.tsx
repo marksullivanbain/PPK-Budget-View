@@ -81,6 +81,12 @@ function SummaryCard({ title, summary, icon }: { title: string; summary: IPTeamS
   );
 }
 
+interface ConsolidatedProject {
+  caseCode: string;
+  caseName: string;
+  monthlyAmounts: number[];
+}
+
 function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: string; month: number }) {
   if (entries.length === 0) {
     return (
@@ -89,6 +95,29 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
       </div>
     );
   }
+
+  // Consolidate entries by case code
+  const projectMap = new Map<string, ConsolidatedProject>();
+  
+  for (const entry of entries) {
+    const key = entry.caseCode || 'unknown';
+    const existing = projectMap.get(key);
+    
+    if (existing) {
+      // Sum up monthly amounts
+      for (let i = 0; i < 12; i++) {
+        existing.monthlyAmounts[i] += entry.monthlyAmounts[i] || 0;
+      }
+    } else {
+      projectMap.set(key, {
+        caseCode: entry.caseCode || '-',
+        caseName: entry.caseName || '-',
+        monthlyAmounts: [...entry.monthlyAmounts],
+      });
+    }
+  }
+
+  const consolidatedProjects = Array.from(projectMap.values());
 
   return (
     <div className="overflow-x-auto">
@@ -104,15 +133,15 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry) => {
-            const ytd = entry.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
+          {consolidatedProjects.map((project) => {
+            const ytd = project.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
             return (
-              <TableRow key={entry.id}>
-                <TableCell className="font-medium">{entry.caseCode || '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{entry.caseName || '-'}</TableCell>
+              <TableRow key={project.caseCode}>
+                <TableCell className="font-medium">{project.caseCode}</TableCell>
+                <TableCell className="text-muted-foreground">{project.caseName}</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
                   <TableCell key={i} className="text-right text-muted-foreground">
-                    {entry.monthlyAmounts[i] > 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
+                    {project.monthlyAmounts[i] > 0 ? formatCurrency(project.monthlyAmounts[i]) : '-'}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
