@@ -114,6 +114,10 @@ export function hasAccessToPractice(email: string, practiceName: string): boolea
     // No access control - all access granted
     return true;
   }
+  // "All Practices" grants access to everything
+  if (practices.includes('All Practices')) {
+    return true;
+  }
   return practices.includes(practiceName);
 }
 

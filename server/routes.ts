@@ -24,9 +24,14 @@ export async function registerRoutes(
       
       // Filter cost centers if access control is enabled
       if (allowedPractices !== null && allowedPractices.length > 0) {
-        costCenters = costCenters.filter(cc => 
-          allowedPractices.includes(cc.name)
-        );
+        // "All Practices" grants access to everything
+        if (allowedPractices.includes('All Practices')) {
+          // Return all cost centers
+        } else {
+          costCenters = costCenters.filter(cc => 
+            allowedPractices.includes(cc.name)
+          );
+        }
       } else if (allowedPractices !== null && allowedPractices.length === 0) {
         // User has no access to any practice
         costCenters = [];
