@@ -13,7 +13,8 @@ import {
   type SpendTypeBreakdown,
   type ProgramSpendItem,
   type ExpenseDetail,
-  type MonthlyTrendData
+  type MonthlyTrendData,
+  type KeyVarianceItem
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData } from "./csv-parser";
@@ -41,6 +42,8 @@ export interface IStorage {
   getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string, periodMode?: 'ytd' | 'month', month?: number): Promise<ExpenseDetail[]>;
   
   getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
+  
+  getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number): Promise<KeyVarianceItem[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -624,6 +627,72 @@ export class MemStorage implements IStorage {
     }
     
     return result;
+  }
+
+  async getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit: number = 20): Promise<KeyVarianceItem[]> {
+    const costCenters = await this.getCostCenters();
+    const variances: KeyVarianceItem[] = [];
+
+    // Helper to calculate budget for period
+    const getBudgetForPeriod = (categoryId: string): number => {
+      const monthlyAmounts = this.monthlyBudgets.get(categoryId);
+      if (!monthlyAmounts) return 0;
+      
+      if (periodMode === 'month') {
+        return monthlyAmounts[month - 1] || 0;
+      } else {
+        // YTD: sum months 0 to month-1
+        return monthlyAmounts.slice(0, month).reduce((sum, val) => sum + val, 0);
+      }
+    };
+
+    // Process each practice
+    for (const costCenter of costCenters) {
+      const categories = await this.getSpendCategories(costCenter.id);
+      const allExpenses = await this.getExpenses(costCenter.id);
+      
+      // Filter expenses by period
+      const expenses = allExpenses.filter(e => {
+        if (!e.month) return true;
+        if (periodMode === 'month') {
+          return e.month === month;
+        } else {
+          return e.month <= month;
+        }
+      });
+
+      // Group by category (case group)
+      for (const category of categories) {
+        // Skip Compensation - focus on program spend variances
+        if (category.name === "Compensation") continue;
+        
+        const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
+        const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const budget = getBudgetForPeriod(category.id);
+        
+        // Only include if there's meaningful spend or budget
+        if (actual > 0 || budget > 0) {
+          const variance = budget - actual;
+          const percentUsed = budget > 0 ? Math.round((actual / budget) * 100) : (actual > 0 ? 100 : 0);
+          
+          variances.push({
+            practice: costCenter.name,
+            caseGroup: category.name,
+            actual: Math.round(actual),
+            budget: Math.round(budget),
+            variance: Math.round(variance),
+            isOverBudget: variance < 0,
+            percentUsed,
+          });
+        }
+      }
+    }
+
+    // Sort by absolute variance (largest first)
+    variances.sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance));
+    
+    // Return top N
+    return variances.slice(0, limit);
   }
 }
 

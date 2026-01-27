@@ -125,3 +125,14 @@ export interface MonthlyTrendData {
   compensationActual: number;
   programActual: number;
 }
+
+// Key variance item for "All Practices" view
+export interface KeyVarianceItem {
+  practice: string;
+  caseGroup: string;
+  actual: number;
+  budget: number;
+  variance: number;
+  isOverBudget: boolean;
+  percentUsed: number;
+}

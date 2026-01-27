@@ -153,6 +153,28 @@ export async function registerRoutes(
     }
   });
 
+  // Get key variances across all practices (for "All Practices" view)
+  app.get("/api/key-variances", isAuthenticated, async (req, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      const allowedPractices = getPracticesForEmail(userEmail || '');
+      
+      // Only allow users with "All Practices" access
+      if (!allowedPractices || !allowedPractices.includes('All Practices')) {
+        return res.status(403).json({ error: "Access denied - requires All Practices access" });
+      }
+      
+      const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
+      const month = parseInt(req.query.month as string) || 12;
+      const limit = parseInt(req.query.limit as string) || 20;
+      
+      const variances = await storage.getKeyVariances(periodMode, month, limit);
+      res.json(variances);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch key variances" });
+    }
+  });
+
   // Get monthly trends for a cost center
   app.get("/api/cost-centers/:costCenterId/trends", isAuthenticated, async (req, res) => {
     try {
