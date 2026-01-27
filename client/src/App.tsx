@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Trends from "@/pages/trends";
+import IPTeamsPage from "@/pages/ip-teams";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -51,6 +52,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/trends" component={Trends} />
+      <Route path="/ip-teams" component={IPTeamsPage} />
       <Route component={NotFound} />
     </Switch>
   );
