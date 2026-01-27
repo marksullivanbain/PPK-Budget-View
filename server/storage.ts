@@ -498,8 +498,11 @@ export class MemStorage implements IStorage {
       "Other Compensation"
     ];
     
+    // Dynamic threshold: $1K for single month, $20K for YTD
+    const programThreshold = periodMode === 'month' ? 1000 : 20000;
+    
     const programSpendBreakdown: ProgramSpendItem[] = Array.from(programGroups.entries())
-      .filter(([category, data]) => data.amount >= 1000 && !compensationAccounts.includes(category))
+      .filter(([category, data]) => data.amount >= programThreshold && !compensationAccounts.includes(category))
       .map(([category, data]) => ({
         category,
         itemCount: data.count,

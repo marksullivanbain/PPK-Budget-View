@@ -42,7 +42,7 @@ shared/
 - **Period Filtering**: View data by YTD (through any month) or single month - two dropdowns control YTD/Month mode and month selector (1-12)
 - KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance (all rounded to nearest dollar)
 - Spend Type Breakdown with progress bars per category
-- Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k
+- Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k (Month mode) or ≥$20k (YTD mode)
 - Total Program Spend = Total Spend minus Compensation actual
 - **Expense Details Drill-Down**: Click any category or program to see individual expense line items with search and period filters
 - Dark theme UI matching the original design
