@@ -95,16 +95,12 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Practice</TableHead>
-            <TableHead>Case</TableHead>
-            <TableHead>Level</TableHead>
-            <TableHead>%</TableHead>
+            <TableHead>Case Code</TableHead>
+            <TableHead>Project Name</TableHead>
             {MONTH_NAMES.slice(0, month).map((m, i) => (
               <TableHead key={i} className="text-right">{m}</TableHead>
             ))}
             <TableHead className="text-right">YTD</TableHead>
-            <TableHead className="text-right">Budget</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -112,18 +108,14 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
             const ytd = entry.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
             return (
               <TableRow key={entry.id}>
-                <TableCell className="font-medium">{entry.name || '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{entry.costCenter}</TableCell>
-                <TableCell className="text-muted-foreground">{entry.caseCode || '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{entry.level || '-'}</TableCell>
-                <TableCell className="text-muted-foreground">{entry.percentage}%</TableCell>
+                <TableCell className="font-medium">{entry.caseCode || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.caseName || '-'}</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
                   <TableCell key={i} className="text-right text-muted-foreground">
                     {entry.monthlyAmounts[i] > 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
-                <TableCell className="text-right text-muted-foreground">{formatCurrency(entry.cy25)}</TableCell>
               </TableRow>
             );
           })}
