@@ -771,8 +771,9 @@ export class MemStorage implements IStorage {
       traditionalRows = allTraditional.filter(e => e.costCenter === practice);
       rotationsRows = allRotations.filter(e => e.costCenter === practice);
       
-      // Interlock filters by columns B, C, D (interlock1, interlock2, interlock3)
+      // Interlock filters by costCenter (column A) OR columns B, C, D (interlock1, interlock2, interlock3)
       interlockRows = allInterlock.filter(e => 
+        e.costCenter === practice ||
         practiceMatches(e.interlock1, practice) ||
         practiceMatches(e.interlock2, practice) ||
         practiceMatches(e.interlock3, practice)
