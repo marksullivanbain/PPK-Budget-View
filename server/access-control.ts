@@ -3,7 +3,6 @@ import path from 'path';
 
 export interface AccessEntry {
   practiceName: string;
-  eCode: string;
   employeeName: string;
   email: string;
 }
@@ -66,15 +65,13 @@ export function parseAccessTable(): AccessEntry[] {
     fields.push(current.trim());
     
     const practiceName = fields[0]?.trim();
-    const eCode = fields[1]?.trim();
-    const employeeName = fields[2]?.trim();
-    const bainEmail = fields[3]?.trim();
+    const employeeName = fields[1]?.trim();
+    const bainEmail = fields[2]?.trim();
     
     if (practiceName && bainEmail) {
       const email = extractEmail(bainEmail);
       entries.push({
         practiceName,
-        eCode,
         employeeName,
         email
       });
