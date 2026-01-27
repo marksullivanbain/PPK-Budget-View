@@ -349,3 +349,84 @@ export function aggregateData(budgetRows: BudgetRow[], expenseRows: ExpenseRow[]
   
   return { costCenters, categoryBudgets, categoryActuals };
 }
+
+// IP Teams data parsing
+export interface IPTeamRow {
+  costCenter: string;
+  type: 'Traditional' | 'Interlock' | 'Rotations';
+  interlock1: string;
+  interlock2: string;
+  interlock3: string;
+  serviceLine: string;
+  name: string;
+  caseCode: string;
+  caseName: string;
+  level: string;
+  percentage: number;
+  monthlyAmounts: number[]; // 12 months
+  ytd: number;
+  cy25: number;
+}
+
+export function parseIPTeamsCSV(filePath: string): IPTeamRow[] {
+  try {
+    const absolutePath = path.resolve(filePath);
+    const content = fs.readFileSync(absolutePath, 'utf-8');
+    const cleanContent = content.replace(/^\uFEFF/, '');
+    const lines = cleanContent.split('\n').filter(line => line.trim());
+    
+    const rows: IPTeamRow[] = [];
+    
+    // Skip header row
+    for (let i = 1; i < lines.length; i++) {
+      const fields = parseCSVLine(lines[i]);
+      if (fields.length < 28) continue;
+      
+      const costCenter = fields[0]?.trim() || '';
+      const typeRaw = fields[4]?.trim() || '';
+      
+      // Validate type
+      let type: 'Traditional' | 'Interlock' | 'Rotations';
+      if (typeRaw === 'Traditional') {
+        type = 'Traditional';
+      } else if (typeRaw === 'Interlock') {
+        type = 'Interlock';
+      } else if (typeRaw === 'Rotations') {
+        type = 'Rotations';
+      } else {
+        continue; // Skip unknown types
+      }
+      
+      // Parse monthly amounts (columns 15-26, indices 15-26 for Jan-Dec)
+      const monthlyAmounts: number[] = [];
+      for (let m = 15; m <= 26; m++) {
+        monthlyAmounts.push(parseNumber(fields[m] || '0'));
+      }
+      
+      const row: IPTeamRow = {
+        costCenter,
+        type,
+        interlock1: fields[1]?.trim() || 'n/a',
+        interlock2: fields[2]?.trim() || 'n/a',
+        interlock3: fields[3]?.trim() || 'n/a',
+        serviceLine: fields[5]?.trim() || '',
+        name: fields[9]?.trim() || '',
+        caseCode: fields[10]?.trim() || '',
+        caseName: fields[31]?.trim() || '',
+        level: fields[12]?.trim() || '',
+        percentage: parseNumber(fields[11]?.replace('%', '') || '100'),
+        monthlyAmounts,
+        ytd: parseNumber(fields[27] || '0'),
+        cy25: parseNumber(fields[28] || '0'),
+      };
+      
+      rows.push(row);
+    }
+    
+    console.log(`Loaded ${rows.length} IP team entries`);
+    return rows;
+  } catch (error) {
+    console.error("Error parsing IP Teams CSV:", error);
+    return [];
+  }
+}

@@ -136,3 +136,41 @@ export interface KeyVarianceItem {
   isOverBudget: boolean;
   percentUsed: number;
 }
+
+// IP Teams data for investment tracking
+export interface IPTeamEntry {
+  id: string;
+  costCenter: string;
+  type: 'Traditional' | 'Interlock' | 'Rotations';
+  interlock1: string;
+  interlock2: string;
+  interlock3: string;
+  serviceLine: string;
+  name: string;
+  caseCode: string;
+  caseName: string;
+  level: string;
+  percentage: number;
+  monthlyAmounts: number[]; // 12 months (Jan-Dec)
+  ytd: number;
+  cy25: number; // Full year / estimated budget
+}
+
+export interface IPTeamSummary {
+  costCenter: string;
+  type: string;
+  ytdActual: number;
+  estimatedBudget: number;
+  monthlyAmounts: number[];
+}
+
+export interface IPTeamData {
+  practices: string[];
+  traditionalRows: IPTeamEntry[];
+  interlockRows: IPTeamEntry[];
+  rotationsRows: IPTeamEntry[];
+  traditionalSubtotal: IPTeamSummary;
+  interlockSubtotal: IPTeamSummary;
+  rotationsSubtotal: IPTeamSummary;
+  grandTotal: IPTeamSummary;
+}

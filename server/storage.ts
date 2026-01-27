@@ -14,10 +14,13 @@ import {
   type ProgramSpendItem,
   type ExpenseDetail,
   type MonthlyTrendData,
-  type KeyVarianceItem
+  type KeyVarianceItem,
+  type IPTeamEntry,
+  type IPTeamData,
+  type IPTeamSummary
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData } from "./csv-parser";
+import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData, parseIPTeamsCSV, type IPTeamRow } from "./csv-parser";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -44,6 +47,9 @@ export interface IStorage {
   getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
   
   getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number): Promise<KeyVarianceItem[]>;
+  
+  getIPTeamsPractices(): Promise<string[]>;
+  getIPTeamsData(practice: string | null, month: number): Promise<IPTeamData>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -79,6 +85,7 @@ export class MemStorage implements IStorage {
   private monthlyBudgets: Map<string, number[]>;  // categoryId -> monthly amounts array
   private expenses: Map<string, Expense>;
   private costCenterIdMap: Map<string, string>;
+  private ipTeamEntries: IPTeamEntry[];
 
   constructor() {
     this.users = new Map();
@@ -88,8 +95,10 @@ export class MemStorage implements IStorage {
     this.monthlyBudgets = new Map();
     this.expenses = new Map();
     this.costCenterIdMap = new Map();
+    this.ipTeamEntries = [];
     
     this.loadCSVData();
+    this.loadIPTeamsData();
   }
 
   private loadCSVData() {
@@ -693,6 +702,125 @@ export class MemStorage implements IStorage {
     
     // Return top N
     return variances.slice(0, limit);
+  }
+
+  private loadIPTeamsData() {
+    try {
+      const ipTeamsPath = "attached_assets/IP_data_(2025)_1769541304144.csv";
+      const rows = parseIPTeamsCSV(ipTeamsPath);
+      
+      let id = 1;
+      for (const row of rows) {
+        this.ipTeamEntries.push({
+          id: `ip-${id++}`,
+          costCenter: row.costCenter,
+          type: row.type,
+          interlock1: row.interlock1,
+          interlock2: row.interlock2,
+          interlock3: row.interlock3,
+          serviceLine: row.serviceLine,
+          name: row.name,
+          caseCode: row.caseCode,
+          caseName: row.caseName,
+          level: row.level,
+          percentage: row.percentage,
+          monthlyAmounts: row.monthlyAmounts,
+          ytd: row.ytd,
+          cy25: row.cy25,
+        });
+      }
+      
+      console.log(`Loaded ${this.ipTeamEntries.length} IP team entries`);
+    } catch (error) {
+      console.error("Error loading IP Teams data:", error);
+    }
+  }
+
+  async getIPTeamsPractices(): Promise<string[]> {
+    const practices = new Set<string>();
+    for (const entry of this.ipTeamEntries) {
+      practices.add(entry.costCenter);
+    }
+    return Array.from(practices).sort();
+  }
+
+  async getIPTeamsData(practice: string | null, month: number): Promise<IPTeamData> {
+    // Filter by practice if specified
+    let entries = this.ipTeamEntries;
+    if (practice && practice !== 'all') {
+      entries = entries.filter(e => e.costCenter === practice);
+    }
+    
+    // Split by type
+    const traditionalRows = entries.filter(e => e.type === 'Traditional');
+    const interlockRows = entries.filter(e => e.type === 'Interlock');
+    const rotationsRows = entries.filter(e => e.type === 'Rotations');
+    
+    // Helper to calculate YTD through month
+    const calcYTD = (amounts: number[], throughMonth: number): number => {
+      return amounts.slice(0, throughMonth).reduce((sum, val) => sum + val, 0);
+    };
+    
+    // Helper to sum monthly amounts arrays
+    const sumMonthly = (rows: IPTeamEntry[]): number[] => {
+      const result = new Array(12).fill(0);
+      for (const row of rows) {
+        for (let m = 0; m < 12; m++) {
+          result[m] += row.monthlyAmounts[m] || 0;
+        }
+      }
+      return result;
+    };
+    
+    // Calculate subtotals
+    const traditionalMonthly = sumMonthly(traditionalRows);
+    const interlockMonthly = sumMonthly(interlockRows);
+    const rotationsMonthly = sumMonthly(rotationsRows);
+    
+    const traditionalSubtotal: IPTeamSummary = {
+      costCenter: practice || 'All',
+      type: 'Traditional',
+      ytdActual: calcYTD(traditionalMonthly, month),
+      estimatedBudget: traditionalRows.reduce((sum, r) => sum + r.cy25, 0),
+      monthlyAmounts: traditionalMonthly,
+    };
+    
+    const interlockSubtotal: IPTeamSummary = {
+      costCenter: practice || 'All',
+      type: 'Interlock',
+      ytdActual: calcYTD(interlockMonthly, month),
+      estimatedBudget: interlockRows.reduce((sum, r) => sum + r.cy25, 0),
+      monthlyAmounts: interlockMonthly,
+    };
+    
+    const rotationsSubtotal: IPTeamSummary = {
+      costCenter: practice || 'All',
+      type: 'Rotations',
+      ytdActual: calcYTD(rotationsMonthly, month),
+      estimatedBudget: rotationsRows.reduce((sum, r) => sum + r.cy25, 0),
+      monthlyAmounts: rotationsMonthly,
+    };
+    
+    // Grand total
+    const grandMonthly = sumMonthly(entries);
+    const grandTotal: IPTeamSummary = {
+      costCenter: practice || 'All',
+      type: 'Total',
+      ytdActual: calcYTD(grandMonthly, month),
+      estimatedBudget: entries.reduce((sum, r) => sum + r.cy25, 0),
+      monthlyAmounts: grandMonthly,
+    };
+    
+    return {
+      practices: await this.getIPTeamsPractices(),
+      traditionalRows,
+      interlockRows,
+      rotationsRows,
+      traditionalSubtotal,
+      interlockSubtotal,
+      rotationsSubtotal,
+      grandTotal,
+    };
   }
 }
 

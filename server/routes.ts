@@ -175,6 +175,29 @@ export async function registerRoutes(
     }
   });
 
+  // Get IP Teams practices list
+  app.get("/api/ip-teams/practices", isAuthenticated, async (req, res) => {
+    try {
+      const practices = await storage.getIPTeamsPractices();
+      res.json(practices);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch IP teams practices" });
+    }
+  });
+
+  // Get IP Teams data
+  app.get("/api/ip-teams/data", isAuthenticated, async (req, res) => {
+    try {
+      const practice = req.query.practice as string | null;
+      const month = parseInt(req.query.month as string) || 12;
+      
+      const data = await storage.getIPTeamsData(practice, month);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch IP teams data" });
+    }
+  });
+
   // Get monthly trends for a cost center
   app.get("/api/cost-centers/:costCenterId/trends", isAuthenticated, async (req, res) => {
     try {
