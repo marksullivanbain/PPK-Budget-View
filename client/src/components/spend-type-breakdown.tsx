@@ -101,24 +101,69 @@ export function SpendTypeBreakdown({
         </div>
       </ScrollArea>
       
-      <div className="border-t border-border mt-4 pt-4 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Actual</span>
-          <span className="text-sm font-semibold text-foreground" data-testid="text-total-actual">
-            {formatCurrency(Math.round(totalActual))}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Total Budget</span>
-          <span className="text-sm font-semibold text-foreground" data-testid="text-total-budget">
-            {formatCurrency(Math.round(totalBudget))}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Variance</span>
-          <span className={`text-sm font-semibold ${variance >= 0 ? 'text-emerald-400' : 'text-red-400'}`} data-testid="text-variance">
-            {formatVariance(Math.abs(variance), variance < 0)}
-          </span>
+      <div className="border-t border-border mt-4 pt-4 flex flex-col gap-3">
+        {(() => {
+          const compItem = data.find(d => d.categoryName === "Compensation");
+          const programItems = data.filter(d => d.categoryName !== "Compensation");
+          const compActual = compItem?.actual ?? 0;
+          const compBudget = compItem?.budget ?? 0;
+          const programActual = programItems.reduce((sum, d) => sum + d.actual, 0);
+          const programBudget = programItems.reduce((sum, d) => sum + d.budget, 0);
+          
+          return (
+            <>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Compensation Subtotal</span>
+                  <span className="text-sm font-medium text-foreground" data-testid="text-comp-subtotal">
+                    {formatCurrency(Math.round(compActual))}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Budget</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatCurrency(Math.round(compBudget))}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Program Subtotal</span>
+                  <span className="text-sm font-medium text-foreground" data-testid="text-program-subtotal">
+                    {formatCurrency(Math.round(programActual))}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Budget</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatCurrency(Math.round(programBudget))}
+                  </span>
+                </div>
+              </div>
+            </>
+          );
+        })()}
+        
+        <div className="border-t border-border pt-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Total Actual</span>
+            <span className="text-sm font-semibold text-foreground" data-testid="text-total-actual">
+              {formatCurrency(Math.round(totalActual))}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Total Budget</span>
+            <span className="text-sm font-semibold text-foreground" data-testid="text-total-budget">
+              {formatCurrency(Math.round(totalBudget))}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Variance</span>
+            <span className={`text-sm font-semibold ${variance >= 0 ? 'text-emerald-400' : 'text-red-400'}`} data-testid="text-variance">
+              {formatVariance(Math.abs(variance), variance < 0)}
+            </span>
+          </div>
         </div>
       </div>
     </Card>
