@@ -36,7 +36,7 @@ export function SpendTypeBreakdown({
   return (
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-spend-type-breakdown">
       <div className="flex flex-col gap-1 mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Spend Type Breakdown</h3>
+        <h3 className="text-lg font-semibold text-foreground">Case Group Detail</h3>
         <p className="text-sm text-muted-foreground">Budget vs Actual - Click a category to filter</p>
       </div>
       
