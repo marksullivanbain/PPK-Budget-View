@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { KpiCard } from "@/components/kpi-card";
 import { SpendTypeBreakdown } from "@/components/spend-type-breakdown";
@@ -7,6 +7,10 @@ import { ExpenseDetails } from "@/components/expense-details";
 import { CostCenterSelector } from "@/components/cost-center-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
 function formatCurrency(amount: number): string {
@@ -64,6 +68,7 @@ function BreakdownCardSkeleton() {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
@@ -71,6 +76,14 @@ export default function Dashboard() {
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
   });
+  
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!user) return '';
+    const first = user.firstName?.[0] || '';
+    const last = user.lastName?.[0] || '';
+    return (first + last).toUpperCase() || user.email?.[0]?.toUpperCase() || '?';
+  };
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardSummary>({
     queryKey: ['/api/dashboard', selectedCostCenterId],
@@ -123,19 +136,42 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
-              2025 {selectedCostCenter?.name || 'Expense'} Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground">December Month Actuals vs. Budget</p>
+        <header className="flex flex-col gap-4 mb-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
+                2025 {selectedCostCenter?.name || 'Expense'} Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">December Month Actuals vs. Budget</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {user && (
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-sm">{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground hidden md:inline">
+                    {user.firstName} {user.lastName}
+                  </span>
+                </div>
+              )}
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="button-logout">
+                <a href="/api/logout">
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </a>
+              </Button>
+            </div>
           </div>
           {costCenters && costCenters.length > 0 && (
-            <CostCenterSelector
-              costCenters={costCenters}
-              selectedId={selectedCostCenterId}
-              onSelect={setSelectedCostCenterId}
-            />
+            <div className="flex justify-end">
+              <CostCenterSelector
+                costCenters={costCenters}
+                selectedId={selectedCostCenterId}
+                onSelect={setSelectedCostCenterId}
+              />
+            </div>
           )}
         </header>
 

@@ -1,11 +1,13 @@
 # Expense/Cost Tracking Dashboard
 
 ## Overview
-An internal expense and cost tracking dashboard for cost center managers. The dashboard displays budget vs actual spending, variance analysis, and program spend breakdowns with a dark-themed UI.
+An internal expense and cost tracking dashboard for cost center managers. The dashboard displays budget vs actual spending, variance analysis, and program spend breakdowns with a dark-themed UI. Access is controlled via email-based authentication.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Express.js + TypeScript
+- **Database**: PostgreSQL (for auth sessions)
+- **Authentication**: Replit Auth (OpenID Connect)
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **State Management**: TanStack React Query
 - **Routing**: Wouter
@@ -34,6 +36,8 @@ shared/
 ```
 
 ## Key Features
+- **Authentication**: Users must log in via Replit Auth (Google, GitHub, email, etc.)
+- **Access Control**: Users only see practices they're assigned to in the security access table
 - Cost center selection dropdown (16 cost centers from CSV data)
 - KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance (all rounded to nearest dollar)
 - Spend Type Breakdown with progress bars per category
@@ -41,6 +45,13 @@ shared/
 - Total Program Spend = Total Spend minus Compensation actual
 - **Expense Details Drill-Down**: Click any category or program to see individual expense line items with search and period filters
 - Dark theme UI matching the original design
+
+## Access Control
+- Security table: `attached_assets/Replit_Security_Access_Table_*.csv`
+- Format: Practice Name, eCode, Employee Name, Bain email
+- Email matching: Extracts email from "Name <email@bain.com>" format, case-insensitive
+- Users see only practices mapped to their email address
+- If user's email is not in the table, they see no practices
 
 ## Data Source
 - Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
