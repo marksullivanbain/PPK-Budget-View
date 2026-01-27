@@ -5,6 +5,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { SpendTypeBreakdown } from "@/components/spend-type-breakdown";
 import { ProgramSpendBreakdown } from "@/components/program-spend-breakdown";
 import { ExpenseDetails } from "@/components/expense-details";
+import { KeyVariances } from "@/components/key-variances";
 import { CostCenterSelector } from "@/components/cost-center-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -296,26 +297,32 @@ export default function Dashboard() {
               />
             </div>
 
-            {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
-              <ExpenseDetails
-                costCenterId={selectedCostCenterId}
-                filterType="category"
-                filterValue={selectedSpendCategory}
-                filterLabel={getSelectedSpendCategoryInfo()!.label}
-                filterColor={getSelectedSpendCategoryInfo()!.color}
-                onClearFilter={clearFilter}
-              />
-            )}
+            {selectedCostCenterId === "all" ? (
+              <KeyVariances periodMode={periodMode} month={selectedMonth} />
+            ) : (
+              <>
+                {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
+                  <ExpenseDetails
+                    costCenterId={selectedCostCenterId}
+                    filterType="category"
+                    filterValue={selectedSpendCategory}
+                    filterLabel={getSelectedSpendCategoryInfo()!.label}
+                    filterColor={getSelectedSpendCategoryInfo()!.color}
+                    onClearFilter={clearFilter}
+                  />
+                )}
 
-            {selectedProgramCategory && getSelectedProgramInfo() && (
-              <ExpenseDetails
-                costCenterId={selectedCostCenterId}
-                filterType="program"
-                filterValue={selectedProgramCategory}
-                filterLabel={getSelectedProgramInfo()!.label}
-                filterColor={getSelectedProgramInfo()!.color}
-                onClearFilter={clearFilter}
-              />
+                {selectedProgramCategory && getSelectedProgramInfo() && (
+                  <ExpenseDetails
+                    costCenterId={selectedCostCenterId}
+                    filterType="program"
+                    filterValue={selectedProgramCategory}
+                    filterLabel={getSelectedProgramInfo()!.label}
+                    filterColor={getSelectedProgramInfo()!.color}
+                    onClearFilter={clearFilter}
+                  />
+                )}
+              </>
             )}
           </>
         )}

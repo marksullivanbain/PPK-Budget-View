@@ -29,7 +29,7 @@ function VarianceRow({ item }: { item: KeyVarianceItem }) {
   
   return (
     <div 
-      className="flex items-center justify-between py-3 px-4 border-b border-border/50 last:border-b-0 hover-elevate rounded-md"
+      className="flex items-center justify-between gap-4 py-3 px-4"
       data-testid={`variance-row-${item.practice}-${item.caseGroup}`}
     >
       <div className="flex-1 min-w-0">
@@ -89,10 +89,15 @@ export function KeyVariances({ periodMode, month }: KeyVariancesProps) {
     queryFn: async () => {
       const url = `/api/key-variances?periodMode=${periodMode}&month=${month}&limit=20`;
       const response = await fetch(url, { credentials: 'include' });
+      if (response.status === 403) {
+        throw new Error('ACCESS_DENIED');
+      }
       if (!response.ok) throw new Error('Failed to fetch key variances');
       return response.json();
     },
   });
+  
+  const isAccessDenied = error?.message === 'ACCESS_DENIED';
 
   const overBudgetItems = variances?.filter(v => v.isOverBudget) || [];
   const underBudgetItems = variances?.filter(v => !v.isOverBudget) || [];
@@ -112,6 +117,10 @@ export function KeyVariances({ periodMode, month }: KeyVariancesProps) {
           {[1, 2, 3, 4, 5].map((i) => (
             <VarianceRowSkeleton key={i} />
           ))}
+        </div>
+      ) : isAccessDenied ? (
+        <div className="text-center py-8 text-muted-foreground">
+          Key variance analysis requires access to all practices
         </div>
       ) : error ? (
         <div className="text-center py-8 text-muted-foreground">
