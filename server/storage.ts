@@ -35,9 +35,9 @@ export interface IStorage {
   getExpenses(costCenterId: string): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   
-  getDashboardSummary(costCenterId: string): Promise<DashboardSummary>;
+  getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number): Promise<DashboardSummary>;
   
-  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string): Promise<ExpenseDetail[]>;
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string, periodMode?: 'ytd' | 'month', month?: number): Promise<ExpenseDetail[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -56,11 +56,21 @@ function getCategoryColor(name: string): string {
   return CATEGORY_COLORS[name] || "#6B7280";
 }
 
+function parseMonthFromPeriod(period: string | null | undefined): number {
+  if (!period) return 12;
+  const num = parseInt(period.trim());
+  if (!isNaN(num) && num >= 1 && num <= 12) {
+    return num;
+  }
+  return 12;
+}
+
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private costCenters: Map<string, CostCenter>;
   private spendCategories: Map<string, SpendCategory>;
   private budgets: Map<string, Budget>;
+  private monthlyBudgets: Map<string, number[]>;  // categoryId -> monthly amounts array
   private expenses: Map<string, Expense>;
   private costCenterIdMap: Map<string, string>;
 
@@ -69,6 +79,7 @@ export class MemStorage implements IStorage {
     this.costCenters = new Map();
     this.spendCategories = new Map();
     this.budgets = new Map();
+    this.monthlyBudgets = new Map();
     this.expenses = new Map();
     this.costCenterIdMap = new Map();
     
@@ -108,7 +119,7 @@ export class MemStorage implements IStorage {
         const costCenterId = this.costCenterIdMap.get(costCenterName);
         if (!costCenterId) return;
         
-        Array.from(budgetMap.entries()).forEach(([categoryName, budgetAmount]) => {
+        Array.from(budgetMap.entries()).forEach(([categoryName, monthlyAmounts]) => {
           const catKey = `${costCenterName}|${categoryName}`;
           const catId = `cat-${categoryIndex++}`;
           categoryIdMap.set(catKey, catId);
@@ -120,10 +131,15 @@ export class MemStorage implements IStorage {
             costCenterId,
           });
           
+          // Store monthly amounts array
+          this.monthlyBudgets.set(catId, monthlyAmounts);
+          
+          // Calculate annual total for default budget display
+          const annualAmount = monthlyAmounts.reduce((sum, val) => sum + val, 0);
           this.budgets.set(`bud-${catId}`, {
             id: `bud-${catId}`,
             categoryId: catId,
-            amount: Math.round(budgetAmount),
+            amount: Math.round(annualAmount),
             year: 2025,
           });
         });
@@ -180,7 +196,7 @@ export class MemStorage implements IStorage {
           categoryId,
           costCenterId,
           programCategory: row.coreProgram,
-          month: 12,
+          month: parseMonthFromPeriod(row.period),
           year: 2025,
           lineDescription: row.lineDescription,
           summaryAccount: row.summaryAccount,
@@ -327,9 +343,33 @@ export class MemStorage implements IStorage {
     return newExpense;
   }
 
-  async getDashboardSummary(costCenterId: string): Promise<DashboardSummary> {
+  async getDashboardSummary(costCenterId: string, periodMode: 'ytd' | 'month' = 'ytd', month: number = 12): Promise<DashboardSummary> {
     const categories = await this.getSpendCategories(costCenterId);
-    const expenses = await this.getExpenses(costCenterId);
+    const allExpenses = await this.getExpenses(costCenterId);
+    
+    // Filter expenses by period
+    const expenses = allExpenses.filter(e => {
+      if (!e.month) return true; // Include if no month data
+      if (periodMode === 'month') {
+        return e.month === month;
+      } else {
+        // YTD: include all months up to and including selected month
+        return e.month <= month;
+      }
+    });
+    
+    // Helper to calculate budget for period
+    const getBudgetForPeriod = (categoryId: string): number => {
+      const monthlyAmounts = this.monthlyBudgets.get(categoryId);
+      if (!monthlyAmounts) return 0;
+      
+      if (periodMode === 'month') {
+        return monthlyAmounts[month - 1] || 0;
+      } else {
+        // YTD: sum months 0 to month-1
+        return monthlyAmounts.slice(0, month).reduce((sum, val) => sum + val, 0);
+      }
+    };
     
     const spendTypeBreakdown: SpendTypeBreakdown[] = [];
     let totalActual = 0;
@@ -348,8 +388,7 @@ export class MemStorage implements IStorage {
       for (const category of categories) {
         const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
         const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-        const budgets = await this.getBudgets(category.id);
-        const budget = budgets.find(b => b.year === 2025)?.amount || 0;
+        const budget = getBudgetForPeriod(category.id);
         
         const existing = categoryAggregates.get(category.name) || { 
           actual: 0, budget: 0, itemCount: 0, color: category.color, categoryIds: [] 
@@ -384,8 +423,7 @@ export class MemStorage implements IStorage {
       for (const category of categories) {
         const categoryExpenses = expenses.filter(e => e.categoryId === category.id);
         const actual = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-        const budgets = await this.getBudgets(category.id);
-        const budget = budgets.find(b => b.year === 2025)?.amount || 0;
+        const budget = getBudgetForPeriod(category.id);
         
         totalActual += actual;
         totalBudget += budget;

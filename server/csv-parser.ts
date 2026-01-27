@@ -4,7 +4,7 @@ import * as path from 'path';
 interface BudgetRow {
   costCenter: string;
   type: string;  // Compensation, General, Databases, BCN, IP, Marketing
-  annualAmount: number;
+  monthlyAmounts: number[];  // Array of 12 monthly values (index 0 = Jan, 11 = Dec)
 }
 
 // Marketing mapping: Case Group ID -> Practice Cost Center
@@ -140,10 +140,10 @@ export function parseBudgetCSV(filePath: string, marketingMapping?: Map<string, 
       const caseGroup = fields[9]?.trim();  // Case Group (Column J)
       const costType = fields[13]?.trim();  // Cost Type (Column N)
       
-      // Sum all 12 monthly amounts (columns 17-28, indices 16-27)
-      let annualAmount = 0;
+      // Store all 12 monthly amounts (columns 17-28, indices 16-27)
+      const monthlyAmounts: number[] = [];
       for (let m = 16; m <= 27; m++) {
-        annualAmount += parseNumber(fields[m]);
+        monthlyAmounts.push(parseNumber(fields[m]));
       }
       
       // Check if Case Group maps to a practice via marketing mapping
@@ -171,7 +171,7 @@ export function parseBudgetCSV(filePath: string, marketingMapping?: Map<string, 
       }
       
       if (costCenter && type) {
-        rows.push({ costCenter, type, annualAmount });
+        rows.push({ costCenter, type, monthlyAmounts });
       }
     }
   }
@@ -291,7 +291,7 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
 
 export interface AggregatedData {
   costCenters: Map<string, { name: string; description: string }>;
-  categoryBudgets: Map<string, Map<string, number>>;
+  categoryBudgets: Map<string, Map<string, number[]>>;  // Monthly amounts array per category
   categoryActuals: Map<string, Map<string, number>>;
 }
 
@@ -305,7 +305,7 @@ export function normalizeCategory(category: string): string {
 
 export function aggregateData(budgetRows: BudgetRow[], expenseRows: ExpenseRow[]): AggregatedData {
   const costCenters = new Map<string, { name: string; description: string }>();
-  const categoryBudgets = new Map<string, Map<string, number>>();
+  const categoryBudgets = new Map<string, Map<string, number[]>>();
   const categoryActuals = new Map<string, Map<string, number>>();
   
   for (const row of budgetRows) {
@@ -322,8 +322,10 @@ export function aggregateData(budgetRows: BudgetRow[], expenseRows: ExpenseRow[]
     
     const normalizedType = normalizeCategory(row.type);
     const budgetMap = categoryBudgets.get(row.costCenter)!;
-    const currentBudget = budgetMap.get(normalizedType) || 0;
-    budgetMap.set(normalizedType, currentBudget + row.annualAmount);
+    const currentBudget = budgetMap.get(normalizedType) || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    // Add monthly amounts element-wise
+    const newBudget = currentBudget.map((val, idx) => val + row.monthlyAmounts[idx]);
+    budgetMap.set(normalizedType, newBudget);
   }
   
   for (const row of expenseRows) {

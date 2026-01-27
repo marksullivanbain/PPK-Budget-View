@@ -50,6 +50,10 @@ export async function registerRoutes(
       const costCenterId = req.params.costCenterId as string;
       const userEmail = getUserEmail(req);
       
+      // Parse period filter parameters
+      const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
+      const month = parseInt(req.query.month as string) || 12;
+      
       // Allow "all" as a special case for combined view
       if (costCenterId !== "all") {
         const costCenter = await storage.getCostCenter(costCenterId);
@@ -63,7 +67,7 @@ export async function registerRoutes(
         }
       }
       
-      const summary = await storage.getDashboardSummary(costCenterId);
+      const summary = await storage.getDashboardSummary(costCenterId, periodMode, month);
       res.json(summary);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard data" });

@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LogOut, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
@@ -67,11 +68,16 @@ function BreakdownCardSkeleton() {
   );
 }
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 
+                     'July', 'August', 'September', 'October', 'November', 'December'];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
+  const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
+  const [selectedMonth, setSelectedMonth] = useState<number>(12);
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
@@ -86,7 +92,13 @@ export default function Dashboard() {
   };
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardSummary>({
-    queryKey: ['/api/dashboard', selectedCostCenterId],
+    queryKey: ['/api/dashboard', selectedCostCenterId, periodMode, selectedMonth],
+    queryFn: async () => {
+      const url = `/api/dashboard/${selectedCostCenterId}?periodMode=${periodMode}&month=${selectedMonth}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch dashboard data');
+      return response.json();
+    },
     enabled: !!selectedCostCenterId,
   });
 
@@ -142,7 +154,11 @@ export default function Dashboard() {
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
                 2025 {selectedCostCenter?.name || 'Expense'} Dashboard
               </h1>
-              <p className="text-sm text-muted-foreground">December Month Actuals vs. Budget</p>
+              <p className="text-sm text-muted-foreground">
+                {periodMode === 'ytd' 
+                  ? `YTD through ${MONTH_NAMES[selectedMonth - 1]} Actuals vs. Budget`
+                  : `${MONTH_NAMES[selectedMonth - 1]} Actuals vs. Budget`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {user && (
@@ -164,15 +180,45 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
-          {costCenters && costCenters.length > 0 && (
-            <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Select 
+                value={periodMode} 
+                onValueChange={(value: 'ytd' | 'month') => setPeriodMode(value)}
+              >
+                <SelectTrigger className="w-[120px]" data-testid="select-period-mode">
+                  <SelectValue placeholder="Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ytd">YTD</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select 
+                value={selectedMonth.toString()} 
+                onValueChange={(value) => setSelectedMonth(parseInt(value))}
+              >
+                <SelectTrigger className="w-[140px]" data-testid="select-month">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_NAMES.map((month, index) => (
+                    <SelectItem key={index + 1} value={(index + 1).toString()}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {costCenters && costCenters.length > 0 && (
               <CostCenterSelector
                 costCenters={costCenters}
                 selectedId={selectedCostCenterId}
                 onSelect={setSelectedCostCenterId}
               />
-            </div>
-          )}
+            )}
+          </div>
         </header>
 
         {isLoading ? (
