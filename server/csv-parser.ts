@@ -117,7 +117,7 @@ function normalizePracticeName(practice: string): string {
   return normalized;
 }
 
-export function parseBudgetCSV(filePath: string): BudgetRow[] {
+export function parseBudgetCSV(filePath: string, marketingMapping?: Map<string, string>): BudgetRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
   // Remove BOM if present
@@ -125,6 +125,7 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
   const lines = cleanContent.split('\n').filter(line => line.trim());
   
   const rows: BudgetRow[] = [];
+  let marketingMappedCount = 0;
   
   // New format columns (0-indexed):
   // Column I (8) = Cost Center Name
@@ -145,6 +146,14 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
         annualAmount += parseNumber(fields[m]);
       }
       
+      // Check if Case Group maps to a practice via marketing mapping
+      let isMarketingMapped = false;
+      if (marketingMapping && caseGroup && marketingMapping.has(caseGroup)) {
+        costCenter = marketingMapping.get(caseGroup)!;
+        isMarketingMapped = true;
+        marketingMappedCount++;
+      }
+      
       // Normalize practice names (consolidate duplicates)
       costCenter = normalizePracticeName(costCenter);
       
@@ -152,6 +161,9 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
       let type: string;
       if (costType === 'Compensation') {
         type = 'Compensation';
+      } else if (isMarketingMapped) {
+        // Marketing-mapped budgets get "Marketing" category
+        type = 'Marketing';
       } else {
         // Use case group ending to determine category
         const category = getCategoryFromCaseGroupCode(caseGroup);
@@ -162,6 +174,10 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
         rows.push({ costCenter, type, annualAmount });
       }
     }
+  }
+  
+  if (marketingMappedCount > 0) {
+    console.log(`Mapped ${marketingMappedCount} budget rows to practices via marketing mapping`);
   }
   
   return rows;

@@ -81,8 +81,8 @@ export class MemStorage implements IStorage {
       const expensePath = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
-      const budgetRows = parseBudgetCSV(budgetPath);
       const marketingMapping = parseMarketingMappingCSV(marketingMappingPath);
+      const budgetRows = parseBudgetCSV(budgetPath, marketingMapping);
       const expenseRows = parseExpenseCSV(expensePath, marketingMapping);
       
       const aggregated = aggregateData(budgetRows, expenseRows);
