@@ -87,6 +87,11 @@ interface ConsolidatedProject {
   monthlyAmounts: number[];
 }
 
+function countUniqueProjects(entries: IPTeamEntry[]): number {
+  const uniqueCases = new Set(entries.map(e => e.caseCode || 'unknown'));
+  return uniqueCases.size;
+}
+
 function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: string; month: number }) {
   if (entries.length === 0) {
     return (
@@ -292,7 +297,7 @@ export default function IPTeamsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-500" />
-                Traditional ({data.traditionalRows.length})
+                Traditional ({countUniqueProjects(data.traditionalRows)} projects)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -304,7 +309,7 @@ export default function IPTeamsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ArrowLeftRight className="h-5 w-5 text-purple-500" />
-                Interlock ({data.interlockRows.length})
+                Interlock ({countUniqueProjects(data.interlockRows)} projects)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -316,7 +321,7 @@ export default function IPTeamsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <RotateCcw className="h-5 w-5 text-green-500" />
-                Rotations ({data.rotationsRows.length})
+                Rotations ({countUniqueProjects(data.rotationsRows)} projects)
               </CardTitle>
             </CardHeader>
             <CardContent>
