@@ -92,7 +92,15 @@ function countUniqueProjects(entries: IPTeamEntry[]): number {
   return uniqueCases.size;
 }
 
-function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: string; month: number }) {
+interface IPTeamTableProps {
+  entries: IPTeamEntry[];
+  type: string;
+  month: number;
+  selectedCaseCode: string | null;
+  onSelectProject: (caseCode: string) => void;
+}
+
+function IPTeamTable({ entries, type, month, selectedCaseCode, onSelectProject }: IPTeamTableProps) {
   if (entries.length === 0) {
     return (
       <div className="text-sm text-muted-foreground py-4 text-center">
@@ -140,8 +148,14 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
         <TableBody>
           {consolidatedProjects.map((project) => {
             const ytd = project.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
+            const isSelected = selectedCaseCode === project.caseCode;
             return (
-              <TableRow key={project.caseCode}>
+              <TableRow 
+                key={project.caseCode}
+                className={`cursor-pointer hover-elevate ${isSelected ? 'bg-primary/10' : ''}`}
+                onClick={() => onSelectProject(project.caseCode)}
+                data-testid={`row-project-${project.caseCode}`}
+              >
                 <TableCell className="font-medium">{project.caseCode}</TableCell>
                 <TableCell className="text-muted-foreground">{project.caseName}</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
@@ -159,10 +173,57 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
   );
 }
 
+function PersonDetailTable({ entries, month }: { entries: IPTeamEntry[]; month: number }) {
+  if (entries.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground py-4 text-center">
+        No person entries found for this project
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Level</TableHead>
+            <TableHead>%</TableHead>
+            {MONTH_NAMES.slice(0, month).map((m, i) => (
+              <TableHead key={i} className="text-right">{m}</TableHead>
+            ))}
+            <TableHead className="text-right">YTD</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => {
+            const ytd = entry.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
+            return (
+              <TableRow key={entry.id}>
+                <TableCell className="font-medium">{entry.name || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.level || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.percentage}%</TableCell>
+                {MONTH_NAMES.slice(0, month).map((_, i) => (
+                  <TableCell key={i} className="text-right text-muted-foreground">
+                    {entry.monthlyAmounts[i] > 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 export default function IPTeamsPage() {
   const { user } = useAuth();
   const [selectedPractice, setSelectedPractice] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>("12");
+  const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   
   const queryParams = new URLSearchParams({ month: selectedMonth });
   if (selectedPractice !== 'all') {
@@ -172,6 +233,15 @@ export default function IPTeamsPage() {
   const { data, isLoading, error } = useQuery<IPTeamData>({
     queryKey: [`/api/ip-teams/data?${queryParams.toString()}`],
   });
+
+  // Get all entries for selected project
+  const allEntries = data ? [...data.traditionalRows, ...data.interlockRows, ...data.rotationsRows] : [];
+  const selectedProjectEntries = selectedCaseCode 
+    ? allEntries.filter(e => e.caseCode === selectedCaseCode)
+    : [];
+  const selectedProjectName = selectedProjectEntries.length > 0 
+    ? selectedProjectEntries[0].caseName 
+    : '';
 
   if (error) {
     return (
@@ -301,7 +371,13 @@ export default function IPTeamsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <IPTeamTable entries={data.traditionalRows} type="Traditional" month={parseInt(selectedMonth)} />
+              <IPTeamTable 
+                entries={data.traditionalRows} 
+                type="Traditional" 
+                month={parseInt(selectedMonth)}
+                selectedCaseCode={selectedCaseCode}
+                onSelectProject={setSelectedCaseCode}
+              />
             </CardContent>
           </Card>
 
@@ -313,7 +389,13 @@ export default function IPTeamsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <IPTeamTable entries={data.interlockRows} type="Interlock" month={parseInt(selectedMonth)} />
+              <IPTeamTable 
+                entries={data.interlockRows} 
+                type="Interlock" 
+                month={parseInt(selectedMonth)}
+                selectedCaseCode={selectedCaseCode}
+                onSelectProject={setSelectedCaseCode}
+              />
             </CardContent>
           </Card>
 
@@ -325,9 +407,37 @@ export default function IPTeamsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <IPTeamTable entries={data.rotationsRows} type="Rotations" month={parseInt(selectedMonth)} />
+              <IPTeamTable 
+                entries={data.rotationsRows} 
+                type="Rotations" 
+                month={parseInt(selectedMonth)}
+                selectedCaseCode={selectedCaseCode}
+                onSelectProject={setSelectedCaseCode}
+              />
             </CardContent>
           </Card>
+
+          {selectedCaseCode && selectedProjectEntries.length > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  By Person Detail: {selectedCaseCode} - {selectedProjectName}
+                </CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedCaseCode(null)}
+                  data-testid="button-close-detail"
+                >
+                  Close
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <PersonDetailTable entries={selectedProjectEntries} month={parseInt(selectedMonth)} />
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : null}
       </div>
