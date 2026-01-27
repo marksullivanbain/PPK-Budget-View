@@ -412,7 +412,7 @@ export function parseIPTeamsCSV(filePath: string): IPTeamRow[] {
         serviceLine: fields[5]?.trim() || '',
         name: fields[9]?.trim() || '',
         caseCode: fields[10]?.trim() || '',
-        caseName: fields[31]?.trim() || '',
+        caseName: fields[32]?.trim() || '',  // Column AG = Case Name
         level: fields[12]?.trim() || '',
         percentage: parseNumber(fields[11]?.replace('%', '') || '100'),
         monthlyAmounts,
