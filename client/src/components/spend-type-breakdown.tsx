@@ -107,8 +107,12 @@ export function SpendTypeBreakdown({
           const programItems = data.filter(d => d.categoryName !== "Compensation");
           const compActual = compItem?.actual ?? 0;
           const compBudget = compItem?.budget ?? 0;
+          const compVariance = compBudget - compActual;
+          const compIsOver = compVariance < 0;
           const programActual = programItems.reduce((sum, d) => sum + d.actual, 0);
           const programBudget = programItems.reduce((sum, d) => sum + d.budget, 0);
+          const programVariance = programBudget - programActual;
+          const programIsOver = programVariance < 0;
           
           return (
             <>
@@ -120,9 +124,9 @@ export function SpendTypeBreakdown({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Budget</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatCurrency(Math.round(compBudget))}
+                  <span className="text-xs text-muted-foreground">Budget: {formatCurrency(Math.round(compBudget))}</span>
+                  <span className={`text-xs font-medium ${compIsOver ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {formatVariance(Math.abs(compVariance), compIsOver)}
                   </span>
                 </div>
               </div>
@@ -135,36 +139,15 @@ export function SpendTypeBreakdown({
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Budget</span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatCurrency(Math.round(programBudget))}
+                  <span className="text-xs text-muted-foreground">Budget: {formatCurrency(Math.round(programBudget))}</span>
+                  <span className={`text-xs font-medium ${programIsOver ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {formatVariance(Math.abs(programVariance), programIsOver)}
                   </span>
                 </div>
               </div>
             </>
           );
         })()}
-        
-        <div className="border-t border-border pt-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total Actual</span>
-            <span className="text-sm font-semibold text-foreground" data-testid="text-total-actual">
-              {formatCurrency(Math.round(totalActual))}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total Budget</span>
-            <span className="text-sm font-semibold text-foreground" data-testid="text-total-budget">
-              {formatCurrency(Math.round(totalBudget))}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Variance</span>
-            <span className={`text-sm font-semibold ${variance >= 0 ? 'text-emerald-400' : 'text-red-400'}`} data-testid="text-variance">
-              {formatVariance(Math.abs(variance), variance < 0)}
-            </span>
-          </div>
-        </div>
       </div>
     </Card>
   );
