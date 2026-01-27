@@ -57,7 +57,11 @@ shared/
 - Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
 - Expense data: `attached_assets/Full_Practice_Expense_data_(Dec_2025)*.csv` - 5,814 expense records
 - Marketing mapping: `attached_assets/Replit_Marketing_Mapping_Table_*.csv` - Maps Case Group IDs to practices
-- Category mapping based on Case Group Code (column S):
+
+## Expense Column Mapping (no manual columns needed)
+- **Practice**: Column Q (index 16) - overridden by marketing mapping when Case Group ID matches
+- **Spend Type**: Column Y (index 24) - Account Type: "Comp" → Compensation, else → Program
+- **Category**: Column S (index 18) - Case Group Code determines subcategory:
   - XXXX0201 = General
   - XXXX0203 = Databases
   - XXXX0204 = BCN

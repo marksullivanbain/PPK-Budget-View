@@ -126,6 +126,15 @@ function getCategoryFromCaseGroupCode(caseGroupCode: string): string | null {
   return null;
 }
 
+function getSpendTypeFromAccountType(accountType: string): string {
+  if (!accountType) return 'General';
+  const normalized = accountType.trim().toLowerCase();
+  if (normalized === 'comp' || normalized === 'compensation') {
+    return 'Compensation';
+  }
+  return 'Program';
+}
+
 export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string, string>): ExpenseRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
@@ -137,10 +146,13 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
   for (let i = 1; i < lines.length; i++) {
     const fields = parseCSVLine(lines[i]);
     if (fields.length >= 65) {
-      let practice = fields[0]?.trim();
-      const spendType = fields[1]?.trim();
-      const coreProgram = fields[2]?.trim();
-      const caseGroupCode = fields[18]?.trim() || ''; // Column S (0-indexed = 18)
+      // Use column Q (index 16) for Practice instead of column A
+      let practice = fields[16]?.trim() || '';
+      // Use column Y (index 24) for Account Type to determine Comp vs Program
+      const accountType = fields[24]?.trim() || '';
+      const spendType = getSpendTypeFromAccountType(accountType);
+      // Use column S (index 18) for Case Group - program categorization
+      const caseGroupCode = fields[18]?.trim() || '';
       const caseCode = fields[20]?.trim() || '';
       const caseName = fields[21]?.trim() || '';
       const summaryAccount = fields[25]?.trim() || '';
@@ -159,16 +171,19 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
         marketingMappedCount++;
       }
       
-      // Map category based on case group code (column S)
-      const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
-      const normalizedSpendType = mappedCategory || normalizeCategory(spendType);
+      // Map category based on case group code (column S) for non-Compensation items
+      let normalizedSpendType = spendType;
+      if (spendType !== 'Compensation') {
+        const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
+        normalizedSpendType = mappedCategory || normalizeCategory(spendType);
+      }
       
       if (practice && spendType) {
         rows.push({ 
           practice, 
           spendType, 
           normalizedSpendType,
-          coreProgram: coreProgram && coreProgram !== "z.Not Program" ? coreProgram : null,
+          coreProgram: caseGroupCode || null,
           amount,
           lineDescription,
           summaryAccount,
