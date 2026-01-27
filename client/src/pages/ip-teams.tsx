@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, TrendingUp, ArrowLeftRight, RotateCcw, LayoutDashboard, LogOut } from "lucide-react";
+import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { IPTeamData, IPTeamEntry, IPTeamSummary } from "@shared/schema";
 
@@ -43,9 +43,9 @@ function TypeIcon({ type }: { type: string }) {
     case 'Traditional':
       return <Users className="h-4 w-4 text-blue-400" />;
     case 'Interlock':
-      return <ArrowLeftRight className="h-4 w-4 text-purple-400" />;
+      return <UsersRound className="h-4 w-4 text-purple-400" />;
     case 'Rotations':
-      return <RotateCcw className="h-4 w-4 text-green-400" />;
+      return <User className="h-4 w-4 text-green-400" />;
     default:
       return <TrendingUp className="h-4 w-4 text-gray-400" />;
   }
@@ -352,12 +352,12 @@ export default function IPTeamsPage() {
             <SummaryCard 
               title="Interlock" 
               summary={data.interlockSubtotal} 
-              icon={<ArrowLeftRight className="h-4 w-4 text-purple-400" />}
+              icon={<UsersRound className="h-4 w-4 text-purple-400" />}
             />
             <SummaryCard 
               title="Rotations" 
               summary={data.rotationsSubtotal} 
-              icon={<RotateCcw className="h-4 w-4 text-green-400" />}
+              icon={<User className="h-4 w-4 text-green-400" />}
             />
             <SummaryCard 
               title="Total IP Investment" 
@@ -387,7 +387,7 @@ export default function IPTeamsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ArrowLeftRight className="h-5 w-5 text-purple-500" />
+                <UsersRound className="h-5 w-5 text-purple-500" />
                 Interlock ({countUniqueProjects(data.interlockRows)} projects)
               </CardTitle>
             </CardHeader>
@@ -405,7 +405,7 @@ export default function IPTeamsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <RotateCcw className="h-5 w-5 text-green-500" />
+                <User className="h-5 w-5 text-green-500" />
                 Rotations ({countUniqueProjects(data.rotationsRows)} projects)
               </CardTitle>
             </CardHeader>
