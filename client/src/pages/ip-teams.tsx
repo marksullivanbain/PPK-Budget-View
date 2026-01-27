@@ -132,6 +132,15 @@ function IPTeamTable({ entries, type, month, selectedCaseCode, onSelectProject }
 
   const consolidatedProjects = Array.from(projectMap.values());
 
+  // Calculate subtotals for each month
+  const monthlyTotals = new Array(12).fill(0);
+  for (const project of consolidatedProjects) {
+    for (let i = 0; i < 12; i++) {
+      monthlyTotals[i] += project.monthlyAmounts[i] || 0;
+    }
+  }
+  const ytdTotal = monthlyTotals.slice(0, month).reduce((sum, v) => sum + v, 0);
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -167,6 +176,15 @@ function IPTeamTable({ entries, type, month, selectedCaseCode, onSelectProject }
               </TableRow>
             );
           })}
+          <TableRow className="bg-muted/50 font-semibold border-t-2">
+            <TableCell colSpan={2}>Subtotal</TableCell>
+            {MONTH_NAMES.slice(0, month).map((_, i) => (
+              <TableCell key={i} className="text-right">
+                {monthlyTotals[i] > 0 ? formatCurrency(monthlyTotals[i]) : '-'}
+              </TableCell>
+            ))}
+            <TableCell className="text-right">{formatCurrency(ytdTotal)}</TableCell>
+          </TableRow>
         </TableBody>
       </Table>
     </div>
