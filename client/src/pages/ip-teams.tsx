@@ -286,15 +286,15 @@ export default function IPTeamsPage() {
                   Dashboard
                 </Link>
               </Button>
+              <Button variant="default" size="sm" className="gap-1.5" data-testid="link-ip-teams-active">
+                <Users className="h-4 w-4" />
+                IP Teams
+              </Button>
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-trends">
                 <Link href="/trends">
                   <TrendingUp className="h-4 w-4" />
                   Trends
                 </Link>
-              </Button>
-              <Button variant="default" size="sm" className="gap-1.5" data-testid="link-ip-teams-active">
-                <Users className="h-4 w-4" />
-                IP Teams
               </Button>
             </div>
             
