@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { KpiCard } from "@/components/kpi-card";
 import { SpendTypeBreakdown } from "@/components/spend-type-breakdown";
 import { ProgramSpendBreakdown } from "@/components/program-spend-breakdown";
@@ -10,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Calendar } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
@@ -180,44 +181,58 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Select 
-                value={periodMode} 
-                onValueChange={(value: 'ytd' | 'month') => setPeriodMode(value)}
-              >
-                <SelectTrigger className="w-[120px]" data-testid="select-period-mode">
-                  <SelectValue placeholder="Period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ytd">YTD</SelectItem>
-                  <SelectItem value="month">Month</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select 
-                value={selectedMonth.toString()} 
-                onValueChange={(value) => setSelectedMonth(parseInt(value))}
-              >
-                <SelectTrigger className="w-[140px]" data-testid="select-month">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTH_NAMES.map((month, index) => (
-                    <SelectItem key={index + 1} value={(index + 1).toString()}>
-                      {month}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Button variant="default" size="sm" className="gap-1.5" data-testid="link-dashboard-active">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-trends">
+                <Link href="/trends">
+                  <TrendingUp className="h-4 w-4" />
+                  Trends
+                </Link>
+              </Button>
             </div>
-            {costCenters && costCenters.length > 0 && (
-              <CostCenterSelector
-                costCenters={costCenters}
-                selectedId={selectedCostCenterId}
-                onSelect={setSelectedCostCenterId}
-              />
-            )}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select 
+                  value={periodMode} 
+                  onValueChange={(value: 'ytd' | 'month') => setPeriodMode(value)}
+                >
+                  <SelectTrigger className="w-[120px]" data-testid="select-period-mode">
+                    <SelectValue placeholder="Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ytd">YTD</SelectItem>
+                    <SelectItem value="month">Month</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select 
+                  value={selectedMonth.toString()} 
+                  onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[140px]" data-testid="select-month">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTH_NAMES.map((month, index) => (
+                      <SelectItem key={index + 1} value={(index + 1).toString()}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {costCenters && costCenters.length > 0 && (
+                <CostCenterSelector
+                  costCenters={costCenters}
+                  selectedId={selectedCostCenterId}
+                  onSelect={setSelectedCostCenterId}
+                />
+              )}
+            </div>
           </div>
         </header>
 

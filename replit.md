@@ -93,6 +93,7 @@ The following practices are consolidated for reporting:
 - `GET /api/cost-centers/:costCenterId/categories` - Get spend categories
 - `GET /api/cost-centers/:costCenterId/expenses` - Get expenses
 - `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value` - Get expense line items for drill-down
+- `GET /api/cost-centers/:costCenterId/trends` - Get monthly trend data for charts
 
 ## Data Model
 - **CostCenter**: Practice areas (M&A, Tax, Audit)
