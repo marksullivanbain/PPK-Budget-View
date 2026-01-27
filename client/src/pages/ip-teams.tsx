@@ -52,9 +52,6 @@ function TypeIcon({ type }: { type: string }) {
 }
 
 function SummaryCard({ title, summary, icon }: { title: string; summary: IPTeamSummary; icon: React.ReactNode }) {
-  const variance = summary.estimatedBudget - summary.ytdActual;
-  const percentUsed = summary.estimatedBudget > 0 ? (summary.ytdActual / summary.estimatedBudget) * 100 : 0;
-  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
@@ -63,19 +60,7 @@ function SummaryCard({ title, summary, icon }: { title: string; summary: IPTeamS
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{formatCurrencyFull(summary.ytdActual)}</div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-muted-foreground">Budget: {formatCurrencyFull(summary.estimatedBudget)}</span>
-          <span className={`text-xs ${variance >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-            ({variance >= 0 ? '+' : ''}{formatCurrency(variance)})
-          </span>
-        </div>
-        <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-          <div 
-            className={`h-full ${percentUsed > 100 ? 'bg-destructive' : 'bg-primary'}`}
-            style={{ width: `${Math.min(percentUsed, 100)}%` }}
-          />
-        </div>
-        <div className="text-xs text-muted-foreground mt-1">{percentUsed.toFixed(0)}% of budget used</div>
+        <div className="text-xs text-muted-foreground mt-1">YTD Investment</div>
       </CardContent>
     </Card>
   );
