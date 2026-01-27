@@ -197,8 +197,10 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
       const amount = parseNumber(fields[59]);
       
       // Check if Case Group Code maps to a practice via marketing mapping
+      let isMarketingMapped = false;
       if (marketingMapping && caseGroupCode && marketingMapping.has(caseGroupCode)) {
         practice = marketingMapping.get(caseGroupCode)!;
+        isMarketingMapped = true;
         marketingMappedCount++;
       }
       
@@ -208,8 +210,13 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
       // Map category based on case group code (column S) for non-Compensation items
       let normalizedSpendType = spendType;
       if (spendType !== 'Compensation') {
-        const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
-        normalizedSpendType = mappedCategory || normalizeCategory(spendType);
+        // Marketing-mapped expenses get "Marketing" category
+        if (isMarketingMapped) {
+          normalizedSpendType = 'Marketing';
+        } else {
+          const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
+          normalizedSpendType = mappedCategory || normalizeCategory(spendType);
+        }
       }
       
       if (practice && spendType) {
