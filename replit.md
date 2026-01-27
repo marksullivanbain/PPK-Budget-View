@@ -39,6 +39,7 @@ shared/
 - **Authentication**: Users must log in via Replit Auth (Google, GitHub, email, etc.)
 - **Access Control**: Users only see practices they're assigned to in the security access table
 - Cost center selection dropdown (19 cost centers from CSV data)
+- **Period Filtering**: View data by YTD (through any month) or single month - two dropdowns control YTD/Month mode and month selector (1-12)
 - KPI cards showing: Total Spend, Total Budget, Budget Used %, Variance (all rounded to nearest dollar)
 - Spend Type Breakdown with progress bars per category
 - Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k
@@ -88,7 +89,7 @@ The following practices are consolidated for reporting:
 
 ## API Endpoints
 - `GET /api/cost-centers` - List all cost centers
-- `GET /api/dashboard/:costCenterId` - Get dashboard summary for a cost center
+- `GET /api/dashboard/:costCenterId?periodMode=ytd|month&month=1-12` - Get dashboard summary for a cost center with period filtering
 - `GET /api/cost-centers/:costCenterId/categories` - Get spend categories
 - `GET /api/cost-centers/:costCenterId/expenses` - Get expenses
 - `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value` - Get expense line items for drill-down
