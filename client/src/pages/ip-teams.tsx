@@ -56,26 +56,26 @@ function SummaryCard({ title, summary, icon }: { title: string; summary: IPTeamS
   const percentUsed = summary.estimatedBudget > 0 ? (summary.ytdActual / summary.estimatedBudget) * 100 : 0;
   
   return (
-    <Card className="bg-slate-900 border-slate-700">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-        <CardTitle className="text-sm font-medium text-slate-400">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         {icon}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-white">{formatCurrencyFull(summary.ytdActual)}</div>
+        <div className="text-2xl font-bold">{formatCurrencyFull(summary.ytdActual)}</div>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-slate-400">Budget: {formatCurrencyFull(summary.estimatedBudget)}</span>
-          <span className={`text-xs ${variance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <span className="text-xs text-muted-foreground">Budget: {formatCurrencyFull(summary.estimatedBudget)}</span>
+          <span className={`text-xs ${variance >= 0 ? 'text-green-500' : 'text-destructive'}`}>
             ({variance >= 0 ? '+' : ''}{formatCurrency(variance)})
           </span>
         </div>
-        <div className="mt-2 h-2 bg-slate-700 rounded-full overflow-hidden">
+        <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
           <div 
-            className={`h-full ${percentUsed > 100 ? 'bg-red-500' : 'bg-blue-500'}`}
+            className={`h-full ${percentUsed > 100 ? 'bg-destructive' : 'bg-primary'}`}
             style={{ width: `${Math.min(percentUsed, 100)}%` }}
           />
         </div>
-        <div className="text-xs text-slate-500 mt-1">{percentUsed.toFixed(0)}% of budget used</div>
+        <div className="text-xs text-muted-foreground mt-1">{percentUsed.toFixed(0)}% of budget used</div>
       </CardContent>
     </Card>
   );
@@ -84,7 +84,7 @@ function SummaryCard({ title, summary, icon }: { title: string; summary: IPTeamS
 function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: string; month: number }) {
   if (entries.length === 0) {
     return (
-      <div className="text-sm text-slate-500 py-4 text-center">
+      <div className="text-sm text-muted-foreground py-4 text-center">
         No {type.toLowerCase()} entries found
       </div>
     );
@@ -94,34 +94,36 @@ function IPTeamTable({ entries, type, month }: { entries: IPTeamEntry[]; type: s
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="border-slate-700">
-            <TableHead className="text-slate-400">Name</TableHead>
-            <TableHead className="text-slate-400">Practice</TableHead>
-            <TableHead className="text-slate-400">Level</TableHead>
-            <TableHead className="text-slate-400">%</TableHead>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Practice</TableHead>
+            <TableHead>Case</TableHead>
+            <TableHead>Level</TableHead>
+            <TableHead>%</TableHead>
             {MONTH_NAMES.slice(0, month).map((m, i) => (
-              <TableHead key={i} className="text-slate-400 text-right">{m}</TableHead>
+              <TableHead key={i} className="text-right">{m}</TableHead>
             ))}
-            <TableHead className="text-slate-400 text-right">YTD</TableHead>
-            <TableHead className="text-slate-400 text-right">Budget</TableHead>
+            <TableHead className="text-right">YTD</TableHead>
+            <TableHead className="text-right">Budget</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
             const ytd = entry.monthlyAmounts.slice(0, month).reduce((sum, v) => sum + v, 0);
             return (
-              <TableRow key={entry.id} className="border-slate-700 hover:bg-slate-800">
-                <TableCell className="text-white font-medium">{entry.name || entry.caseName || '-'}</TableCell>
-                <TableCell className="text-slate-300">{entry.costCenter}</TableCell>
-                <TableCell className="text-slate-300">{entry.level || '-'}</TableCell>
-                <TableCell className="text-slate-300">{entry.percentage}%</TableCell>
+              <TableRow key={entry.id}>
+                <TableCell className="font-medium">{entry.name || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.costCenter}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.caseCode || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.level || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.percentage}%</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
-                  <TableCell key={i} className="text-right text-slate-300">
+                  <TableCell key={i} className="text-right text-muted-foreground">
                     {entry.monthlyAmounts[i] > 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
                   </TableCell>
                 ))}
-                <TableCell className="text-right font-medium text-white">{formatCurrency(ytd)}</TableCell>
-                <TableCell className="text-right text-slate-300">{formatCurrency(entry.cy25)}</TableCell>
+                <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{formatCurrency(entry.cy25)}</TableCell>
               </TableRow>
             );
           })}
@@ -136,24 +138,19 @@ export default function IPTeamsPage() {
   const [selectedPractice, setSelectedPractice] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>("12");
   
+  const queryParams = new URLSearchParams({ month: selectedMonth });
+  if (selectedPractice !== 'all') {
+    queryParams.set('practice', selectedPractice);
+  }
+  
   const { data, isLoading, error } = useQuery<IPTeamData>({
-    queryKey: ["/api/ip-teams/data", selectedPractice, selectedMonth],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedPractice !== 'all') {
-        params.set('practice', selectedPractice);
-      }
-      params.set('month', selectedMonth);
-      const res = await fetch(`/api/ip-teams/data?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch IP teams data");
-      return res.json();
-    },
+    queryKey: [`/api/ip-teams/data?${queryParams.toString()}`],
   });
 
   if (error) {
     return (
-      <div className="p-6 bg-slate-950 min-h-screen">
-        <div className="text-red-400">Error loading IP Teams data</div>
+      <div className="p-6 min-h-screen bg-background">
+        <div className="text-destructive">Error loading IP Teams data</div>
       </div>
     );
   }
@@ -240,10 +237,10 @@ export default function IPTeamsPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-32 bg-slate-800" />
+              <Skeleton key={i} className="h-32" />
             ))}
           </div>
-          <Skeleton className="h-96 bg-slate-800" />
+          <Skeleton className="h-96" />
         </div>
       ) : data ? (
         <div className="space-y-6">
@@ -270,10 +267,10 @@ export default function IPTeamsPage() {
             />
           </div>
 
-          <Card className="bg-slate-900 border-slate-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-400" />
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-500" />
                 Traditional ({data.traditionalRows.length})
               </CardTitle>
             </CardHeader>
@@ -282,10 +279,10 @@ export default function IPTeamsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900 border-slate-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <ArrowLeftRight className="h-5 w-5 text-purple-400" />
+              <CardTitle className="flex items-center gap-2">
+                <ArrowLeftRight className="h-5 w-5 text-purple-500" />
                 Interlock ({data.interlockRows.length})
               </CardTitle>
             </CardHeader>
@@ -294,10 +291,10 @@ export default function IPTeamsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900 border-slate-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <RotateCcw className="h-5 w-5 text-green-400" />
+              <CardTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-green-500" />
                 Rotations ({data.rotationsRows.length})
               </CardTitle>
             </CardHeader>

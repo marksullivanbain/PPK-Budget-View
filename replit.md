@@ -22,14 +22,18 @@ client/
 │   │   ├── spend-type-breakdown.tsx  # Budget vs actual by category
 │   │   ├── program-spend-breakdown.tsx  # Program spend details
 │   │   ├── expense-details.tsx  # Expense drill-down table
-│   │   └── cost-center-selector.tsx  # Cost center dropdown
+│   │   ├── cost-center-selector.tsx  # Cost center dropdown
+│   │   └── key-variances.tsx  # Key variances for "All Practices" view
 │   ├── pages/
-│   │   └── dashboard.tsx  # Main dashboard page
+│   │   ├── dashboard.tsx  # Main dashboard page
+│   │   ├── trends.tsx     # Monthly trends charts
+│   │   └── ip-teams.tsx   # IP Teams investment tracking
 │   └── App.tsx           # App entry with routing
 server/
 ├── routes.ts             # API endpoints
 ├── storage.ts            # In-memory storage with CSV data
 ├── csv-parser.ts         # CSV file parsing utilities
+├── access-control.ts     # Email-based access control
 └── index.ts              # Express server setup
 shared/
 └── schema.ts             # TypeScript types and Zod schemas
@@ -94,6 +98,16 @@ The following practices are consolidated for reporting:
 - `GET /api/cost-centers/:costCenterId/expenses` - Get expenses
 - `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value` - Get expense line items for drill-down
 - `GET /api/cost-centers/:costCenterId/trends` - Get monthly trend data for charts
+- `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N` - Get key variances for All Practices view
+- `GET /api/ip-teams/practices` - Get list of practices with IP Teams data
+- `GET /api/ip-teams/data?practice=X&month=N` - Get IP Teams investment tracking data
+
+## IP Teams Investment Tracking
+- Data source: `attached_assets/IP_data_(2025)_*.csv` - Non-cash investment tracking
+- Three investment types: Traditional, Interlock, Rotations
+- Columns: Cost Center (A), Type (E), Monthly amounts (P-AA), YTD (AB), CY25/Budget (AC), Name (J), Case (K)
+- Shows per-person entries with monthly breakdown, YTD totals, and budget comparison
+- Summary cards show subtotals by type (Traditional, Interlock, Rotations) and grand total
 
 ## Data Model
 - **CostCenter**: Practice areas (M&A, Tax, Audit)
