@@ -46,7 +46,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Programs": "#10B981",
   "Databases": "#8B5CF6",
   "BCN": "#F59E0B",
-  "Marketing": "#EC4899",
+  "IP": "#EC4899",
+  "Marketing": "#A855F7",
   "Technology": "#06B6D4",
   "Training": "#F97316",
 };

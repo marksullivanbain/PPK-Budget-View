@@ -56,7 +56,12 @@ shared/
 ## Data Source
 - Budget data: `attached_assets/2025_Budget_by_Category_-_Dec*.csv` - December 2025 budget allocations
 - Expense data: `attached_assets/Full_Practice_Expense_data_(Dec_2025)*.csv` - 5,814 expense records
-- Category mapping: "Program" expenses map to "General" budget category
+- Category mapping based on Case Group Code (column S):
+  - XXXX0201 = General
+  - XXXX0203 = Databases
+  - XXXX0204 = BCN
+  - XXXX0205 = IP
+  - Fallback: "Program" expenses map to "General" budget category
 - Program grouping: Uses Account Name (column AB) for more granular breakdown
 
 ## API Endpoints

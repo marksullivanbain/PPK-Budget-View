@@ -19,6 +19,7 @@ export interface ExpenseRow {
   accountName: string;
   caseCode: string;
   caseName: string;
+  caseGroupCode: string;
   documentDescription: string;
   postedBy: string;
   vendorName: string;
@@ -76,6 +77,19 @@ export function parseBudgetCSV(filePath: string): BudgetRow[] {
   return rows;
 }
 
+function getCategoryFromCaseGroupCode(caseGroupCode: string): string | null {
+  if (!caseGroupCode) return null;
+  
+  // Extract last 4 digits and match:
+  // XXXX0201 = General, XXX0203 = Databases, XXX0204 = BCN, XXX0205 = IP
+  if (caseGroupCode.endsWith('0201')) return 'General';
+  if (caseGroupCode.endsWith('0203')) return 'Databases';
+  if (caseGroupCode.endsWith('0204')) return 'BCN';
+  if (caseGroupCode.endsWith('0205')) return 'IP';
+  
+  return null;
+}
+
 export function parseExpenseCSV(filePath: string): ExpenseRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
@@ -89,7 +103,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
       const coreProgram = fields[2]?.trim();
-      const caseGroupName = fields[19]?.trim() || '';
+      const caseGroupCode = fields[18]?.trim() || ''; // Column S (0-indexed = 18)
       const caseCode = fields[20]?.trim() || '';
       const caseName = fields[21]?.trim() || '';
       const summaryAccount = fields[25]?.trim() || '';
@@ -102,14 +116,15 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const sapInvoiceDocUrl = fields[60]?.trim() || '';
       const amount = parseNumber(fields[64]);
       
-      // Check if Case Group Name ends with "- DBs" to categorize as Databases
-      const isDatabase = caseGroupName.endsWith('- DBs');
+      // Map category based on case group code (column S)
+      const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
+      const normalizedSpendType = mappedCategory || normalizeCategory(spendType);
       
       if (practice && spendType) {
         rows.push({ 
           practice, 
           spendType, 
-          normalizedSpendType: isDatabase ? 'Databases' : normalizeCategory(spendType),
+          normalizedSpendType,
           coreProgram: coreProgram && coreProgram !== "z.Not Program" ? coreProgram : null,
           amount,
           lineDescription,
@@ -117,6 +132,7 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
           accountName,
           caseCode,
           caseName,
+          caseGroupCode,
           documentDescription,
           postedBy,
           vendorName,
