@@ -150,11 +150,11 @@ export function ExpenseDetails({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_100px_180px_120px_100px_100px] gap-4 py-2 border-b border-border text-sm font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_100px_140px_140px_70px_100px] gap-4 py-2 border-b border-border text-sm font-medium text-muted-foreground">
             <span>Line Description</span>
-            <span>Spend Type</span>
-            <span>Summary Account</span>
+            <span>Case Code</span>
             <span>Case Name</span>
+            <span>Vendor Name</span>
             <span>Period</span>
             <button 
               onClick={toggleSort}
@@ -180,23 +180,20 @@ export function ExpenseDetails({
                 filteredExpenses.map((expense) => (
                   <div 
                     key={expense.id}
-                    className="grid grid-cols-[1fr_100px_180px_120px_100px_100px] gap-4 py-3 border-b border-border text-sm hover-elevate rounded-md"
+                    className="grid grid-cols-[1fr_100px_140px_140px_70px_100px] gap-4 py-3 border-b border-border text-sm hover-elevate rounded-md"
                     data-testid={`row-expense-${expense.id}`}
                   >
                     <span className="text-foreground font-medium truncate" title={expense.lineDescription}>
                       {expense.lineDescription || '-'}
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-muted-foreground truncate" title={expense.spendType}>
-                        {expense.spendType || '-'}
-                      </span>
-                    </div>
-                    <span className="text-muted-foreground truncate" title={expense.summaryAccount}>
-                      {expense.summaryAccount || '-'}
+                    <span className="text-muted-foreground truncate" title={expense.caseCode}>
+                      {expense.caseCode || '-'}
                     </span>
                     <span className="text-muted-foreground truncate" title={expense.caseName}>
                       {expense.caseName || '-'}
+                    </span>
+                    <span className="text-muted-foreground truncate" title={expense.vendorName}>
+                      {expense.vendorName || '-'}
                     </span>
                     <span className="text-muted-foreground">
                       {expense.period || '-'}
