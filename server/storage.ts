@@ -15,7 +15,7 @@ import {
   type ExpenseDetail
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { parseBudgetCSV, parseExpenseCSV, aggregateData } from "./csv-parser";
+import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData } from "./csv-parser";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -79,9 +79,11 @@ export class MemStorage implements IStorage {
     try {
       const budgetPath = "attached_assets/2025_Budget_by_Category_-_Dec_1769186982996.csv";
       const expensePath = "attached_assets/Full_Practice_Expense_data_(Dec_2025)_1769187589802.csv";
+      const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
       const budgetRows = parseBudgetCSV(budgetPath);
-      const expenseRows = parseExpenseCSV(expensePath);
+      const marketingMapping = parseMarketingMappingCSV(marketingMappingPath);
+      const expenseRows = parseExpenseCSV(expensePath, marketingMapping);
       
       const aggregated = aggregateData(budgetRows, expenseRows);
       

@@ -7,6 +7,42 @@ interface BudgetRow {
   month12Amount: number;
 }
 
+// Marketing mapping: Case Group ID -> Practice Cost Center
+let marketingMappingCache: Map<string, string> | null = null;
+
+export function parseMarketingMappingCSV(filePath: string): Map<string, string> {
+  if (marketingMappingCache) return marketingMappingCache;
+  
+  try {
+    const absolutePath = path.resolve(filePath);
+    const content = fs.readFileSync(absolutePath, 'utf-8');
+    // Remove BOM if present
+    const cleanContent = content.replace(/^\uFEFF/, '');
+    const lines = cleanContent.split('\n').filter(line => line.trim());
+    
+    const mapping = new Map<string, string>();
+    
+    for (let i = 1; i < lines.length; i++) {
+      const fields = parseCSVLine(lines[i]);
+      if (fields.length >= 3) {
+        const caseGroupId = fields[0]?.trim();
+        const practiceCenter = fields[2]?.trim();
+        
+        if (caseGroupId && practiceCenter) {
+          mapping.set(caseGroupId, practiceCenter);
+        }
+      }
+    }
+    
+    marketingMappingCache = mapping;
+    console.log(`Loaded ${mapping.size} marketing practice mappings`);
+    return mapping;
+  } catch (error) {
+    console.error("Error loading marketing mapping CSV:", error);
+    return new Map();
+  }
+}
+
 export interface ExpenseRow {
   practice: string;
   spendType: string;
@@ -90,17 +126,18 @@ function getCategoryFromCaseGroupCode(caseGroupCode: string): string | null {
   return null;
 }
 
-export function parseExpenseCSV(filePath: string): ExpenseRow[] {
+export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string, string>): ExpenseRow[] {
   const absolutePath = path.resolve(filePath);
   const content = fs.readFileSync(absolutePath, 'utf-8');
   const lines = content.split('\n').filter(line => line.trim());
   
   const rows: ExpenseRow[] = [];
+  let marketingMappedCount = 0;
   
   for (let i = 1; i < lines.length; i++) {
     const fields = parseCSVLine(lines[i]);
     if (fields.length >= 65) {
-      const practice = fields[0]?.trim();
+      let practice = fields[0]?.trim();
       const spendType = fields[1]?.trim();
       const coreProgram = fields[2]?.trim();
       const caseGroupCode = fields[18]?.trim() || ''; // Column S (0-indexed = 18)
@@ -115,6 +152,12 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
       const vendorName = fields[54]?.trim() || '';
       const sapInvoiceDocUrl = fields[60]?.trim() || '';
       const amount = parseNumber(fields[64]);
+      
+      // Check if Case Group Code maps to a practice via marketing mapping
+      if (marketingMapping && caseGroupCode && marketingMapping.has(caseGroupCode)) {
+        practice = marketingMapping.get(caseGroupCode)!;
+        marketingMappedCount++;
+      }
       
       // Map category based on case group code (column S)
       const mappedCategory = getCategoryFromCaseGroupCode(caseGroupCode);
@@ -141,6 +184,10 @@ export function parseExpenseCSV(filePath: string): ExpenseRow[] {
         });
       }
     }
+  }
+  
+  if (marketingMappedCount > 0) {
+    console.log(`Mapped ${marketingMappedCount} expenses to practices via marketing mapping`);
   }
   
   return rows;
