@@ -114,3 +114,14 @@ export interface ExpenseDetail {
   vendorName: string;
   sapInvoiceDocUrl: string;
 }
+
+// Monthly trend data for visualization
+export interface MonthlyTrendData {
+  month: number;
+  monthName: string;
+  actual: number;
+  budget: number;
+  variance: number;
+  compensationActual: number;
+  programActual: number;
+}

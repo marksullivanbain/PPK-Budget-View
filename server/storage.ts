@@ -12,7 +12,8 @@ import {
   type DashboardSummary,
   type SpendTypeBreakdown,
   type ProgramSpendItem,
-  type ExpenseDetail
+  type ExpenseDetail,
+  type MonthlyTrendData
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData } from "./csv-parser";
@@ -38,6 +39,8 @@ export interface IStorage {
   getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number): Promise<DashboardSummary>;
   
   getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string, periodMode?: 'ytd' | 'month', month?: number): Promise<ExpenseDetail[]>;
+  
+  getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -575,6 +578,55 @@ export class MemStorage implements IStorage {
       vendorName: exp.vendorName || '',
       sapInvoiceDocUrl: exp.sapInvoiceDocUrl || '',
     })).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  }
+
+  async getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]> {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const categories = await this.getSpendCategories(costCenterId);
+    const allExpenses = await this.getExpenses(costCenterId);
+    
+    const result: MonthlyTrendData[] = [];
+    
+    for (let month = 1; month <= 12; month++) {
+      const monthExpenses = allExpenses.filter(e => e.month === month);
+      
+      // Calculate actual spend for this month
+      const actual = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+      
+      // Calculate budget for this month
+      let monthBudget = 0;
+      for (const category of categories) {
+        const catBudgets = await this.getBudgets(category.id);
+        for (const budget of catBudgets) {
+          const budgetData = budget as any;
+          if (budgetData.monthlyAmounts && Array.isArray(budgetData.monthlyAmounts)) {
+            monthBudget += budgetData.monthlyAmounts[month - 1] || 0;
+          }
+        }
+      }
+      
+      // Find compensation categories
+      const compensationCategoryIds = categories.filter(c => c.name === "Compensation").map(c => c.id);
+      
+      // Calculate compensation vs program actual
+      const compensationActual = monthExpenses
+        .filter(e => compensationCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      const programActual = actual - compensationActual;
+      
+      result.push({
+        month,
+        monthName: monthNames[month - 1],
+        actual: Math.round(actual),
+        budget: Math.round(monthBudget),
+        variance: Math.round(monthBudget - actual),
+        compensationActual: Math.round(compensationActual),
+        programActual: Math.round(programActual),
+      });
+    }
+    
+    return result;
   }
 }
 

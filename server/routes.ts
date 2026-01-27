@@ -153,5 +153,27 @@ export async function registerRoutes(
     }
   });
 
+  // Get monthly trends for a cost center
+  app.get("/api/cost-centers/:costCenterId/trends", isAuthenticated, async (req, res) => {
+    try {
+      const costCenterId = req.params.costCenterId as string;
+      const userEmail = getUserEmail(req);
+      
+      // Validate cost center exists and check access
+      const costCenter = await storage.getCostCenter(costCenterId);
+      if (!costCenter) {
+        return res.status(404).json({ error: "Cost center not found" });
+      }
+      if (!hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+      
+      const trends = await storage.getMonthlyTrends(costCenterId);
+      res.json(trends);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch trend data" });
+    }
+  });
+
   return httpServer;
 }
