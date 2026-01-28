@@ -11,9 +11,10 @@ interface CostCenterSelectorProps {
   costCenters: CostCenter[];
   selectedId: string;
   onSelect: (id: string) => void;
+  showAllPractices?: boolean;
 }
 
-export function CostCenterSelector({ costCenters, selectedId, onSelect }: CostCenterSelectorProps) {
+export function CostCenterSelector({ costCenters, selectedId, onSelect, showAllPractices = false }: CostCenterSelectorProps) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-sm text-muted-foreground whitespace-nowrap">Cost Center:</span>
@@ -22,9 +23,11 @@ export function CostCenterSelector({ costCenters, selectedId, onSelect }: CostCe
           <SelectValue placeholder="Select cost center" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all" data-testid="option-cost-center-all">
-            All Practices
-          </SelectItem>
+          {showAllPractices && (
+            <SelectItem value="all" data-testid="option-cost-center-all">
+              All Practices
+            </SelectItem>
+          )}
           {costCenters.map((center) => (
             <SelectItem key={center.id} value={center.id} data-testid={`option-cost-center-${center.id}`}>
               {center.name}

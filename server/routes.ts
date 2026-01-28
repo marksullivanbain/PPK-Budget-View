@@ -10,10 +10,27 @@ function getUserEmail(req: Request): string | null {
   return user?.claims?.email || null;
 }
 
+// Helper to check if user has "All Practices" access
+function hasAllPracticesAccess(email: string): boolean {
+  const practices = getPracticesForEmail(email);
+  return practices !== null && practices.includes('All Practices');
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Get user access info (whether they can see "All Practices" view)
+  app.get("/api/user-access", isAuthenticated, async (req, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      const canSeeAllPractices = hasAllPracticesAccess(userEmail || '');
+      res.json({ canSeeAllPractices });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user access" });
+    }
+  });
+
   // Get all cost centers (filtered by user access)
   app.get("/api/cost-centers", isAuthenticated, async (req, res) => {
     try {

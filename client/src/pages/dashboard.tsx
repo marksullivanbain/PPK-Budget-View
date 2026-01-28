@@ -84,6 +84,10 @@ export default function Dashboard() {
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
   });
+
+  const { data: userAccess } = useQuery<{ canSeeAllPractices: boolean }>({
+    queryKey: ['/api/user-access'],
+  });
   
   // Get user initials for avatar fallback
   const getUserInitials = () => {
@@ -105,8 +109,12 @@ export default function Dashboard() {
   });
 
   // Set initial cost center when data loads
-  if (costCenters && costCenters.length > 0 && !selectedCostCenterId) {
-    setSelectedCostCenterId(costCenters[0].id);
+  if (costCenters && costCenters.length > 0 && !selectedCostCenterId && userAccess !== undefined) {
+    if (userAccess.canSeeAllPractices) {
+      setSelectedCostCenterId("all");
+    } else {
+      setSelectedCostCenterId(costCenters[0].id);
+    }
   }
 
   const handleSpendCategoryClick = (categoryId: string) => {
@@ -237,6 +245,7 @@ export default function Dashboard() {
                   costCenters={costCenters}
                   selectedId={selectedCostCenterId}
                   onSelect={setSelectedCostCenterId}
+                  showAllPractices={userAccess?.canSeeAllPractices ?? false}
                 />
               )}
             </div>

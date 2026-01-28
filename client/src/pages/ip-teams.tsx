@@ -224,18 +224,31 @@ function PersonDetailTable({ entries, month }: { entries: IPTeamEntry[]; month: 
 
 export default function IPTeamsPage() {
   const { user } = useAuth();
-  const [selectedPractice, setSelectedPractice] = useState<string>("all");
+  const [selectedPractice, setSelectedPractice] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("12");
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   
+  const { data: userAccess } = useQuery<{ canSeeAllPractices: boolean }>({
+    queryKey: ['/api/user-access'],
+  });
+
   const queryParams = new URLSearchParams({ month: selectedMonth });
-  if (selectedPractice !== 'all') {
+  if (selectedPractice && selectedPractice !== 'all') {
     queryParams.set('practice', selectedPractice);
   }
   
   const { data, isLoading, error } = useQuery<IPTeamData>({
     queryKey: [`/api/ip-teams/data?${queryParams.toString()}`],
   });
+
+  // Set initial practice when data loads
+  if (data?.practices && data.practices.length > 0 && !selectedPractice && userAccess !== undefined) {
+    if (userAccess.canSeeAllPractices) {
+      setSelectedPractice("all");
+    } else {
+      setSelectedPractice(data.practices[0]);
+    }
+  }
 
   // Get all entries for selected project
   const allEntries = data ? [...data.traditionalRows, ...data.interlockRows, ...data.rotationsRows] : [];
@@ -307,7 +320,9 @@ export default function IPTeamsPage() {
                   <SelectValue placeholder="Select Practice" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Practices</SelectItem>
+                  {userAccess?.canSeeAllPractices && (
+                    <SelectItem value="all">All Practices</SelectItem>
+                  )}
                   {data?.practices.map((practice) => (
                     <SelectItem key={practice} value={practice}>
                       {practice}
