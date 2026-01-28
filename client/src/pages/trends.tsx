@@ -251,6 +251,66 @@ export default function Trends() {
                 </ResponsiveContainer>
               </div>
             </Card>
+
+            <Card className="p-6 border-card-border">
+              <h2 className="text-lg font-semibold text-foreground mb-6" data-testid="text-casegroup-chart-title">
+                Case Group Spend by Month (excl. Compensation)
+              </h2>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="monthName" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      tickFormatter={formatCurrency}
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <Tooltip content={customTooltip} />
+                    <Legend />
+                    <Bar 
+                      dataKey="generalActual" 
+                      name="General"
+                      stackId="b"
+                      fill="#10B981"
+                      radius={[0, 0, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="databasesActual" 
+                      name="Databases"
+                      stackId="b"
+                      fill="#8B5CF6"
+                      radius={[0, 0, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="bcnActual" 
+                      name="BCN"
+                      stackId="b"
+                      fill="#F59E0B"
+                      radius={[0, 0, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="ipActual" 
+                      name="IP"
+                      stackId="b"
+                      fill="#EC4899"
+                      radius={[0, 0, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="marketingActual" 
+                      name="Marketing"
+                      stackId="b"
+                      fill="#A855F7"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
           </div>
         )}
       </div>

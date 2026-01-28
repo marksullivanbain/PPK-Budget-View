@@ -124,6 +124,12 @@ export interface MonthlyTrendData {
   variance: number;
   compensationActual: number;
   programActual: number;
+  // Case group breakdown (excluding Compensation)
+  generalActual: number;
+  databasesActual: number;
+  bcnActual: number;
+  ipActual: number;
+  marketingActual: number;
 }
 
 // Key variance item for "All Practices" view

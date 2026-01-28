@@ -599,6 +599,15 @@ export class MemStorage implements IStorage {
     
     const result: MonthlyTrendData[] = [];
     
+    // Build category ID maps for each case group
+    const getCategoryIds = (name: string) => categories.filter(c => c.name === name).map(c => c.id);
+    const compensationCategoryIds = getCategoryIds("Compensation");
+    const generalCategoryIds = getCategoryIds("General");
+    const databasesCategoryIds = getCategoryIds("Databases");
+    const bcnCategoryIds = getCategoryIds("BCN");
+    const ipCategoryIds = getCategoryIds("IP");
+    const marketingCategoryIds = getCategoryIds("Marketing");
+    
     for (let month = 1; month <= 12; month++) {
       const monthExpenses = allExpenses.filter(e => e.month === month);
       
@@ -614,15 +623,33 @@ export class MemStorage implements IStorage {
         }
       }
       
-      // Find compensation categories
-      const compensationCategoryIds = categories.filter(c => c.name === "Compensation").map(c => c.id);
-      
       // Calculate compensation vs program actual
       const compensationActual = monthExpenses
         .filter(e => compensationCategoryIds.includes(e.categoryId))
         .reduce((sum, e) => sum + e.amount, 0);
       
       const programActual = actual - compensationActual;
+      
+      // Calculate case group breakdowns (excluding Compensation)
+      const generalActual = monthExpenses
+        .filter(e => generalCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      const databasesActual = monthExpenses
+        .filter(e => databasesCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      const bcnActual = monthExpenses
+        .filter(e => bcnCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      const ipActual = monthExpenses
+        .filter(e => ipCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
+      
+      const marketingActual = monthExpenses
+        .filter(e => marketingCategoryIds.includes(e.categoryId))
+        .reduce((sum, e) => sum + e.amount, 0);
       
       result.push({
         month,
@@ -632,6 +659,11 @@ export class MemStorage implements IStorage {
         variance: Math.round(monthBudget - actual),
         compensationActual: Math.round(compensationActual),
         programActual: Math.round(programActual),
+        generalActual: Math.round(generalActual),
+        databasesActual: Math.round(databasesActual),
+        bcnActual: Math.round(bcnActual),
+        ipActual: Math.round(ipActual),
+        marketingActual: Math.round(marketingActual),
       });
     }
     
