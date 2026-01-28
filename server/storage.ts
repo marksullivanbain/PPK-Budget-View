@@ -49,7 +49,7 @@ export interface IStorage {
   getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number): Promise<KeyVarianceItem[]>;
   
   getIPTeamsPractices(): Promise<string[]>;
-  getIPTeamsData(practice: string | null, month: number): Promise<IPTeamData>;
+  getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -744,7 +744,7 @@ export class MemStorage implements IStorage {
     return Array.from(practices).sort();
   }
 
-  async getIPTeamsData(practice: string | null, month: number): Promise<IPTeamData> {
+  async getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData> {
     // Helper to check if practice matches (handles missing "Practice" suffix)
     const practiceMatches = (value: string, targetPractice: string): boolean => {
       if (!value || value === 'n/a') return false;
@@ -756,10 +756,24 @@ export class MemStorage implements IStorage {
              normalized === target.replace(' practice', '');
     };
     
-    // Split by type first
-    const allTraditional = this.ipTeamEntries.filter(e => e.type === 'Traditional');
-    const allInterlock = this.ipTeamEntries.filter(e => e.type === 'Interlock');
-    const allRotations = this.ipTeamEntries.filter(e => e.type === 'Rotations');
+    // Helper to check if entry is accessible based on allowed practices
+    const isAccessible = (entry: IPTeamEntry): boolean => {
+      if (!allowedPractices || allowedPractices.includes('All Practices')) {
+        return true;
+      }
+      // Check if any of the practice columns match allowed practices
+      return allowedPractices.some(ap => 
+        entry.costCenter === ap ||
+        practiceMatches(entry.interlock1, ap) ||
+        practiceMatches(entry.interlock2, ap) ||
+        practiceMatches(entry.interlock3, ap)
+      );
+    };
+    
+    // Split by type first, filtering by access control
+    const allTraditional = this.ipTeamEntries.filter(e => e.type === 'Traditional' && isAccessible(e));
+    const allInterlock = this.ipTeamEntries.filter(e => e.type === 'Interlock' && isAccessible(e));
+    const allRotations = this.ipTeamEntries.filter(e => e.type === 'Rotations' && isAccessible(e));
     
     let traditionalRows = allTraditional;
     let interlockRows = allInterlock;

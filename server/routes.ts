@@ -178,8 +178,18 @@ export async function registerRoutes(
   // Get IP Teams practices list
   app.get("/api/ip-teams/practices", isAuthenticated, async (req, res) => {
     try {
-      const practices = await storage.getIPTeamsPractices();
-      res.json(practices);
+      const userEmail = getUserEmail(req);
+      const allowedPractices = getPracticesForEmail(userEmail || '');
+      
+      const allPractices = await storage.getIPTeamsPractices();
+      
+      // Filter practices based on access control
+      let filteredPractices = allPractices;
+      if (allowedPractices !== null && !allowedPractices.includes('All Practices')) {
+        filteredPractices = allPractices.filter(p => allowedPractices.includes(p));
+      }
+      
+      res.json(filteredPractices);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch IP teams practices" });
     }
@@ -188,10 +198,19 @@ export async function registerRoutes(
   // Get IP Teams data
   app.get("/api/ip-teams/data", isAuthenticated, async (req, res) => {
     try {
+      const userEmail = getUserEmail(req);
+      const allowedPractices = getPracticesForEmail(userEmail || '');
       const practice = req.query.practice as string | null;
       const month = parseInt(req.query.month as string) || 12;
       
-      const data = await storage.getIPTeamsData(practice, month);
+      // Check access to requested practice
+      if (practice && allowedPractices !== null && !allowedPractices.includes('All Practices')) {
+        if (!allowedPractices.includes(practice)) {
+          return res.status(403).json({ error: "Access denied to this practice" });
+        }
+      }
+      
+      const data = await storage.getIPTeamsData(practice, month, allowedPractices);
       res.json(data);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch IP teams data" });
