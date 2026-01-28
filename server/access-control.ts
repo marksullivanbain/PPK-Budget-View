@@ -86,6 +86,7 @@ export function parseAccessTable(): AccessEntry[] {
   }
   
   console.log(`Loaded ${entries.length} access control entries for ${accessMap.size} unique users`);
+  console.log(`Access map emails: ${Array.from(accessMap.keys()).join(', ')}`);
   return entries;
 }
 
@@ -101,7 +102,9 @@ export function getPracticesForEmail(email: string): string[] | null {
     return [];
   }
   
-  return accessMap.get(normalizedEmail) || [];
+  const practices = accessMap.get(normalizedEmail) || [];
+  console.log(`Access check for ${normalizedEmail}: ${practices.length > 0 ? practices.join(', ') : 'NO ACCESS'}`);
+  return practices;
 }
 
 // Check if a user has access to a specific practice
