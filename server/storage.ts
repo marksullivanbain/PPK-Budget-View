@@ -850,8 +850,14 @@ export class MemStorage implements IStorage {
       monthlyAmounts: grandMonthly,
     };
     
+    // Get practices list, filtered by access control
+    let practices = await this.getIPTeamsPractices();
+    if (allowedPractices && !allowedPractices.includes('All Practices')) {
+      practices = practices.filter(p => allowedPractices.includes(p));
+    }
+
     return {
-      practices: await this.getIPTeamsPractices(),
+      practices,
       traditionalRows,
       interlockRows,
       rotationsRows,
