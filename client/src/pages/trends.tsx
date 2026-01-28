@@ -212,39 +212,6 @@ export default function Trends() {
               </div>
             </Card>
 
-            <Card className="p-6 border-card-border">
-              <h2 className="text-lg font-semibold text-foreground mb-6" data-testid="text-variance-chart-title">
-                Monthly Variance (Budget - Actual)
-              </h2>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="monthName" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      tickFormatter={formatCurrency}
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <Tooltip content={customTooltip} />
-                    <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" />
-                    <Bar 
-                      dataKey="variance" 
-                      name="Variance"
-                      fill="#3B82F6"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                Positive values indicate under budget, negative values indicate over budget
-              </p>
-            </Card>
 
             <Card className="p-6 border-card-border">
               <h2 className="text-lg font-semibold text-foreground mb-6" data-testid="text-breakdown-chart-title">
