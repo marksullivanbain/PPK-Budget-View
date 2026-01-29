@@ -293,7 +293,7 @@ export default function Dashboard() {
               <KpiCard
                 title="Total Budget"
                 value={formatCurrency(Math.round(dashboardData.totalBudget))}
-                icon="settings"
+                icon="wallet"
               />
               <KpiCard
                 title="Budget Used"
