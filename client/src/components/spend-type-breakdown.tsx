@@ -37,7 +37,7 @@ export function SpendTypeBreakdown({
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-spend-type-breakdown">
       <div className="flex flex-col gap-1 mb-4">
         <h3 className="text-lg font-semibold text-foreground">Case Group Detail</h3>
-        <p className="text-sm text-muted-foreground">Budget vs Actual - Click a category to filter</p>
+        <p className="text-sm text-muted-foreground">Budget vs Actual - Click a case group to filter</p>
       </div>
       
       <ScrollArea className="flex-1 -mx-1 px-1">
@@ -45,14 +45,19 @@ export function SpendTypeBreakdown({
           {data.map((item) => {
             const progressPercent = Math.min((item.actual / item.budget) * 100, 100);
             const isSelected = selectedCategory === item.categoryId;
+            const isCompensation = item.categoryName === "Compensation";
             
             return (
               <div 
                 key={item.categoryId}
-                className={`flex flex-col gap-2 cursor-pointer rounded-md p-2 -m-2 transition-colors ${
-                  isSelected ? 'bg-accent/50' : 'hover-elevate'
+                className={`flex flex-col gap-2 rounded-md p-2 -m-2 transition-colors ${
+                  isCompensation 
+                    ? '' 
+                    : isSelected 
+                      ? 'bg-accent/50 cursor-pointer' 
+                      : 'hover-elevate cursor-pointer'
                 }`}
-                onClick={() => onCategoryClick?.(item.categoryId)}
+                onClick={() => !isCompensation && onCategoryClick?.(item.categoryId)}
                 data-testid={`item-category-${item.categoryId}`}
               >
                 <div className="flex items-center justify-between gap-2">
