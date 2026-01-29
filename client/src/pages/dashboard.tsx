@@ -202,16 +202,16 @@ export default function Dashboard() {
                 <LayoutDashboard className="h-4 w-4" />
                 Cost Dashboard
               </Button>
-              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-ip-teams">
-                <Link href="/ip-teams">
-                  <Users className="h-4 w-4" />
-                  IP Teams
-                </Link>
-              </Button>
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-trends">
                 <Link href="/trends">
                   <TrendingUp className="h-4 w-4" />
                   Cost Trends
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-ip-teams">
+                <Link href="/ip-teams">
+                  <Users className="h-4 w-4" />
+                  IP Teams
                 </Link>
               </Button>
             </div>

@@ -141,15 +141,15 @@ export default function Trends() {
                   Cost Dashboard
                 </Link>
               </Button>
+              <Button variant="default" size="sm" className="gap-1.5" data-testid="link-trends-active">
+                <TrendingUp className="h-4 w-4" />
+                Cost Trends
+              </Button>
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-ip-teams">
                 <Link href="/ip-teams">
                   <Users className="h-4 w-4" />
                   IP Teams
                 </Link>
-              </Button>
-              <Button variant="default" size="sm" className="gap-1.5" data-testid="link-trends-active">
-                <TrendingUp className="h-4 w-4" />
-                Cost Trends
               </Button>
             </div>
             {costCenters && costCenters.length > 0 && (
