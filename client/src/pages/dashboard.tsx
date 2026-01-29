@@ -180,7 +180,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
-                2025 {selectedCostCenter?.name || 'Expense'} Dashboard
+                {selectedCostCenter?.name || 'Practice'} Expense Dashboard - 2025
               </h1>
               <p className="text-sm text-muted-foreground">
                 {periodMode === 'ytd' 
