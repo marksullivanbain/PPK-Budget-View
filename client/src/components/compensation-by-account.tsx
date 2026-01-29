@@ -175,7 +175,7 @@ export function CompensationByAccount({ data }: CompensationByAccountProps) {
   return (
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-compensation-by-account">
       <div className="flex flex-col gap-1 mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Compensation by Summary Account</h3>
+        <h3 className="text-lg font-semibold text-foreground">Compensation by Account</h3>
         <p className="text-sm text-muted-foreground">Breakdown by account type</p>
       </div>
       
