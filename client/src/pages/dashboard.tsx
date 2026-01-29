@@ -288,13 +288,11 @@ export default function Dashboard() {
               <KpiCard
                 title="Total Spend"
                 value={formatCurrency(Math.round(dashboardData.totalSpend))}
-                subtitle="Actual expenses"
                 icon="dollar"
               />
               <KpiCard
                 title="Total Budget"
                 value={formatCurrency(Math.round(dashboardData.totalBudget))}
-                subtitle="Annual budget"
                 icon="settings"
               />
               <KpiCard
