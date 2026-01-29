@@ -132,7 +132,9 @@ export interface MonthlyTrendData {
   budget: number;
   variance: number;
   compensationActual: number;
+  compensationBudget: number;
   programActual: number;
+  programBudget: number;
   // Case group breakdown (excluding Compensation)
   generalActual: number;
   databasesActual: number;

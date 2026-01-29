@@ -50,9 +50,12 @@ function ChartSkeleton() {
   );
 }
 
+type SpendFilter = 'all' | 'compensation' | 'programs';
+
 export default function Trends() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
+  const [spendFilter, setSpendFilter] = useState<SpendFilter>('all');
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
@@ -170,12 +173,49 @@ export default function Trends() {
         ) : (
           <div className="grid gap-6">
             <Card className="p-6 border-card-border">
-              <h2 className="text-lg font-semibold text-foreground mb-6" data-testid="text-actuals-chart-title">
-                Monthly Actuals vs Budget
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-foreground" data-testid="text-actuals-chart-title">
+                  Monthly Actuals vs Budget
+                </h2>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant={spendFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSpendFilter('all')}
+                    data-testid="btn-filter-all"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={spendFilter === 'compensation' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSpendFilter('compensation')}
+                    data-testid="btn-filter-compensation"
+                  >
+                    Compensation
+                  </Button>
+                  <Button
+                    variant={spendFilter === 'programs' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSpendFilter('programs')}
+                    data-testid="btn-filter-programs"
+                  >
+                    Programs
+                  </Button>
+                </div>
+              </div>
               <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart 
+                    data={trendData?.map(d => ({
+                      ...d,
+                      filteredActual: spendFilter === 'all' ? d.actual : 
+                                      spendFilter === 'compensation' ? d.compensationActual : d.programActual,
+                      filteredBudget: spendFilter === 'all' ? d.budget : 
+                                      spendFilter === 'compensation' ? d.compensationBudget : d.programBudget,
+                    }))} 
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="monthName" 
@@ -191,8 +231,9 @@ export default function Trends() {
                     <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey="actual" 
-                      name="Actual Spend"
+                      dataKey="filteredActual" 
+                      name={spendFilter === 'all' ? 'Actual Spend' : 
+                            spendFilter === 'compensation' ? 'Compensation Actual' : 'Program Actual'}
                       stroke="#3B82F6" 
                       strokeWidth={2}
                       dot={{ fill: '#3B82F6', strokeWidth: 2 }}
@@ -200,8 +241,9 @@ export default function Trends() {
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="budget" 
-                      name="Budget"
+                      dataKey="filteredBudget" 
+                      name={spendFilter === 'all' ? 'Budget' : 
+                            spendFilter === 'compensation' ? 'Compensation Budget' : 'Program Budget'}
                       stroke="#10B981" 
                       strokeWidth={2}
                       strokeDasharray="5 5"

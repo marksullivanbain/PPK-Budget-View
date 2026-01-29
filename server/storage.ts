@@ -727,10 +727,18 @@ export class MemStorage implements IStorage {
       
       // Calculate budget for this month using the monthlyBudgets map
       let monthBudget = 0;
+      let compensationBudget = 0;
+      let programBudget = 0;
       for (const category of categories) {
         const monthlyAmounts = this.monthlyBudgets.get(category.id);
         if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
-          monthBudget += monthlyAmounts[month - 1] || 0;
+          const catBudget = monthlyAmounts[month - 1] || 0;
+          monthBudget += catBudget;
+          if (compensationCategoryIds.includes(category.id)) {
+            compensationBudget += catBudget;
+          } else {
+            programBudget += catBudget;
+          }
         }
       }
       
@@ -769,7 +777,9 @@ export class MemStorage implements IStorage {
         budget: Math.round(monthBudget),
         variance: Math.round(monthBudget - actual),
         compensationActual: Math.round(compensationActual),
+        compensationBudget: Math.round(compensationBudget),
         programActual: Math.round(programActual),
+        programBudget: Math.round(programBudget),
         generalActual: Math.round(generalActual),
         databasesActual: Math.round(databasesActual),
         bcnActual: Math.round(bcnActual),
