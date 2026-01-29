@@ -43,7 +43,7 @@ export interface IStorage {
   
   getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<DashboardSummary>;
   
-  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string, periodMode?: 'ytd' | 'month', month?: number): Promise<ExpenseDetail[]>;
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<ExpenseDetail[]>;
   
   getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
   
@@ -600,17 +600,40 @@ export class MemStorage implements IStorage {
 
   async getExpenseDetails(
     costCenterId: string, 
-    filterType: 'category' | 'program', 
-    filterValue: string
+    filterType: 'category' | 'program' | 'account', 
+    filterValue: string,
+    periodMode?: 'ytd' | 'month',
+    month?: number,
+    caseGroupFilter?: string
   ): Promise<ExpenseDetail[]> {
-    const expenses = costCenterId === "all" 
+    let expenses = costCenterId === "all" 
       ? Array.from(this.expenses.values())
       : Array.from(this.expenses.values()).filter(
           expense => expense.costCenterId === costCenterId
         );
     
+    // Apply period filtering if specified
+    if (periodMode && month) {
+      expenses = expenses.filter(exp => {
+        const expMonth = exp.postingPeriod || 12;
+        if (periodMode === 'ytd') {
+          return expMonth <= month;
+        } else {
+          return expMonth === month;
+        }
+      });
+    }
+    
     let filtered: Expense[];
     let isCompensation = false;
+    
+    // Apply case group filter for account filter type
+    if (filterType === 'account' && caseGroupFilter) {
+      const caseGroupCategoryIds = Array.from(this.spendCategories.values())
+        .filter(c => c.name === caseGroupFilter)
+        .map(c => c.id);
+      expenses = expenses.filter(e => caseGroupCategoryIds.includes(e.categoryId));
+    }
     
     if (filterType === 'category') {
       if (costCenterId === "all") {
@@ -631,8 +654,11 @@ export class MemStorage implements IStorage {
           filtered = [];
         }
       }
+    } else if (filterType === 'program' || filterType === 'account') {
+      // Both program and account filter by summary account name
+      filtered = expenses.filter(exp => exp.summaryAccount === filterValue);
     } else {
-      filtered = expenses.filter(exp => exp.accountName === filterValue);
+      filtered = [];
     }
     
     // For Compensation, aggregate by Summary Account instead of showing line items

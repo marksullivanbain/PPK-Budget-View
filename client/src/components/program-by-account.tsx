@@ -7,7 +7,9 @@ import type { AccountSpendItem } from "@shared/schema";
 interface ProgramByAccountProps {
   data: AccountSpendItem[];
   selectedCaseGroup?: string | null;
+  selectedAccount?: string | null;
   onClearFilter?: () => void;
+  onAccountClick?: (account: string) => void;
 }
 
 function formatCurrency(amount: number): string {
@@ -19,7 +21,7 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function ProgramByAccount({ data, selectedCaseGroup, onClearFilter }: ProgramByAccountProps) {
+export function ProgramByAccount({ data, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick }: ProgramByAccountProps) {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
 
   return (
@@ -59,11 +61,21 @@ export function ProgramByAccount({ data, selectedCaseGroup, onClearFilter }: Pro
           ) : (
             data.map((item) => {
               const percent = total > 0 ? (item.amount / total) * 100 : 0;
+              const isSelected = selectedAccount === item.account;
+              
+              const handleClick = () => {
+                if (onAccountClick) {
+                  onAccountClick(isSelected ? "" : item.account);
+                }
+              };
               
               return (
                 <div 
                   key={item.account}
-                  className="flex flex-col gap-1.5"
+                  className={`flex flex-col gap-1.5 cursor-pointer rounded-md p-2 -m-2 transition-colors ${
+                    isSelected ? 'bg-accent/50' : 'hover-elevate'
+                  }`}
+                  onClick={handleClick}
                   data-testid={`item-prog-account-${item.account.replace(/\s+/g, '-').toLowerCase()}`}
                 >
                   <div className="flex items-center justify-between gap-2">

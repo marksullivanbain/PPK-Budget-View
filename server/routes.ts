@@ -141,7 +141,7 @@ export async function registerRoutes(
     try {
       const costCenterId = req.params.costCenterId as string;
       const userEmail = getUserEmail(req);
-      const { filterType, filterValue } = req.query;
+      const { filterType, filterValue, periodMode, month, caseGroup } = req.query;
       
       // Validate cost center exists and check access
       const costCenter = await storage.getCostCenter(costCenterId);
@@ -156,14 +156,17 @@ export async function registerRoutes(
         return res.status(400).json({ error: "filterType and filterValue are required" });
       }
       
-      if (filterType !== 'category' && filterType !== 'program') {
-        return res.status(400).json({ error: "filterType must be 'category' or 'program'" });
+      if (filterType !== 'category' && filterType !== 'program' && filterType !== 'account') {
+        return res.status(400).json({ error: "filterType must be 'category', 'program', or 'account'" });
       }
       
       const details = await storage.getExpenseDetails(
         costCenterId, 
-        filterType as 'category' | 'program', 
-        filterValue as string
+        filterType as 'category' | 'program' | 'account', 
+        filterValue as string,
+        periodMode as 'ytd' | 'month' | undefined,
+        month ? parseInt(month as string) : undefined,
+        caseGroup as string | undefined
       );
       res.json(details);
     } catch (error) {

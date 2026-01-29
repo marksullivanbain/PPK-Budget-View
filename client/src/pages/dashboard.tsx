@@ -81,6 +81,7 @@ export default function Dashboard() {
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
   const [selectedCaseGroup, setSelectedCaseGroup] = useState<string | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
 
@@ -144,6 +145,17 @@ export default function Dashboard() {
   const clearFilter = () => {
     setSelectedSpendCategory(null);
     setSelectedProgramCategory(null);
+    setSelectedAccount(null);
+  };
+  
+  const handleAccountClick = (account: string) => {
+    if (selectedAccount === account || account === "") {
+      setSelectedAccount(null);
+    } else {
+      setSelectedAccount(account);
+      setSelectedSpendCategory(null);
+      setSelectedProgramCategory(null);
+    }
   };
 
   const getSelectedSpendCategoryInfo = () => {
@@ -323,7 +335,9 @@ export default function Dashboard() {
                 <ProgramByAccount
                   data={dashboardData.programByAccount || []}
                   selectedCaseGroup={selectedCaseGroup}
+                  selectedAccount={selectedAccount}
                   onClearFilter={() => setSelectedCaseGroup(null)}
+                  onAccountClick={handleAccountClick}
                 />
               </div>
             </div>
@@ -351,6 +365,20 @@ export default function Dashboard() {
                     filterLabel={getSelectedProgramInfo()!.label}
                     filterColor={getSelectedProgramInfo()!.color}
                     onClearFilter={clearFilter}
+                  />
+                )}
+                
+                {selectedAccount && (
+                  <ExpenseDetails
+                    costCenterId={selectedCostCenterId}
+                    filterType="account"
+                    filterValue={selectedAccount}
+                    filterLabel={selectedCaseGroup ? `${selectedCaseGroup} - ${selectedAccount}` : selectedAccount}
+                    filterColor="#6B7280"
+                    onClearFilter={clearFilter}
+                    periodMode={periodMode}
+                    month={selectedMonth}
+                    caseGroup={selectedCaseGroup || undefined}
                   />
                 )}
               </>

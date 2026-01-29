@@ -11,11 +11,14 @@ import type { ExpenseDetail } from "@shared/schema";
 
 interface ExpenseDetailsProps {
   costCenterId: string;
-  filterType: 'category' | 'program';
+  filterType: 'category' | 'program' | 'account';
   filterValue: string;
   filterLabel: string;
   filterColor?: string;
   onClearFilter: () => void;
+  periodMode?: 'ytd' | 'month';
+  month?: number;
+  caseGroup?: string;
 }
 
 function formatCurrency(amount: number): string {
@@ -35,17 +38,22 @@ export function ExpenseDetails({
   filterLabel,
   filterColor = "#6B7280",
   onClearFilter,
+  periodMode,
+  month,
+  caseGroup,
 }: ExpenseDetailsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
 
   const { data: expenses, isLoading } = useQuery<ExpenseDetail[]>({
-    queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue }],
+    queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue, periodMode, month, caseGroup }],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/cost-centers/${costCenterId}/expense-details?filterType=${filterType}&filterValue=${encodeURIComponent(filterValue)}`
-      );
+      let url = `/api/cost-centers/${costCenterId}/expense-details?filterType=${filterType}&filterValue=${encodeURIComponent(filterValue)}`;
+      if (periodMode) url += `&periodMode=${periodMode}`;
+      if (month) url += `&month=${month}`;
+      if (caseGroup) url += `&caseGroup=${encodeURIComponent(caseGroup)}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch expense details');
       return response.json();
     },
