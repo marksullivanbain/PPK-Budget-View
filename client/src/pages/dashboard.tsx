@@ -6,7 +6,6 @@ import { CompensationBreakdown } from "@/components/compensation-breakdown";
 import { CompensationByAccount } from "@/components/compensation-by-account";
 import { CaseGroupBreakdown } from "@/components/case-group-breakdown";
 import { ProgramByAccount } from "@/components/program-by-account";
-import { ProgramSpendBreakdown } from "@/components/program-spend-breakdown";
 import { ExpenseDetails } from "@/components/expense-details";
 import { KeyVariances } from "@/components/key-variances";
 import { CostCenterSelector } from "@/components/cost-center-selector";
@@ -298,7 +297,7 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <div className="flex flex-col gap-6">
                 <CompensationBreakdown
                   data={dashboardData.spendTypeBreakdown.find(d => d.categoryName === "Compensation")}
@@ -319,12 +318,6 @@ export default function Dashboard() {
                   data={dashboardData.programByAccount || []}
                 />
               </div>
-              <ProgramSpendBreakdown
-                data={dashboardData.programSpendBreakdown}
-                totalProgramSpend={dashboardData.totalProgramSpend}
-                onCategoryClick={handleProgramCategoryClick}
-                selectedCategory={selectedProgramCategory}
-              />
             </div>
 
             {selectedCostCenterId === "all" ? (
