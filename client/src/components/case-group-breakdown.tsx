@@ -53,8 +53,14 @@ export function CaseGroupBreakdown({
             const isCaseGroupSelected = selectedCaseGroup === item.categoryName;
             
             const handleClick = () => {
+              // Toggle case group filter for Program by Account card
               if (onCaseGroupSelect) {
                 onCaseGroupSelect(isCaseGroupSelected ? null : item.categoryName);
+              }
+              // Also trigger expense details drill-down
+              if (isSelected) {
+                // If already selected, deselect
+                onCategoryClick?.("");
               } else {
                 onCategoryClick?.(item.categoryId);
               }
