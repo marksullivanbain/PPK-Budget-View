@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { KpiCard } from "@/components/kpi-card";
-import { SpendTypeBreakdown } from "@/components/spend-type-breakdown";
+import { CompensationBreakdown } from "@/components/compensation-breakdown";
+import { CaseGroupBreakdown } from "@/components/case-group-breakdown";
 import { ProgramSpendBreakdown } from "@/components/program-spend-breakdown";
 import { ExpenseDetails } from "@/components/expense-details";
 import { KeyVariances } from "@/components/key-variances";
@@ -295,12 +296,16 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <SpendTypeBreakdown
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="flex flex-col gap-6">
+                <CompensationBreakdown
+                  data={dashboardData.spendTypeBreakdown.find(d => d.categoryName === "Compensation")}
+                  onCategoryClick={handleSpendCategoryClick}
+                  selectedCategory={selectedSpendCategory}
+                />
+              </div>
+              <CaseGroupBreakdown
                 data={dashboardData.spendTypeBreakdown}
-                totalActual={dashboardData.totalSpend}
-                totalBudget={dashboardData.totalBudget}
-                variance={dashboardData.variance}
                 onCategoryClick={handleSpendCategoryClick}
                 selectedCategory={selectedSpendCategory}
               />
