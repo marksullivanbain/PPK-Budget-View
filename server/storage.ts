@@ -555,6 +555,7 @@ export class MemStorage implements IStorage {
         );
     
     let filtered: Expense[];
+    let isCompensation = false;
     
     if (filterType === 'category') {
       if (costCenterId === "all") {
@@ -563,18 +564,47 @@ export class MemStorage implements IStorage {
           .filter(cat => cat.name === filterValue)
           .map(cat => cat.id);
         filtered = expenses.filter(exp => categoryIds.includes(exp.categoryId));
+        isCompensation = filterValue === "Compensation";
       } else {
         const category = Array.from(this.spendCategories.values()).find(
           cat => cat.id === filterValue
         );
         if (category) {
           filtered = expenses.filter(exp => exp.categoryId === filterValue);
+          isCompensation = category.name === "Compensation";
         } else {
           filtered = [];
         }
       }
     } else {
       filtered = expenses.filter(exp => exp.accountName === filterValue);
+    }
+    
+    // For Compensation, aggregate by Summary Account instead of showing line items
+    if (isCompensation) {
+      const summaryMap = new Map<string, { amount: number; count: number }>();
+      
+      for (const exp of filtered) {
+        const summaryAcct = exp.summaryAccount || 'Other Compensation';
+        const existing = summaryMap.get(summaryAcct) || { amount: 0, count: 0 };
+        existing.amount += exp.amount;
+        existing.count += 1;
+        summaryMap.set(summaryAcct, existing);
+      }
+      
+      return Array.from(summaryMap.entries()).map(([summaryAcct, data], idx) => ({
+        id: `comp-summary-${idx}`,
+        lineDescription: summaryAcct,
+        spendType: 'Comp',
+        summaryAccount: summaryAcct,
+        caseCode: '',
+        caseName: '',
+        documentDescription: `${data.count} line items`,
+        period: '',
+        amount: Math.round(data.amount),
+        vendorName: '',
+        sapInvoiceDocUrl: '',
+      })).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }
     
     return filtered.map(exp => ({
