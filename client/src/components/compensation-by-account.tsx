@@ -21,8 +21,12 @@ export function CompensationByAccount({ data }: CompensationByAccountProps) {
   const [bonusExpanded, setBonusExpanded] = useState(false);
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   
-  const bonusItems = data.filter(item => item.account.toLowerCase().includes('bonus'));
-  const nonBonusItems = data.filter(item => !item.account.toLowerCase().includes('bonus'));
+  const bonusItems = data
+    .filter(item => item.account.toLowerCase().includes('bonus'))
+    .sort((a, b) => b.amount - a.amount);
+  const nonBonusItems = data
+    .filter(item => !item.account.toLowerCase().includes('bonus'))
+    .sort((a, b) => b.amount - a.amount);
   
   const bonusTotal = bonusItems.reduce((sum, item) => sum + item.amount, 0);
   const bonusItemCount = bonusItems.reduce((sum, item) => sum + item.itemCount, 0);
