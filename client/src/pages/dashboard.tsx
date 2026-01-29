@@ -80,6 +80,7 @@ export default function Dashboard() {
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
+  const [selectedCaseGroup, setSelectedCaseGroup] = useState<string | null>(null);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
 
@@ -100,9 +101,12 @@ export default function Dashboard() {
   };
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardSummary>({
-    queryKey: ['/api/dashboard', selectedCostCenterId, periodMode, selectedMonth],
+    queryKey: ['/api/dashboard', selectedCostCenterId, periodMode, selectedMonth, selectedCaseGroup],
     queryFn: async () => {
-      const url = `/api/dashboard/${selectedCostCenterId}?periodMode=${periodMode}&month=${selectedMonth}`;
+      let url = `/api/dashboard/${selectedCostCenterId}?periodMode=${periodMode}&month=${selectedMonth}`;
+      if (selectedCaseGroup) {
+        url += `&caseGroup=${encodeURIComponent(selectedCaseGroup)}`;
+      }
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
       return response.json();
@@ -307,7 +311,9 @@ export default function Dashboard() {
                 <CaseGroupBreakdown
                   data={dashboardData.spendTypeBreakdown}
                   onCategoryClick={handleSpendCategoryClick}
+                  onCaseGroupSelect={setSelectedCaseGroup}
                   selectedCategory={selectedSpendCategory}
+                  selectedCaseGroup={selectedCaseGroup}
                 />
               </div>
               <div className="flex flex-col gap-6">
@@ -316,6 +322,8 @@ export default function Dashboard() {
                 />
                 <ProgramByAccount
                   data={dashboardData.programByAccount || []}
+                  selectedCaseGroup={selectedCaseGroup}
+                  onClearFilter={() => setSelectedCaseGroup(null)}
                 />
               </div>
             </div>

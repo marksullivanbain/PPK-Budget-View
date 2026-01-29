@@ -41,7 +41,7 @@ export interface IStorage {
   getExpenses(costCenterId: string): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   
-  getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number): Promise<DashboardSummary>;
+  getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<DashboardSummary>;
   
   getExpenseDetails(costCenterId: string, filterType: 'category' | 'program', filterValue: string, periodMode?: 'ytd' | 'month', month?: number): Promise<ExpenseDetail[]>;
   
@@ -359,7 +359,7 @@ export class MemStorage implements IStorage {
     return newExpense;
   }
 
-  async getDashboardSummary(costCenterId: string, periodMode: 'ytd' | 'month' = 'ytd', month: number = 12): Promise<DashboardSummary> {
+  async getDashboardSummary(costCenterId: string, periodMode: 'ytd' | 'month' = 'ytd', month: number = 12, caseGroupFilter?: string): Promise<DashboardSummary> {
     const categories = await this.getSpendCategories(costCenterId);
     const allExpenses = await this.getExpenses(costCenterId);
     
@@ -553,7 +553,19 @@ export class MemStorage implements IStorage {
       .sort((a, b) => b.amount - a.amount);
     
     // Program spend by Summary Account (non-Compensation)
-    const programExpenses = expenses.filter(e => !compensationCategoryIds.includes(e.categoryId));
+    // Get category IDs for the case group filter if specified
+    let caseGroupCategoryIds: string[] | null = null;
+    if (caseGroupFilter) {
+      caseGroupCategoryIds = categories
+        .filter(c => c.name === caseGroupFilter)
+        .map(c => c.id);
+    }
+    
+    const programExpenses = expenses.filter(e => {
+      if (compensationCategoryIds.includes(e.categoryId)) return false;
+      if (caseGroupCategoryIds && !caseGroupCategoryIds.includes(e.categoryId)) return false;
+      return true;
+    });
     const progAccountGroups = new Map<string, { count: number; amount: number }>();
     for (const expense of programExpenses) {
       const key = expense.summaryAccount || 'Other';

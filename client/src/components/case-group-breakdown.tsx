@@ -5,7 +5,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface CaseGroupBreakdownProps {
   data: SpendTypeBreakdownData[];
   onCategoryClick?: (categoryId: string) => void;
+  onCaseGroupSelect?: (categoryName: string | null) => void;
   selectedCategory?: string | null;
+  selectedCaseGroup?: string | null;
 }
 
 function formatCurrency(amount: number): string {
@@ -25,7 +27,9 @@ function formatVariance(amount: number, isOverBudget: boolean): string {
 export function CaseGroupBreakdown({ 
   data, 
   onCategoryClick,
-  selectedCategory 
+  onCaseGroupSelect,
+  selectedCategory,
+  selectedCaseGroup
 }: CaseGroupBreakdownProps) {
   const programItems = data.filter(d => d.categoryName !== "Compensation");
   
@@ -46,14 +50,23 @@ export function CaseGroupBreakdown({
           {programItems.map((item) => {
             const progressPercent = item.budget > 0 ? Math.min((item.actual / item.budget) * 100, 100) : 0;
             const isSelected = selectedCategory === item.categoryId;
+            const isCaseGroupSelected = selectedCaseGroup === item.categoryName;
+            
+            const handleClick = () => {
+              if (onCaseGroupSelect) {
+                onCaseGroupSelect(isCaseGroupSelected ? null : item.categoryName);
+              } else {
+                onCategoryClick?.(item.categoryId);
+              }
+            };
             
             return (
               <div 
                 key={item.categoryId}
                 className={`flex flex-col gap-2 cursor-pointer rounded-md p-2 -m-2 transition-colors ${
-                  isSelected ? 'bg-accent/50' : 'hover-elevate'
+                  isSelected || isCaseGroupSelected ? 'bg-accent/50' : 'hover-elevate'
                 }`}
-                onClick={() => onCategoryClick?.(item.categoryId)}
+                onClick={handleClick}
                 data-testid={`item-category-${item.categoryId}`}
               >
                 <div className="flex items-center justify-between gap-2">
