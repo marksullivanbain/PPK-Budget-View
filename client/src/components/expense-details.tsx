@@ -176,7 +176,7 @@ export function ExpenseDetails({
                 <ArrowUp className="w-3.5 h-3.5" />
               )}
             </button>
-            <span>SAP Invoice Doc URL</span>
+            <span>Invoice Link</span>
           </div>
 
           <ScrollArea className="max-h-[400px]">
