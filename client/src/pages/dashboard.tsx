@@ -299,7 +299,7 @@ export default function Dashboard() {
                 title="Budget Used"
                 value={formatPercent(dashboardData.budgetUsedPercent)}
                 subtitle="Of total budget"
-                icon="chart"
+                icon="percent"
               />
               <KpiCard
                 title="Variance"

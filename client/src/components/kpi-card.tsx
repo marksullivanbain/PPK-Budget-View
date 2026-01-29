@@ -1,11 +1,11 @@
 import { Card } from "@/components/ui/card";
-import { DollarSign, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { DollarSign, Wallet, Percent, PlusCircle, MinusCircle } from "lucide-react";
 
 interface KpiCardProps {
   title: string;
   value: string;
   subtitle?: string;
-  icon: "dollar" | "wallet" | "chart" | "variance";
+  icon: "dollar" | "wallet" | "percent" | "variance";
   trend?: "up" | "down";
   accentColor?: "default" | "green";
 }
@@ -14,8 +14,8 @@ export function KpiCard({ title, value, subtitle, icon, trend, accentColor = "de
   const iconMap = {
     dollar: DollarSign,
     wallet: Wallet,
-    chart: TrendingUp,
-    variance: trend === "up" ? TrendingUp : TrendingDown,
+    percent: Percent,
+    variance: trend === "up" ? MinusCircle : PlusCircle,
   };
   
   const IconComponent = iconMap[icon];
