@@ -299,7 +299,7 @@ export default function IPTeamsPage() {
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-dashboard">
                 <Link href="/">
                   <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                  Cost Dashboard
                 </Link>
               </Button>
               <Button variant="default" size="sm" className="gap-1.5" data-testid="link-ip-teams-active">
@@ -309,7 +309,7 @@ export default function IPTeamsPage() {
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-trends">
                 <Link href="/trends">
                   <TrendingUp className="h-4 w-4" />
-                  Trends
+                  Cost Trends
                 </Link>
               </Button>
             </div>

@@ -200,7 +200,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <Button variant="default" size="sm" className="gap-1.5" data-testid="link-dashboard-active">
                 <LayoutDashboard className="h-4 w-4" />
-                Dashboard
+                Cost Dashboard
               </Button>
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-ip-teams">
                 <Link href="/ip-teams">
@@ -211,7 +211,7 @@ export default function Dashboard() {
               <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-trends">
                 <Link href="/trends">
                   <TrendingUp className="h-4 w-4" />
-                  Trends
+                  Cost Trends
                 </Link>
               </Button>
             </div>
