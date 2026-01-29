@@ -42,14 +42,11 @@ export function CompensationBreakdown({
     <Card className="p-5 flex flex-col border-card-border" data-testid="card-compensation-breakdown">
       <div className="flex flex-col gap-1 mb-4">
         <h3 className="text-lg font-semibold text-foreground">Compensation</h3>
-        <p className="text-sm text-muted-foreground">Budget vs Actual - Click to view details</p>
+        <p className="text-sm text-muted-foreground">Budget vs Actual</p>
       </div>
       
       <div 
-        className={`flex flex-col gap-3 cursor-pointer rounded-md p-3 -m-1 transition-colors ${
-          isSelected ? 'bg-accent/50' : 'hover-elevate'
-        }`}
-        onClick={() => onCategoryClick?.(data.categoryId)}
+        className="flex flex-col gap-3 rounded-md p-3 -m-1"
         data-testid={`item-compensation-${data.categoryId}`}
       >
         <div className="flex items-center justify-between gap-2">
