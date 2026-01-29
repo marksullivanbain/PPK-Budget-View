@@ -12,6 +12,7 @@ import {
   type DashboardSummary,
   type SpendTypeBreakdown,
   type ProgramSpendItem,
+  type AccountSpendItem,
   type ExpenseDetail,
   type MonthlyTrendData,
   type KeyVarianceItem,
@@ -531,6 +532,47 @@ export class MemStorage implements IStorage {
     const totalProgramSpend = Math.round(totalActual - compensationActual);
     const variance = totalBudget - totalActual;
     
+    // Compensation by Summary Account
+    const compensationExpenses = expenses.filter(e => compensationCategoryIds.includes(e.categoryId));
+    const compAccountGroups = new Map<string, { count: number; amount: number }>();
+    for (const expense of compensationExpenses) {
+      const key = expense.summaryAccount || 'Other Compensation';
+      const existing = compAccountGroups.get(key) || { count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += expense.amount;
+      compAccountGroups.set(key, existing);
+    }
+    
+    const compensationByAccount: AccountSpendItem[] = Array.from(compAccountGroups.entries())
+      .map(([account, data]) => ({
+        account,
+        amount: Math.round(data.amount),
+        itemCount: data.count,
+        color: programColors[account] || "#6B7280",
+      }))
+      .sort((a, b) => b.amount - a.amount);
+    
+    // Program spend by Summary Account (non-Compensation)
+    const programExpenses = expenses.filter(e => !compensationCategoryIds.includes(e.categoryId));
+    const progAccountGroups = new Map<string, { count: number; amount: number }>();
+    for (const expense of programExpenses) {
+      const key = expense.summaryAccount || 'Other';
+      const existing = progAccountGroups.get(key) || { count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += expense.amount;
+      progAccountGroups.set(key, existing);
+    }
+    
+    const programByAccount: AccountSpendItem[] = Array.from(progAccountGroups.entries())
+      .filter(([_, data]) => data.amount >= programThreshold)
+      .map(([account, data]) => ({
+        account,
+        amount: Math.round(data.amount),
+        itemCount: data.count,
+        color: programColors[account] || "#6B7280",
+      }))
+      .sort((a, b) => b.amount - a.amount);
+    
     return {
       totalSpend: Math.round(totalActual * 100) / 100,
       totalBudget: Math.round(totalBudget),
@@ -540,6 +582,8 @@ export class MemStorage implements IStorage {
       spendTypeBreakdown,
       programSpendBreakdown,
       totalProgramSpend,
+      compensationByAccount,
+      programByAccount,
     };
   }
 

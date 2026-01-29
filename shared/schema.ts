@@ -89,6 +89,13 @@ export interface ProgramSpendItem {
   color: string;
 }
 
+export interface AccountSpendItem {
+  account: string;
+  amount: number;
+  itemCount: number;
+  color: string;
+}
+
 export interface DashboardSummary {
   totalSpend: number;
   totalBudget: number;
@@ -98,6 +105,8 @@ export interface DashboardSummary {
   spendTypeBreakdown: SpendTypeBreakdown[];
   programSpendBreakdown: ProgramSpendItem[];
   totalProgramSpend: number;
+  compensationByAccount: AccountSpendItem[];
+  programByAccount: AccountSpendItem[];
 }
 
 // Expense detail for drill-down view
