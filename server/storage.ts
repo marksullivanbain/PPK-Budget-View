@@ -576,6 +576,7 @@ export class MemStorage implements IStorage {
     }
     
     const programByAccount: AccountSpendItem[] = Array.from(progAccountGroups.entries())
+      .filter(([account, data]) => data.amount >= programThreshold)
       .map(([account, data]) => ({
         account,
         amount: Math.round(data.amount),
