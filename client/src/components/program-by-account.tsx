@@ -10,6 +10,7 @@ interface ProgramByAccountProps {
   selectedAccount?: string | null;
   onClearFilter?: () => void;
   onAccountClick?: (account: string) => void;
+  periodMode?: 'ytd' | 'month';
 }
 
 function formatCurrency(amount: number): string {
@@ -21,8 +22,9 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function ProgramByAccount({ data, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick }: ProgramByAccountProps) {
+export function ProgramByAccount({ data, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick, periodMode = 'ytd' }: ProgramByAccountProps) {
   const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const thresholdText = periodMode === 'month' ? '$1K' : '$20K';
 
   return (
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-program-by-account">
@@ -43,8 +45,8 @@ export function ProgramByAccount({ data, selectedCaseGroup, selectedAccount, onC
         </div>
         <p className="text-sm text-muted-foreground">
           {selectedCaseGroup 
-            ? `Filtered by ${selectedCaseGroup} case group`
-            : "Breakdown by summary account"
+            ? `Filtered by ${selectedCaseGroup} (accounts ≥${thresholdText})`
+            : `Accounts ≥${thresholdText}`
           }
         </p>
       </div>

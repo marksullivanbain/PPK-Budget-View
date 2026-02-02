@@ -336,6 +336,7 @@ export default function Dashboard() {
                   selectedAccount={selectedAccount}
                   onClearFilter={() => setSelectedCaseGroup(null)}
                   onAccountClick={handleAccountClick}
+                  periodMode={periodMode}
                 />
               </div>
             </div>
