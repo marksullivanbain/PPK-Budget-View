@@ -156,13 +156,13 @@ export async function registerRoutes(
         return res.status(400).json({ error: "filterType and filterValue are required" });
       }
       
-      if (filterType !== 'category' && filterType !== 'program' && filterType !== 'account') {
-        return res.status(400).json({ error: "filterType must be 'category', 'program', or 'account'" });
+      if (filterType !== 'category' && filterType !== 'program' && filterType !== 'account' && filterType !== 'caseCode') {
+        return res.status(400).json({ error: "filterType must be 'category', 'program', 'account', or 'caseCode'" });
       }
       
       const details = await storage.getExpenseDetails(
         costCenterId, 
-        filterType as 'category' | 'program' | 'account', 
+        filterType as 'category' | 'program' | 'account' | 'caseCode', 
         filterValue as string,
         periodMode as 'ytd' | 'month' | undefined,
         month ? parseInt(month as string) : undefined,
