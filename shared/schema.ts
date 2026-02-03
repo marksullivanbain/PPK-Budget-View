@@ -107,6 +107,7 @@ export interface DashboardSummary {
   totalProgramSpend: number;
   compensationByAccount: AccountSpendItem[];
   programByAccount: AccountSpendItem[];
+  programByCaseCode: AccountSpendItem[];
 }
 
 // Expense detail for drill-down view

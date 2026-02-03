@@ -585,6 +585,30 @@ export class MemStorage implements IStorage {
       }))
       .sort((a, b) => b.amount - a.amount);
     
+    // Group program expenses by case code
+    const caseCodeColors = [
+      "#06B6D4", "#8B5CF6", "#F59E0B", "#10B981", "#EC4899", 
+      "#6366F1", "#14B8A6", "#F97316", "#84CC16", "#A855F7"
+    ];
+    const progCaseCodeGroups = new Map<string, { count: number; amount: number }>();
+    for (const expense of programExpenses) {
+      const key = expense.caseCode || 'No Case Code';
+      const existing = progCaseCodeGroups.get(key) || { count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += expense.amount;
+      progCaseCodeGroups.set(key, existing);
+    }
+    
+    const programByCaseCode: AccountSpendItem[] = Array.from(progCaseCodeGroups.entries())
+      .filter(([caseCode, data]) => data.amount >= programThreshold)
+      .map(([caseCode, data], index) => ({
+        account: caseCode,
+        amount: Math.round(data.amount),
+        itemCount: data.count,
+        color: caseCodeColors[index % caseCodeColors.length],
+      }))
+      .sort((a, b) => b.amount - a.amount);
+    
     return {
       totalSpend: Math.round(totalActual * 100) / 100,
       totalBudget: Math.round(totalBudget),
@@ -596,6 +620,7 @@ export class MemStorage implements IStorage {
       totalProgramSpend,
       compensationByAccount,
       programByAccount,
+      programByCaseCode,
     };
   }
 
