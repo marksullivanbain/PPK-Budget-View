@@ -94,6 +94,7 @@ export interface AccountSpendItem {
   amount: number;
   itemCount: number;
   color: string;
+  caseName?: string; // For case code view - displays "code - name"
 }
 
 export interface DashboardSummary {

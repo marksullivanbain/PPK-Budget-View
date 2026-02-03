@@ -109,14 +109,16 @@ export function ProgramByAccount({ accountData, caseCodeData, viewMode, onViewMo
                   data-testid={`item-prog-account-${item.account.replace(/\s+/g, '-').toLowerCase()}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div 
-                        className="w-2.5 h-2.5 rounded-full" 
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-sm font-medium text-foreground">{item.account}</span>
+                      <span className="text-sm font-medium text-foreground truncate">
+                        {item.caseName ? `${item.account} - ${item.caseName}` : item.account}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{item.itemCount} items</span>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">{item.itemCount} items</span>
                   </div>
                   
                   <div className="flex items-center justify-between gap-2">
