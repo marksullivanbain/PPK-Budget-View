@@ -374,7 +374,7 @@ export default function Dashboard() {
                 {selectedAccount && (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
-                    filterType="account"
+                    filterType={programViewMode === 'caseCode' ? 'caseCode' : 'account'}
                     filterValue={selectedAccount}
                     filterLabel={selectedCaseGroup ? `${selectedCaseGroup} - ${selectedAccount}` : selectedAccount}
                     filterColor="#6B7280"

@@ -43,7 +43,7 @@ export interface IStorage {
   
   getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<DashboardSummary>;
   
-  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<ExpenseDetail[]>;
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account' | 'caseCode', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<ExpenseDetail[]>;
   
   getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
   
@@ -631,7 +631,7 @@ export class MemStorage implements IStorage {
 
   async getExpenseDetails(
     costCenterId: string, 
-    filterType: 'category' | 'program' | 'account', 
+    filterType: 'category' | 'program' | 'account' | 'caseCode', 
     filterValue: string,
     periodMode?: 'ytd' | 'month',
     month?: number,
@@ -688,6 +688,13 @@ export class MemStorage implements IStorage {
     } else if (filterType === 'program' || filterType === 'account') {
       // Both program and account filter by summary account name
       filtered = expenses.filter(exp => exp.summaryAccount === filterValue);
+    } else if (filterType === 'caseCode') {
+      // Filter by case code
+      if (filterValue === 'No Case Code') {
+        filtered = expenses.filter(exp => !exp.caseCode || exp.caseCode === '');
+      } else {
+        filtered = expenses.filter(exp => exp.caseCode === filterValue);
+      }
     } else {
       filtered = [];
     }

@@ -11,7 +11,7 @@ import type { ExpenseDetail } from "@shared/schema";
 
 interface ExpenseDetailsProps {
   costCenterId: string;
-  filterType: 'category' | 'program' | 'account';
+  filterType: 'category' | 'program' | 'account' | 'caseCode';
   filterValue: string;
   filterLabel: string;
   filterColor?: string;
