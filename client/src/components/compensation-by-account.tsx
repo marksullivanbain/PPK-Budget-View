@@ -22,6 +22,7 @@ type DisplayItem =
   | { type: 'bonus'; items: AccountSpendItem[]; total: number; itemCount: number };
 
 export function CompensationByAccount({ data }: CompensationByAccountProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [bonusExpanded, setBonusExpanded] = useState(false);
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   
@@ -172,36 +173,103 @@ export function CompensationByAccount({ data }: CompensationByAccountProps) {
     );
   };
 
+  // Build stacked bar segments for collapsed view (sorted by amount descending)
+  const stackedBarData = displayItems.map((displayItem) => {
+    if (displayItem.type === 'bonus') {
+      return {
+        label: 'Bonus',
+        amount: displayItem.total,
+        color: bonusColor,
+        percent: total > 0 ? (displayItem.total / total) * 100 : 0
+      };
+    }
+    return {
+      label: displayItem.item.account,
+      amount: displayItem.item.amount,
+      color: displayItem.item.color,
+      percent: total > 0 ? (displayItem.item.amount / total) * 100 : 0
+    };
+  });
+
   return (
-    <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-compensation-by-account">
-      <div className="flex flex-col gap-1 mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Compensation by Account</h3>
-        <p className="text-sm text-muted-foreground">Breakdown by account type</p>
-      </div>
-      
-      <ScrollArea className="flex-1 -mx-1 px-1">
-        <div className="flex flex-col gap-3 pr-2">
-          {data.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No compensation data</p>
-          ) : (
-            displayItems.map((displayItem) => {
-              if (displayItem.type === 'bonus') {
-                return renderBonusGroup(displayItem.items, displayItem.total, displayItem.itemCount);
-              }
-              return renderRegularItem(displayItem.item);
-            })
-          )}
+    <Card className="p-5 flex flex-col border-card-border" data-testid="card-compensation-by-account">
+      <div 
+        className="flex items-center justify-between cursor-pointer hover-elevate rounded-md -m-1 p-1"
+        onClick={() => setIsExpanded(!isExpanded)}
+        data-testid="button-toggle-compensation"
+      >
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold text-foreground">Compensation by Account</h3>
+          <p className="text-sm text-muted-foreground">Breakdown by account type</p>
         </div>
-      </ScrollArea>
-      
-      <div className="border-t border-border mt-4 pt-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground">Total Compensation</span>
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground" data-testid="text-comp-account-total">
             {formatCurrency(total)}
           </span>
+          {isExpanded ? (
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          )}
         </div>
       </div>
+      
+      {!isExpanded && data.length > 0 && (
+        <div className="mt-4">
+          <div className="flex h-6 rounded-md overflow-hidden" data-testid="stacked-bar-compensation">
+            {stackedBarData.map((segment, index) => (
+              <div
+                key={segment.label}
+                className="relative group"
+                style={{ 
+                  width: `${segment.percent}%`,
+                  backgroundColor: segment.color,
+                  minWidth: segment.percent > 0 ? '2px' : '0'
+                }}
+                title={`${segment.label}: ${Math.round(segment.percent)}%`}
+              >
+                {segment.percent >= 8 && (
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">
+                    {Math.round(segment.percent)}%
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+            {stackedBarData.map((segment) => (
+              <div key={segment.label} className="flex items-center gap-1.5">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full" 
+                  style={{ backgroundColor: segment.color }}
+                />
+                <span className="text-xs text-muted-foreground">{segment.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {isExpanded && (
+        <>
+          <div className="mt-4">
+            <ScrollArea className="max-h-[280px] -mx-1 px-1">
+              <div className="flex flex-col gap-3 pr-2">
+                {data.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No compensation data</p>
+                ) : (
+                  displayItems.map((displayItem) => {
+                    if (displayItem.type === 'bonus') {
+                      return renderBonusGroup(displayItem.items, displayItem.total, displayItem.itemCount);
+                    }
+                    return renderRegularItem(displayItem.item);
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </>
+      )}
     </Card>
   );
 }
