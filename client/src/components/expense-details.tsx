@@ -179,7 +179,7 @@ export function ExpenseDetails({
             <span>Invoice Link</span>
           </div>
 
-          <ScrollArea className="max-h-[400px]">
+          <ScrollArea className="max-h-[600px]">
             <div className="flex flex-col">
               {filteredExpenses.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
