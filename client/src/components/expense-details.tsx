@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, Search, ArrowDown, ArrowUp } from "lucide-react";
 import type { ExpenseDetail } from "@shared/schema";
@@ -179,7 +178,7 @@ export function ExpenseDetails({
             <span>Invoice Link</span>
           </div>
 
-          <ScrollArea className="max-h-[600px]">
+          <div className="max-h-[500px] overflow-y-auto">
             <div className="flex flex-col">
               {filteredExpenses.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
@@ -227,7 +226,7 @@ export function ExpenseDetails({
                 ))
               )}
             </div>
-          </ScrollArea>
+          </div>
         </>
       )}
     </Card>
