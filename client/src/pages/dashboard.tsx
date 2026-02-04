@@ -131,6 +131,7 @@ export default function Dashboard() {
     } else {
       setSelectedSpendCategory(categoryId);
       setSelectedProgramCategory(null);
+      setSelectedAccount(null);
     }
   };
 
@@ -140,6 +141,7 @@ export default function Dashboard() {
     } else {
       setSelectedProgramCategory(category);
       setSelectedSpendCategory(null);
+      setSelectedAccount(null);
     }
   };
 
