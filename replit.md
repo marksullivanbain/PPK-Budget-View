@@ -49,6 +49,7 @@ shared/
 - Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k (Month mode) or ≥$20k (YTD mode)
 - Total Program Spend = Total Spend minus Compensation actual
 - **Expense Details Drill-Down**: Click any category or program to see individual expense line items with search and period filters
+- **Case Group Interaction**: Separated filtering from drill-down - single click opens expense details (no dashboard refresh), filter icon button filters entire dashboard
 - Dark theme UI matching the original design
 
 ## Access Control

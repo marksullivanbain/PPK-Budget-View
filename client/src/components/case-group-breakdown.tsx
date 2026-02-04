@@ -1,6 +1,9 @@
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { SpendTypeBreakdown as SpendTypeBreakdownData } from "@shared/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Filter } from "lucide-react";
+import type { MouseEvent } from "react";
 
 interface CaseGroupBreakdownProps {
   data: SpendTypeBreakdownData[];
@@ -42,7 +45,7 @@ export function CaseGroupBreakdown({
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-case-group-breakdown">
       <div className="flex flex-col gap-1 mb-4">
         <h3 className="text-lg font-semibold text-foreground">Program Spend by Case Group</h3>
-        <p className="text-sm text-muted-foreground">Budget vs Actual - Click a category to filter</p>
+        <p className="text-sm text-muted-foreground">Budget vs Actual - Click to see details, use filter icon to filter dashboard</p>
       </div>
       
       <ScrollArea className="flex-1 -mx-1 px-1">
@@ -52,17 +55,20 @@ export function CaseGroupBreakdown({
             const isSelected = selectedCategory === item.categoryId;
             const isCaseGroupSelected = selectedCaseGroup === item.categoryName;
             
-            const handleClick = () => {
-              // Toggle case group filter for Program by Account card
-              if (onCaseGroupSelect) {
-                onCaseGroupSelect(isCaseGroupSelected ? null : item.categoryName);
-              }
-              // Also trigger expense details drill-down
+            // Single click: Only opens expense details (no dashboard filter)
+            const handleDrillDown = () => {
               if (isSelected) {
-                // If already selected, deselect
                 onCategoryClick?.("");
               } else {
                 onCategoryClick?.(item.categoryId);
+              }
+            };
+            
+            // Filter icon click: Filters the entire dashboard
+            const handleFilter = (e: MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation(); // Prevent drill-down from also triggering
+              if (onCaseGroupSelect) {
+                onCaseGroupSelect(isCaseGroupSelected ? null : item.categoryName);
               }
             };
             
@@ -70,9 +76,9 @@ export function CaseGroupBreakdown({
               <div 
                 key={item.categoryId}
                 className={`flex flex-col gap-2 cursor-pointer rounded-md p-2 -m-2 transition-colors ${
-                  isSelected || isCaseGroupSelected ? 'bg-accent/50' : 'hover-elevate'
-                }`}
-                onClick={handleClick}
+                  isSelected ? 'bg-accent/50' : 'hover-elevate'
+                } ${isCaseGroupSelected ? 'ring-1 ring-primary/50' : ''}`}
+                onClick={handleDrillDown}
                 data-testid={`item-category-${item.categoryId}`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -83,7 +89,20 @@ export function CaseGroupBreakdown({
                     />
                     <span className="text-sm font-medium text-foreground">{item.categoryName}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">{item.itemCount} items</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">{item.itemCount} items</span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={isCaseGroupSelected ? "default" : "ghost"}
+                      onClick={handleFilter}
+                      className="h-6 w-6"
+                      title={isCaseGroupSelected ? "Remove filter" : "Filter dashboard by this category"}
+                      data-testid={`button-filter-${item.categoryId}`}
+                    >
+                      <Filter className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="flex items-baseline justify-between gap-2">
