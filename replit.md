@@ -119,6 +119,8 @@ The following practices are consolidated for reporting:
 - Data persisted in PostgreSQL: budget_groups and case_code_mappings tables
 - Validation warning when budget is over/under-allocated
 - Only available for specific practices (not "All Practices" view)
+- **Auto-Marketing Group**: When a practice has marketing budget, a "Marketing" group is auto-created on first visit with the marketing budget pre-allocated and all marketing case codes auto-assigned (only unassigned codes, won't override user assignments)
+- Budget display shows: Core Program Budget, Marketing Budget (separate), Total Program Budget
 
 ### API Endpoints (Budget Tracking)
 - `GET /api/budget-tracking/:practiceId?month=N` - Get budget groups and unassigned case codes

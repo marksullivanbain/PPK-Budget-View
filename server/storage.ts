@@ -1232,7 +1232,54 @@ export class MemStorage implements IStorage {
     const allCaseCodes = await this.getCaseCodesWithExpenses(practiceId, month);
     
     // Get budget groups
-    const groups = await this.getBudgetGroups(practiceId);
+    let groups = await this.getBudgetGroups(practiceId);
+    
+    // Auto-create Marketing group if practice has marketing budget and no Marketing group exists
+    // Use case-insensitive check to avoid duplicates like "Marketing" vs "marketing"
+    const hasMarketingGroup = groups.some(g => g.name.toLowerCase() === 'marketing');
+    if (marketingBudget > 0 && !hasMarketingGroup) {
+      // Create the Marketing group
+      const marketingGroup = await this.createBudgetGroup({
+        practiceId,
+        name: 'Marketing',
+        allocatedBudget: marketingBudget,
+        displayOrder: 0, // Put it first
+      });
+      
+      // Find and auto-assign ONLY UNASSIGNED marketing case codes
+      // (Don't override user-defined assignments)
+      const marketingCategoryIds = new Set(
+        categoryArray.filter(c => c.name === 'Marketing' && c.costCenterId === practiceId).map(c => c.id)
+      );
+      
+      // Get all marketing case codes from expenses
+      const expenseArray = Array.from(this.expenses.values());
+      const marketingCaseCodes = new Set<string>();
+      for (const expense of expenseArray) {
+        if (expense.costCenterId !== practiceId) continue;
+        if (!marketingCategoryIds.has(expense.categoryId)) continue;
+        if (expense.caseCode) {
+          marketingCaseCodes.add(expense.caseCode);
+        }
+      }
+      
+      // Only assign case codes that are currently unassigned
+      for (const caseCode of marketingCaseCodes) {
+        const existingAssignment = allCaseCodes.find(cc => cc.caseCode === caseCode);
+        if (!existingAssignment || existingAssignment.groupId === null) {
+          await this.assignCaseCodeToGroup(practiceId, caseCode, marketingGroup.id);
+        }
+      }
+      
+      // Refresh groups and case codes after creating Marketing group
+      groups = await this.getBudgetGroups(practiceId);
+      // Update case code groupId mappings
+      const updatedMappings = await this.getCaseCodeMappings(practiceId);
+      const mappingByCaseCode = new Map(updatedMappings.map(m => [m.caseCode, m.budgetGroupId]));
+      for (const cc of allCaseCodes) {
+        cc.groupId = mappingByCaseCode.get(cc.caseCode) || null;
+      }
+    }
     
     // Build groups with their case codes and calculations
     const groupsWithCodes: BudgetGroupWithCodes[] = [];
