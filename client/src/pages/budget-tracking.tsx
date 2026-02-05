@@ -473,8 +473,18 @@ export default function BudgetTracking() {
                       Non-compensation program budget allocation
                     </p>
                   </div>
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-6 flex-wrap">
                     <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">Core Program Budget</span>
+                      <span className="text-lg font-semibold">{formatCurrency(budgetData.coreProgramBudget || 0)}</span>
+                    </div>
+                    {budgetData.marketingBudget > 0 && (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-muted-foreground">Marketing Budget</span>
+                        <span className="text-lg font-semibold">{formatCurrency(budgetData.marketingBudget)}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col border-l pl-6 border-border">
                       <span className="text-xs text-muted-foreground">Total Program Budget</span>
                       <span className="text-lg font-semibold">{formatCurrency(allocationStatus?.total || 0)}</span>
                     </div>

@@ -1190,6 +1190,8 @@ export class MemStorage implements IStorage {
       return {
         practiceId,
         practiceName: 'Unknown',
+        coreProgramBudget: 0,
+        marketingBudget: 0,
         totalProgramBudget: 0,
         totalAllocated: 0,
         unallocatedBudget: 0,
@@ -1198,22 +1200,26 @@ export class MemStorage implements IStorage {
       };
     }
     
-    // Get total non-comp budget for this practice (excluding Compensation and Marketing)
-    // Marketing budgets are from the marketing mapping and tracked separately
-    let totalProgramBudget = 0;
+    // Calculate core program budget and marketing budget separately
+    let coreProgramBudget = 0;
+    let marketingBudget = 0;
     const categoryArray = Array.from(this.spendCategories.values());
     const budgetArray = Array.from(this.budgets.values());
     for (const category of categoryArray) {
       if (category.costCenterId !== practiceId) continue;
       if (category.name === 'Compensation') continue;
-      if (category.name === 'Marketing') continue;  // Exclude marketing budgets
       
       for (const budget of budgetArray) {
         if (budget.categoryId === category.id) {
-          totalProgramBudget += budget.amount;
+          if (category.name === 'Marketing') {
+            marketingBudget += budget.amount;
+          } else {
+            coreProgramBudget += budget.amount;
+          }
         }
       }
     }
+    const totalProgramBudget = coreProgramBudget + marketingBudget;
     
     // Get all case codes with expenses
     const allCaseCodes = await this.getCaseCodesWithExpenses(practiceId, month);
@@ -1248,6 +1254,8 @@ export class MemStorage implements IStorage {
     return {
       practiceId,
       practiceName: costCenter.name,
+      coreProgramBudget,
+      marketingBudget,
       totalProgramBudget,
       totalAllocated,
       unallocatedBudget: totalProgramBudget - totalAllocated,

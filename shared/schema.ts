@@ -239,7 +239,9 @@ export interface BudgetGroupWithCodes extends BudgetGroup {
 export interface DynamicBudgetData {
   practiceId: string;
   practiceName: string;
-  totalProgramBudget: number; // Total non-comp budget available
+  coreProgramBudget: number; // Core program budget (excludes Compensation and Marketing)
+  marketingBudget: number; // Marketing budget (from marketing mapping)
+  totalProgramBudget: number; // Total non-comp budget (core + marketing)
   totalAllocated: number; // Sum of all group allocations
   unallocatedBudget: number; // totalProgramBudget - totalAllocated
   groups: BudgetGroupWithCodes[];
