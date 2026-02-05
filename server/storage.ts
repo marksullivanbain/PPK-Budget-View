@@ -1147,13 +1147,20 @@ export class MemStorage implements IStorage {
     const mappings = await this.getCaseCodeMappings(practiceId);
     const mappingByCaseCode = new Map(mappings.map(m => [m.caseCode, m.budgetGroupId]));
     
+    // Find Compensation category IDs to exclude those expenses
+    const categories = await this.getSpendCategories(practiceId);
+    const compensationCategoryIds = new Set(
+      categories.filter(c => c.name === "Compensation").map(c => c.id)
+    );
+    
     // Get all non-comp expenses for this practice, grouped by case code
     const caseCodeExpenses = new Map<string, { caseName: string; amount: number }>();
     
     const expenseArray = Array.from(this.expenses.values());
     for (const expense of expenseArray) {
       if (expense.costCenterId !== practiceId) continue;
-      if (expense.spendType === 'Comp') continue; // Exclude compensation
+      // Exclude compensation by checking category (more reliable than spendType field)
+      if (compensationCategoryIds.has(expense.categoryId)) continue;
       if (expense.month > month) continue; // Only YTD expenses
       
       const code = expense.caseCode || 'Unknown';
