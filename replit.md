@@ -27,7 +27,8 @@ client/
 │   ├── pages/
 │   │   ├── dashboard.tsx  # Main dashboard page
 │   │   ├── trends.tsx     # Monthly trends charts
-│   │   └── ip-teams.tsx   # IP Teams investment tracking
+│   │   ├── ip-teams.tsx   # IP Teams investment tracking
+│   │   └── budget-tracking.tsx  # Dynamic budget group management
 │   └── App.tsx           # App entry with routing
 server/
 ├── routes.ts             # API endpoints
@@ -109,6 +110,22 @@ The following practices are consolidated for reporting:
 - Columns: Cost Center (A), Type (E), Monthly amounts (P-AA), YTD (AB), CY25/Budget (AC), Name (J), Case (K)
 - Shows per-person entries with monthly breakdown, YTD totals, and budget comparison
 - Summary cards show subtotals by type (Traditional, Interlock, Rotations) and grand total
+
+## Dynamic Budget Tracking
+- Allows users to create custom budget groups for organizing case codes
+- Drag-and-drop interface using @dnd-kit for moving case codes between groups
+- Each group shows: Full Year Budget (allocated), YTD Budget (allocatedBudget × month/12), YTD Actual, Variance
+- Non-compensation expenses only (excludes Comp spend type)
+- Data persisted in PostgreSQL: budget_groups and case_code_mappings tables
+- Validation warning when budget is over/under-allocated
+- Only available for specific practices (not "All Practices" view)
+
+### API Endpoints (Budget Tracking)
+- `GET /api/budget-tracking/:practiceId?month=N` - Get budget groups and unassigned case codes
+- `POST /api/budget-tracking/:practiceId/groups` - Create a new budget group
+- `PUT /api/budget-tracking/groups/:groupId` - Update group name/budget
+- `DELETE /api/budget-tracking/groups/:groupId` - Delete a group (also removes case code mappings)
+- `POST /api/budget-tracking/:practiceId/assign` - Assign/unassign case code to group
 
 ## Data Model
 - **CostCenter**: Practice areas (M&A, Tax, Audit)

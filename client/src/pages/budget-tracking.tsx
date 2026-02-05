@@ -9,7 +9,8 @@ import {
   closestCenter,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  useDroppable
 } from "@dnd-kit/core";
 import { 
   SortableContext, 
@@ -81,6 +82,25 @@ function DraggableCaseCode({ caseCode, isDragging }: DraggableCaseCodeProps) {
       <span className={`text-sm font-medium ${caseCode.ytdActual < 0 ? 'text-red-500' : ''}`}>
         {formatCurrency(caseCode.ytdActual)}
       </span>
+    </div>
+  );
+}
+
+interface DroppableContainerProps {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function DroppableContainer({ id, children, className }: DroppableContainerProps) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`${className} ${isOver ? 'ring-2 ring-primary/50 bg-primary/5' : ''}`}
+    >
+      {children}
     </div>
   );
 }
@@ -185,11 +205,11 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
         </div>
       </div>
 
-      <SortableContext items={group.caseCodes.map(cc => cc.caseCode)} strategy={verticalListSortingStrategy}>
-        <div 
-          className="flex flex-col gap-1 min-h-[60px] p-2 bg-background/50 rounded-md border border-dashed border-border"
-          data-group-id={group.id}
-        >
+      <DroppableContainer 
+        id={`group-${group.id}`}
+        className="flex flex-col gap-1 min-h-[60px] p-2 bg-background/50 rounded-md border border-dashed border-border"
+      >
+        <SortableContext items={group.caseCodes.map(cc => cc.caseCode)} strategy={verticalListSortingStrategy}>
           {group.caseCodes.length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-4">
               Drag case codes here
@@ -199,8 +219,8 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
               <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} />
             ))
           )}
-        </div>
-      </SortableContext>
+        </SortableContext>
+      </DroppableContainer>
     </Card>
   );
 }
@@ -295,18 +315,34 @@ export default function BudgetTracking() {
     if (!over) return;
 
     const caseCode = active.id as string;
-    const overElement = document.querySelector(`[data-group-id="${over.id}"]`);
-    const targetGroupId = overElement?.getAttribute('data-group-id') || null;
-
-    if (over.id === 'unassigned') {
+    const overId = over.id as string;
+    
+    // Check if dropping on the unassigned container
+    if (overId === 'unassigned') {
       assignCaseCodeMutation.mutate({ caseCode, groupId: null });
-    } else {
-      const targetGroup = budgetData?.groups.find(g => 
-        g.caseCodes.some(cc => cc.caseCode === over.id) || g.id === over.id
-      );
-      if (targetGroup) {
-        assignCaseCodeMutation.mutate({ caseCode, groupId: targetGroup.id });
-      }
+      return;
+    }
+    
+    // Check if dropping on a group container (format: "group-{id}")
+    if (overId.startsWith('group-')) {
+      const groupId = overId.replace('group-', '');
+      assignCaseCodeMutation.mutate({ caseCode, groupId });
+      return;
+    }
+    
+    // Dropping on another case code - find which group it belongs to
+    const targetGroup = budgetData?.groups.find(g => 
+      g.caseCodes.some(cc => cc.caseCode === overId)
+    );
+    if (targetGroup) {
+      assignCaseCodeMutation.mutate({ caseCode, groupId: targetGroup.id });
+      return;
+    }
+    
+    // Case code dropped on another unassigned case code
+    const isUnassigned = budgetData?.unassignedCaseCodes.some(cc => cc.caseCode === overId);
+    if (isUnassigned) {
+      assignCaseCodeMutation.mutate({ caseCode, groupId: null });
     }
   };
 
@@ -491,11 +527,11 @@ export default function BudgetTracking() {
               <p className="text-sm text-muted-foreground mb-3">
                 Drag case codes to groups above to assign them. These are all non-compensation expenses.
               </p>
-              <SortableContext items={budgetData.unassignedCaseCodes.map(cc => cc.caseCode)} strategy={verticalListSortingStrategy}>
-                <div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 min-h-[100px] p-2 bg-background/50 rounded-md border border-dashed border-border"
-                  data-group-id="unassigned"
-                >
+              <DroppableContainer 
+                id="unassigned"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 min-h-[100px] p-2 bg-background/50 rounded-md border border-dashed border-border"
+              >
+                <SortableContext items={budgetData.unassignedCaseCodes.map(cc => cc.caseCode)} strategy={verticalListSortingStrategy}>
                   {budgetData.unassignedCaseCodes.length === 0 ? (
                     <div className="col-span-full text-sm text-muted-foreground text-center py-4">
                       All case codes have been assigned to groups
@@ -505,8 +541,8 @@ export default function BudgetTracking() {
                       <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} />
                     ))
                   )}
-                </div>
-              </SortableContext>
+                </SortableContext>
+              </DroppableContainer>
             </Card>
 
             <DragOverlay>
