@@ -260,5 +260,124 @@ export async function registerRoutes(
     }
   });
 
+  // Dynamic Budget Tracking endpoints
+  
+  // Get dynamic budget data for a practice
+  app.get("/api/budget-tracking/:practiceId", isAuthenticated, async (req, res) => {
+    try {
+      const practiceId = req.params.practiceId as string;
+      const month = parseInt(req.query.month as string) || 12;
+      const userEmail = getUserEmail(req);
+      
+      const costCenter = await storage.getCostCenter(practiceId);
+      if (!costCenter) {
+        return res.status(404).json({ error: "Practice not found" });
+      }
+      if (!hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+      
+      const data = await storage.getDynamicBudgetData(practiceId, month);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch budget tracking data" });
+    }
+  });
+
+  // Create a new budget group
+  app.post("/api/budget-tracking/:practiceId/groups", isAuthenticated, async (req, res) => {
+    try {
+      const practiceId = req.params.practiceId as string;
+      const userEmail = getUserEmail(req);
+      
+      const costCenter = await storage.getCostCenter(practiceId);
+      if (!costCenter) {
+        return res.status(404).json({ error: "Practice not found" });
+      }
+      if (!hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+      
+      const { name, allocatedBudget, displayOrder } = req.body;
+      const group = await storage.createBudgetGroup({
+        practiceId,
+        name: name || 'New Group',
+        allocatedBudget: allocatedBudget || 0,
+        displayOrder: displayOrder || 0
+      });
+      
+      res.json(group);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create budget group" });
+    }
+  });
+
+  // Update a budget group
+  app.put("/api/budget-tracking/groups/:groupId", isAuthenticated, async (req, res) => {
+    try {
+      const groupId = req.params.groupId as string;
+      const { name, allocatedBudget, displayOrder } = req.body;
+      
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (allocatedBudget !== undefined) updates.allocatedBudget = allocatedBudget;
+      if (displayOrder !== undefined) updates.displayOrder = displayOrder;
+      
+      const updated = await storage.updateBudgetGroup(groupId, updates);
+      if (!updated) {
+        return res.status(404).json({ error: "Budget group not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update budget group" });
+    }
+  });
+
+  // Delete a budget group
+  app.delete("/api/budget-tracking/groups/:groupId", isAuthenticated, async (req, res) => {
+    try {
+      const groupId = req.params.groupId as string;
+      const success = await storage.deleteBudgetGroup(groupId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Budget group not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete budget group" });
+    }
+  });
+
+  // Assign a case code to a budget group
+  app.post("/api/budget-tracking/:practiceId/assign", isAuthenticated, async (req, res) => {
+    try {
+      const practiceId = req.params.practiceId as string;
+      const { caseCode, groupId } = req.body;
+      const userEmail = getUserEmail(req);
+      
+      const costCenter = await storage.getCostCenter(practiceId);
+      if (!costCenter) {
+        return res.status(404).json({ error: "Practice not found" });
+      }
+      if (!hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+      
+      if (!groupId) {
+        // Remove from group (unassign)
+        await storage.removeCaseCodeFromGroup(practiceId, caseCode);
+        res.json({ success: true, unassigned: true });
+      } else {
+        // Assign to group
+        const mapping = await storage.assignCaseCodeToGroup(practiceId, caseCode, groupId);
+        res.json(mapping);
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to assign case code" });
+    }
+  });
+
   return httpServer;
 }

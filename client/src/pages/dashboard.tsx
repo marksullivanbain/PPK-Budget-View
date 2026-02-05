@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
@@ -227,6 +227,12 @@ export default function Dashboard() {
                 <Link href="/ip-teams">
                   <Users className="h-4 w-4" />
                   IP Teams
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-budget-tracking">
+                <Link href="/budget-tracking">
+                  <Wallet className="h-4 w-4" />
+                  Budget Tracking
                 </Link>
               </Button>
             </div>

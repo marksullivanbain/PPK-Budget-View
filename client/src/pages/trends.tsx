@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CostCenterSelector } from "@/components/cost-center-selector";
-import { LogOut, LayoutDashboard, TrendingUp, Users } from "lucide-react";
+import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, MonthlyTrendData } from "@shared/schema";
 import {
@@ -152,6 +152,12 @@ export default function Trends() {
                 <Link href="/ip-teams">
                   <Users className="h-4 w-4" />
                   IP Teams
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-budget-tracking">
+                <Link href="/budget-tracking">
+                  <Wallet className="h-4 w-4" />
+                  Budget Tracking
                 </Link>
               </Button>
             </div>

@@ -18,10 +18,21 @@ import {
   type KeyVarianceItem,
   type IPTeamEntry,
   type IPTeamData,
-  type IPTeamSummary
+  type IPTeamSummary,
+  type BudgetGroup,
+  type InsertBudgetGroup,
+  type CaseCodeMapping,
+  type InsertCaseCodeMapping,
+  type CaseCodeWithExpense,
+  type BudgetGroupWithCodes,
+  type DynamicBudgetData,
+  budgetGroups,
+  caseCodeMappings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData, parseIPTeamsCSV, type IPTeamRow } from "./csv-parser";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -51,6 +62,19 @@ export interface IStorage {
   
   getIPTeamsPractices(): Promise<string[]>;
   getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData>;
+  
+  // Dynamic Budget Group methods
+  getBudgetGroups(practiceId: string): Promise<BudgetGroup[]>;
+  createBudgetGroup(group: InsertBudgetGroup): Promise<BudgetGroup>;
+  updateBudgetGroup(id: string, updates: Partial<InsertBudgetGroup>): Promise<BudgetGroup | undefined>;
+  deleteBudgetGroup(id: string): Promise<boolean>;
+  
+  getCaseCodeMappings(practiceId: string): Promise<CaseCodeMapping[]>;
+  assignCaseCodeToGroup(practiceId: string, caseCode: string, groupId: string): Promise<CaseCodeMapping>;
+  removeCaseCodeFromGroup(practiceId: string, caseCode: string): Promise<boolean>;
+  
+  getDynamicBudgetData(practiceId: string, month: number): Promise<DynamicBudgetData>;
+  getCaseCodesWithExpenses(practiceId: string, month: number): Promise<CaseCodeWithExpense[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -1056,6 +1080,177 @@ export class MemStorage implements IStorage {
       interlockSubtotal,
       rotationsSubtotal,
       grandTotal,
+    };
+  }
+
+  // Dynamic Budget Group Methods
+  async getBudgetGroups(practiceId: string): Promise<BudgetGroup[]> {
+    const groups = await db.select().from(budgetGroups).where(eq(budgetGroups.practiceId, practiceId));
+    return groups.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  async createBudgetGroup(group: InsertBudgetGroup): Promise<BudgetGroup> {
+    const [newGroup] = await db.insert(budgetGroups).values(group).returning();
+    return newGroup;
+  }
+
+  async updateBudgetGroup(id: string, updates: Partial<InsertBudgetGroup>): Promise<BudgetGroup | undefined> {
+    const [updated] = await db.update(budgetGroups).set(updates).where(eq(budgetGroups.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBudgetGroup(id: string): Promise<boolean> {
+    // First delete all case code mappings for this group
+    await db.delete(caseCodeMappings).where(eq(caseCodeMappings.budgetGroupId, id));
+    // Then delete the group
+    const result = await db.delete(budgetGroups).where(eq(budgetGroups.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getCaseCodeMappings(practiceId: string): Promise<CaseCodeMapping[]> {
+    return await db.select().from(caseCodeMappings).where(eq(caseCodeMappings.practiceId, practiceId));
+  }
+
+  async assignCaseCodeToGroup(practiceId: string, caseCode: string, groupId: string): Promise<CaseCodeMapping> {
+    // First remove any existing mapping for this case code
+    await db.delete(caseCodeMappings).where(
+      and(
+        eq(caseCodeMappings.practiceId, practiceId),
+        eq(caseCodeMappings.caseCode, caseCode)
+      )
+    );
+    // Then create the new mapping
+    const [mapping] = await db.insert(caseCodeMappings).values({
+      budgetGroupId: groupId,
+      caseCode,
+      practiceId
+    }).returning();
+    return mapping;
+  }
+
+  async removeCaseCodeFromGroup(practiceId: string, caseCode: string): Promise<boolean> {
+    const result = await db.delete(caseCodeMappings).where(
+      and(
+        eq(caseCodeMappings.practiceId, practiceId),
+        eq(caseCodeMappings.caseCode, caseCode)
+      )
+    ).returning();
+    return result.length > 0;
+  }
+
+  async getCaseCodesWithExpenses(practiceId: string, month: number): Promise<CaseCodeWithExpense[]> {
+    // Get cost center info
+    const costCenter = await this.getCostCenter(practiceId);
+    if (!costCenter) return [];
+    
+    // Get existing mappings
+    const mappings = await this.getCaseCodeMappings(practiceId);
+    const mappingByCaseCode = new Map(mappings.map(m => [m.caseCode, m.budgetGroupId]));
+    
+    // Get all non-comp expenses for this practice, grouped by case code
+    const caseCodeExpenses = new Map<string, { caseName: string; amount: number }>();
+    
+    const expenseArray = Array.from(this.expenses.values());
+    for (const expense of expenseArray) {
+      if (expense.costCenterId !== practiceId) continue;
+      if (expense.spendType === 'Comp') continue; // Exclude compensation
+      if (expense.month > month) continue; // Only YTD expenses
+      
+      const code = expense.caseCode || 'Unknown';
+      const existing = caseCodeExpenses.get(code);
+      if (existing) {
+        existing.amount += expense.amount;
+      } else {
+        caseCodeExpenses.set(code, {
+          caseName: expense.caseName || '',
+          amount: expense.amount
+        });
+      }
+    }
+    
+    // Convert to array
+    const result: CaseCodeWithExpense[] = [];
+    const caseCodeEntries = Array.from(caseCodeExpenses.entries());
+    for (const [caseCode, data] of caseCodeEntries) {
+      result.push({
+        caseCode,
+        caseName: data.caseName,
+        ytdActual: data.amount,
+        groupId: mappingByCaseCode.get(caseCode) || null
+      });
+    }
+    
+    // Sort by amount descending
+    return result.sort((a, b) => Math.abs(b.ytdActual) - Math.abs(a.ytdActual));
+  }
+
+  async getDynamicBudgetData(practiceId: string, month: number): Promise<DynamicBudgetData> {
+    const costCenter = await this.getCostCenter(practiceId);
+    if (!costCenter) {
+      return {
+        practiceId,
+        practiceName: 'Unknown',
+        totalProgramBudget: 0,
+        totalAllocated: 0,
+        unallocatedBudget: 0,
+        groups: [],
+        unassignedCaseCodes: []
+      };
+    }
+    
+    // Get total non-comp budget for this practice
+    let totalProgramBudget = 0;
+    const categoryArray = Array.from(this.spendCategories.values());
+    const budgetArray = Array.from(this.budgets.values());
+    for (const category of categoryArray) {
+      if (category.costCenterId !== practiceId) continue;
+      if (category.name === 'Compensation') continue;
+      
+      for (const budget of budgetArray) {
+        if (budget.categoryId === category.id) {
+          totalProgramBudget += budget.amount;
+        }
+      }
+    }
+    
+    // Get all case codes with expenses
+    const allCaseCodes = await this.getCaseCodesWithExpenses(practiceId, month);
+    
+    // Get budget groups
+    const groups = await this.getBudgetGroups(practiceId);
+    
+    // Build groups with their case codes and calculations
+    const groupsWithCodes: BudgetGroupWithCodes[] = [];
+    let totalAllocated = 0;
+    
+    for (const group of groups) {
+      const caseCodes = allCaseCodes.filter(cc => cc.groupId === group.id);
+      const ytdActual = caseCodes.reduce((sum, cc) => sum + cc.ytdActual, 0);
+      const ytdBudget = group.allocatedBudget * (month / 12);
+      
+      totalAllocated += group.allocatedBudget;
+      
+      groupsWithCodes.push({
+        ...group,
+        caseCodes,
+        ytdActual,
+        fullYearBudget: group.allocatedBudget,
+        ytdBudget,
+        variance: ytdBudget - ytdActual
+      });
+    }
+    
+    // Get unassigned case codes
+    const unassignedCaseCodes = allCaseCodes.filter(cc => cc.groupId === null);
+    
+    return {
+      practiceId,
+      practiceName: costCenter.name,
+      totalProgramBudget,
+      totalAllocated,
+      unallocatedBudget: totalProgramBudget - totalAllocated,
+      groups: groupsWithCodes,
+      unassignedCaseCodes
     };
   }
 }
