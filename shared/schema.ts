@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -192,4 +192,56 @@ export interface IPTeamData {
   interlockSubtotal: IPTeamSummary;
   rotationsSubtotal: IPTeamSummary;
   grandTotal: IPTeamSummary;
+}
+
+// Dynamic Budget Groups (user-created groupings for case codes)
+export const budgetGroups = pgTable("budget_groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  practiceId: varchar("practice_id").notNull(), // Which practice this group belongs to
+  name: text("name").notNull(), // User-defined group name
+  allocatedBudget: real("allocated_budget").notNull().default(0), // Budget allocated to this group
+  displayOrder: integer("display_order").notNull().default(0), // Order for display
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertBudgetGroupSchema = createInsertSchema(budgetGroups).omit({ id: true, createdAt: true });
+export type InsertBudgetGroup = z.infer<typeof insertBudgetGroupSchema>;
+export type BudgetGroup = typeof budgetGroups.$inferSelect;
+
+// Case Code to Budget Group mappings
+export const caseCodeMappings = pgTable("case_code_mappings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  budgetGroupId: varchar("budget_group_id").notNull(), // References budgetGroups.id
+  caseCode: text("case_code").notNull(), // The case code being assigned
+  practiceId: varchar("practice_id").notNull(), // Practice for quick lookup
+});
+
+export const insertCaseCodeMappingSchema = createInsertSchema(caseCodeMappings).omit({ id: true });
+export type InsertCaseCodeMapping = z.infer<typeof insertCaseCodeMappingSchema>;
+export type CaseCodeMapping = typeof caseCodeMappings.$inferSelect;
+
+// Types for Dynamic Budget Tracking UI
+export interface CaseCodeWithExpense {
+  caseCode: string;
+  caseName: string;
+  ytdActual: number;
+  groupId: string | null; // null if unassigned
+}
+
+export interface BudgetGroupWithCodes extends BudgetGroup {
+  caseCodes: CaseCodeWithExpense[];
+  ytdActual: number; // Sum of all case code actuals in this group
+  fullYearBudget: number; // Same as allocatedBudget
+  ytdBudget: number; // allocatedBudget * (month / 12)
+  variance: number; // ytdBudget - ytdActual
+}
+
+export interface DynamicBudgetData {
+  practiceId: string;
+  practiceName: string;
+  totalProgramBudget: number; // Total non-comp budget available
+  totalAllocated: number; // Sum of all group allocations
+  unallocatedBudget: number; // totalProgramBudget - totalAllocated
+  groups: BudgetGroupWithCodes[];
+  unassignedCaseCodes: CaseCodeWithExpense[];
 }
