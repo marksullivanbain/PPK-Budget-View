@@ -1198,13 +1198,15 @@ export class MemStorage implements IStorage {
       };
     }
     
-    // Get total non-comp budget for this practice
+    // Get total non-comp budget for this practice (excluding Compensation and Marketing)
+    // Marketing budgets are from the marketing mapping and tracked separately
     let totalProgramBudget = 0;
     const categoryArray = Array.from(this.spendCategories.values());
     const budgetArray = Array.from(this.budgets.values());
     for (const category of categoryArray) {
       if (category.costCenterId !== practiceId) continue;
       if (category.name === 'Compensation') continue;
+      if (category.name === 'Marketing') continue;  // Exclude marketing budgets
       
       for (const budget of budgetArray) {
         if (budget.categoryId === category.id) {
