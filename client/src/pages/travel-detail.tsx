@@ -197,147 +197,144 @@ export default function TravelDetail() {
       </header>
 
       <div className="p-6 flex flex-col gap-6 max-w-[1600px] mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground" data-testid="text-travel-title">
-              Travel Spend by Case Code
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {periodMode === 'ytd' ? `YTD through ${MONTH_NAMES[selectedMonth - 1]}` : MONTH_NAMES[selectedMonth - 1]} — Total: {formatCurrency(totalTravelSpend)}
-            </p>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search case codes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 w-56"
-              data-testid="input-travel-search"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground" data-testid="text-travel-title">
+                Travel Spend by Case Code
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {periodMode === 'ytd' ? `YTD through ${MONTH_NAMES[selectedMonth - 1]}` : MONTH_NAMES[selectedMonth - 1]}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Card className="px-4 py-2.5" data-testid="card-total-travel-spend">
+                <div className="flex items-center gap-3">
+                  <Plane className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Travel Spend</p>
+                    <p className="text-lg font-semibold text-foreground">{formatCurrency(totalTravelSpend)}</p>
+                  </div>
+                  {travelSummary && (
+                    <Badge variant="secondary" className="ml-1">
+                      {travelSummary.length} case codes
+                    </Badge>
+                  )}
+                </div>
+              </Card>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search case codes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-56"
+                  data-testid="input-travel-search"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {costCentersLoading || summaryLoading ? (
-          <Card className="p-5">
-            <div className="flex flex-col gap-3">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex items-center gap-4 py-3 border-b border-border">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+              <Card key={i} className="p-4">
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-3 w-32 mb-3" />
+                <Skeleton className="h-6 w-24" />
+              </Card>
+            ))}
+          </div>
+        ) : filteredSummary.length === 0 ? (
+          <Card className="p-8">
+            <p className="text-center text-muted-foreground">No travel expenses found</p>
           </Card>
         ) : (
-          <Card className="p-5 border-card-border" data-testid="card-travel-summary">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">Case Code</th>
-                    <th className="text-left py-3 px-3 font-medium text-muted-foreground">Case Name</th>
-                    <th className="text-right py-3 px-3 font-medium text-muted-foreground">Items</th>
-                    <th className="text-right py-3 px-3 font-medium text-muted-foreground">Amount</th>
-                    <th className="text-right py-3 px-3 font-medium text-muted-foreground">% of Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSummary.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
-                        No travel expenses found
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSummary.map((item) => {
-                      const pct = totalTravelSpend > 0 ? (item.totalAmount / totalTravelSpend) * 100 : 0;
-                      const isSelected = selectedCaseCode === item.caseCode;
-                      return (
-                        <tr
-                          key={item.caseCode}
-                          className={`border-b border-border cursor-pointer transition-colors ${
-                            isSelected ? 'bg-accent/50' : 'hover-elevate'
-                          }`}
-                          onClick={() => {
-                            setSelectedCaseCode(isSelected ? null : item.caseCode);
-                            setExpenseSearchTerm("");
-                          }}
-                          data-testid={`row-travel-case-${item.caseCode.replace(/\s+/g, '-').toLowerCase()}`}
-                        >
-                          <td className="py-3 px-3 font-medium text-foreground">{item.caseCode}</td>
-                          <td className="py-3 px-3 text-muted-foreground">{item.caseName || '-'}</td>
-                          <td className="py-3 px-3 text-right text-muted-foreground">{item.itemCount.toLocaleString()}</td>
-                          <td className="py-3 px-3 text-right font-medium text-foreground">{formatCurrency(item.totalAmount)}</td>
-                          <td className="py-3 px-3 text-right text-muted-foreground">{pct.toFixed(1)}%</td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-                {filteredSummary.length > 0 && (
-                  <tfoot>
-                    <tr className="border-t-2 border-border">
-                      <td className="py-3 px-3 font-semibold text-foreground" colSpan={2}>Total</td>
-                      <td className="py-3 px-3 text-right font-medium text-muted-foreground">
-                        {filteredSummary.reduce((sum, item) => sum + item.itemCount, 0).toLocaleString()}
-                      </td>
-                      <td className="py-3 px-3 text-right font-semibold text-foreground">
-                        {formatCurrency(filteredSummary.reduce((sum, item) => sum + item.totalAmount, 0))}
-                      </td>
-                      <td className="py-3 px-3 text-right text-muted-foreground">100%</td>
-                    </tr>
-                  </tfoot>
-                )}
-              </table>
-            </div>
-          </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" data-testid="grid-travel-cases">
+            {filteredSummary.map((item) => {
+              const pct = totalTravelSpend > 0 ? (item.totalAmount / totalTravelSpend) * 100 : 0;
+              const isSelected = selectedCaseCode === item.caseCode;
+              return (
+                <Card
+                  key={item.caseCode}
+                  className={`p-4 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'ring-2 ring-primary bg-accent/30'
+                      : 'hover-elevate'
+                  }`}
+                  onClick={() => {
+                    setSelectedCaseCode(isSelected ? null : item.caseCode);
+                    setExpenseSearchTerm("");
+                  }}
+                  data-testid={`card-travel-case-${item.caseCode.replace(/\s+/g, '-').toLowerCase()}`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-sm font-semibold text-foreground truncate">{item.caseCode}</span>
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {item.itemCount} items
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mb-3" title={item.caseName}>
+                    {item.caseName || 'No case name'}
+                  </p>
+                  <div className="flex items-end justify-between gap-2">
+                    <span className="text-lg font-semibold text-foreground">{formatCurrency(item.totalAmount)}</span>
+                    <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         )}
 
         {selectedCaseCode && (
-          <Card className="p-5 flex flex-col border-card-border" data-testid="card-travel-expenses">
+          <Card className="p-5 flex flex-col" data-testid="card-travel-expenses">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex flex-col gap-1">
                 <h3 className="text-lg font-semibold text-foreground">Expense Details</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Case Code:</span>
-                  <Badge variant="secondary" data-testid="badge-selected-case-code">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge data-testid="badge-selected-case-code">
                     {selectedCaseCode}
-                    {selectedCaseCodeInfo?.caseName && ` - ${selectedCaseCodeInfo.caseName}`}
                   </Badge>
+                  {selectedCaseCodeInfo?.caseName && (
+                    <span className="text-sm text-muted-foreground">{selectedCaseCodeInfo.caseName}</span>
+                  )}
                   <span className="text-sm text-muted-foreground">
                     ({selectedCaseCodeInfo?.itemCount ?? 0} items, {formatCurrency(selectedCaseCodeInfo?.totalAmount ?? 0)})
                   </span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedCaseCode(null)}
-                data-testid="button-clear-case-code"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Close
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search expenses..."
+                    value={expenseSearchTerm}
+                    onChange={(e) => setExpenseSearchTerm(e.target.value)}
+                    className="pl-8 w-56"
+                    data-testid="input-expense-search"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSelectedCaseCode(null)}
+                  data-testid="button-clear-case-code"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-4">
-              <span className="text-sm text-muted-foreground">
-                Showing {filteredExpenses.length} of {travelExpenses?.length ?? 0} records
-              </span>
-              <div className="flex-1" />
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search expenses..."
-                  value={expenseSearchTerm}
-                  onChange={(e) => setExpenseSearchTerm(e.target.value)}
-                  className="pl-8 w-56"
-                  data-testid="input-expense-search"
-                />
-              </div>
+            <div className="text-xs text-muted-foreground mb-2">
+              Showing {filteredExpenses.length} of {travelExpenses?.length ?? 0} records
             </div>
 
             {expensesLoading ? (
