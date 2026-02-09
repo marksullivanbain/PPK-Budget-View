@@ -1,15 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import type { AccountSpendItem } from "@shared/schema";
 
 interface ProgramByAccountProps {
-  accountData: AccountSpendItem[];
   caseCodeData: AccountSpendItem[];
-  viewMode: 'account' | 'caseCode';
-  onViewModeChange: (mode: 'account' | 'caseCode') => void;
   selectedCaseGroup?: string | null;
   selectedAccount?: string | null;
   onClearFilter?: () => void;
@@ -26,43 +22,22 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function ProgramByAccount({ accountData, caseCodeData, viewMode, onViewModeChange, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick, periodMode = 'ytd' }: ProgramByAccountProps) {
-  const data = viewMode === 'account' ? (accountData || []) : (caseCodeData || []);
+export function ProgramByAccount({ caseCodeData, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick, periodMode = 'ytd' }: ProgramByAccountProps) {
+  const data = caseCodeData || [];
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   const thresholdText = periodMode === 'month' ? '$1K' : '$20K';
-  const viewLabel = viewMode === 'account' ? 'Account' : 'Case Code';
 
   return (
     <Card className="p-5 flex flex-col border-card-border h-full" data-testid="card-program-by-account">
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-semibold text-foreground">Program Spend</h3>
-          <div className="flex items-center gap-1" data-testid="toggle-view-mode">
-            <Button
-              size="sm"
-              variant={viewMode === 'account' ? 'default' : 'ghost'}
-              onClick={() => onViewModeChange('account')}
-              className="h-7 px-2 text-xs"
-              data-testid="button-view-account"
-            >
-              Account
-            </Button>
-            <Button
-              size="sm"
-              variant={viewMode === 'caseCode' ? 'default' : 'ghost'}
-              onClick={() => onViewModeChange('caseCode')}
-              className="h-7 px-2 text-xs"
-              data-testid="button-view-case-code"
-            >
-              Case Code
-            </Button>
-          </div>
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
             {selectedCaseGroup 
               ? `Filtered by ${selectedCaseGroup} (≥${thresholdText})`
-              : `By ${viewLabel} ≥${thresholdText}`
+              : `By Case Code ≥${thresholdText}`
             }
           </p>
           {selectedCaseGroup && (

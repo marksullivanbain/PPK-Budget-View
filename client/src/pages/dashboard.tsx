@@ -84,7 +84,6 @@ export default function Dashboard() {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
-  const [programViewMode, setProgramViewMode] = useState<'account' | 'caseCode'>('account');
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
@@ -340,10 +339,7 @@ export default function Dashboard() {
                   data={dashboardData.compensationByAccount || []}
                 />
                 <ProgramByAccount
-                  accountData={dashboardData.programByAccount || []}
                   caseCodeData={dashboardData.programByCaseCode || []}
-                  viewMode={programViewMode}
-                  onViewModeChange={setProgramViewMode}
                   selectedCaseGroup={selectedCaseGroup}
                   selectedAccount={selectedAccount}
                   onClearFilter={() => setSelectedCaseGroup(null)}
@@ -382,7 +378,7 @@ export default function Dashboard() {
                 {selectedAccount && (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
-                    filterType={programViewMode === 'caseCode' ? 'caseCode' : 'account'}
+                    filterType={'caseCode'}
                     filterValue={selectedAccount}
                     filterLabel={selectedCaseGroup ? `${selectedCaseGroup} - ${selectedAccount}` : selectedAccount}
                     filterColor="#6B7280"
