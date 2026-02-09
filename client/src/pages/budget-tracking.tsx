@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, LayoutDashboard, TrendingUp, Users, Plus, Trash2, GripVertical, Edit2, Check, X, Wallet } from "lucide-react";
+import { LogOut, LayoutDashboard, TrendingUp, Users, Plus, Trash2, GripVertical, Edit2, Check, X, Wallet, Plane } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CostCenter, DynamicBudgetData, CaseCodeWithExpense, BudgetGroupWithCodes } from "@shared/schema";
@@ -400,6 +400,12 @@ export default function BudgetTracking() {
                 <Wallet className="w-4 h-4" />
                 <span className="hidden sm:inline">Budget Tracking</span>
               </Button>
+              <Link href="/travel-detail">
+                <Button variant="ghost" size="sm" className="gap-2" data-testid="link-travel-detail">
+                  <Plane className="w-4 h-4" />
+                  <span className="hidden sm:inline">Travel Detail</span>
+                </Button>
+              </Link>
             </nav>
           </div>
           

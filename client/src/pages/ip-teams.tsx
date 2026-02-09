@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut, Wallet } from "lucide-react";
+import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut, Wallet, Plane } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { IPTeamData, IPTeamEntry, IPTeamSummary } from "@shared/schema";
 
@@ -316,6 +316,12 @@ export default function IPTeamsPage() {
                 <Link href="/budget-tracking">
                   <Wallet className="h-4 w-4" />
                   Budget Tracking
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-travel-detail">
+                <Link href="/travel-detail">
+                  <Plane className="h-4 w-4" />
+                  Travel Detail
                 </Link>
               </Button>
             </div>

@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Trends from "@/pages/trends";
 import IPTeamsPage from "@/pages/ip-teams";
 import BudgetTracking from "@/pages/budget-tracking";
+import TravelDetail from "@/pages/travel-detail";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/trends" component={Trends} />
       <Route path="/ip-teams" component={IPTeamsPage} />
       <Route path="/budget-tracking" component={BudgetTracking} />
+      <Route path="/travel-detail" component={TravelDetail} />
       <Route component={NotFound} />
     </Switch>
   );

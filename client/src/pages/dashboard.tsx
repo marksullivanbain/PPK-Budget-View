@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
@@ -232,6 +232,12 @@ export default function Dashboard() {
                 <Link href="/budget-tracking">
                   <Wallet className="h-4 w-4" />
                   Budget Tracking
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-travel-detail">
+                <Link href="/travel-detail">
+                  <Plane className="h-4 w-4" />
+                  Travel Detail
                 </Link>
               </Button>
             </div>

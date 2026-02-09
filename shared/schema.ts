@@ -63,6 +63,8 @@ export const expenses = pgTable("expenses", {
   period: text("period"),
   spendType: text("spend_type"),
   sapInvoiceDocUrl: text("sap_invoice_doc_url"),
+  teeEmployeeName: text("tee_employee_name"),
+  teeAttachment: text("tee_attachment"),
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
@@ -192,6 +194,27 @@ export interface IPTeamData {
   interlockSubtotal: IPTeamSummary;
   rotationsSubtotal: IPTeamSummary;
   grandTotal: IPTeamSummary;
+}
+
+// Travel detail types
+export interface TravelCaseCodeSummary {
+  caseCode: string;
+  caseName: string;
+  totalAmount: number;
+  itemCount: number;
+}
+
+export interface TravelExpenseDetail {
+  id: string;
+  summaryAccount: string;
+  accountName: string;
+  caseCode: string;
+  caseName: string;
+  period: string;
+  lineDescription: string;
+  teeEmployeeName: string;
+  teeAttachment: string;
+  amount: number;
 }
 
 // Dynamic Budget Groups (user-created groupings for case codes)

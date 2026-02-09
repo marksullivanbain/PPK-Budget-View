@@ -61,6 +61,8 @@ export interface ExpenseRow {
   vendorName: string;
   period: string;
   sapInvoiceDocUrl: string;
+  teeEmployeeName: string;
+  teeAttachment: string;
 }
 
 function parseNumber(value: string): number {
@@ -233,6 +235,8 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
       const lineDescription = fields[33]?.trim() || '';
       const postedBy = fields[35]?.trim() || '';
       const vendorName = fields[49]?.trim() || '';
+      const teeEmployeeName = fields[52]?.trim() || '';
+      const teeAttachment = fields[54]?.trim() || '';
       const sapInvoiceDocUrl = fields[55]?.trim() || '';
       const amount = parseNumber(fields[59]);
       
@@ -276,7 +280,9 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
           postedBy,
           vendorName,
           period,
-          sapInvoiceDocUrl
+          sapInvoiceDocUrl,
+          teeEmployeeName,
+          teeAttachment
         });
       }
     }

@@ -26,6 +26,8 @@ import {
   type CaseCodeWithExpense,
   type BudgetGroupWithCodes,
   type DynamicBudgetData,
+  type TravelCaseCodeSummary,
+  type TravelExpenseDetail,
   budgetGroups,
   caseCodeMappings
 } from "@shared/schema";
@@ -249,6 +251,8 @@ export class MemStorage implements IStorage {
           period: row.period,
           spendType: row.spendType,
           sapInvoiceDocUrl: row.sapInvoiceDocUrl,
+          teeEmployeeName: row.teeEmployeeName,
+          teeAttachment: row.teeAttachment,
         });
       }
       
@@ -378,6 +382,8 @@ export class MemStorage implements IStorage {
       period: expense.period ?? null,
       spendType: expense.spendType ?? null,
       sapInvoiceDocUrl: expense.sapInvoiceDocUrl ?? null,
+      teeEmployeeName: expense.teeEmployeeName ?? null,
+      teeAttachment: expense.teeAttachment ?? null,
     };
     this.expenses.set(id, newExpense);
     return newExpense;
@@ -1316,6 +1322,108 @@ export class MemStorage implements IStorage {
       groups: groupsWithCodes,
       unassignedCaseCodes
     };
+  }
+  async getTravelSummaryByCaseCode(
+    costCenterId: string,
+    periodMode: 'ytd' | 'month' = 'ytd',
+    month: number = 12
+  ): Promise<TravelCaseCodeSummary[]> {
+    let expenses = costCenterId === "all"
+      ? Array.from(this.expenses.values())
+      : Array.from(this.expenses.values()).filter(
+          expense => expense.costCenterId === costCenterId
+        );
+    
+    // Filter to travel expenses only (summaryAccount contains "Travel")
+    expenses = expenses.filter(exp => 
+      exp.summaryAccount && exp.summaryAccount.toLowerCase().includes('travel')
+    );
+    
+    // Apply period filtering
+    expenses = expenses.filter(exp => {
+      const expMonth = exp.month || 12;
+      if (periodMode === 'ytd') {
+        return expMonth <= month;
+      } else {
+        return expMonth === month;
+      }
+    });
+    
+    // Group by case code
+    const caseCodeMap = new Map<string, { caseName: string; totalAmount: number; itemCount: number }>();
+    
+    for (const exp of expenses) {
+      const code = exp.caseCode || 'No Case Code';
+      const existing = caseCodeMap.get(code);
+      if (existing) {
+        existing.totalAmount += exp.amount;
+        existing.itemCount += 1;
+      } else {
+        caseCodeMap.set(code, {
+          caseName: exp.caseName || '',
+          totalAmount: exp.amount,
+          itemCount: 1,
+        });
+      }
+    }
+    
+    return Array.from(caseCodeMap.entries())
+      .map(([caseCode, data]) => ({
+        caseCode,
+        caseName: data.caseName,
+        totalAmount: Math.round(data.totalAmount),
+        itemCount: data.itemCount,
+      }))
+      .sort((a, b) => Math.abs(b.totalAmount) - Math.abs(a.totalAmount));
+  }
+
+  async getTravelExpenseDetails(
+    costCenterId: string,
+    caseCode: string,
+    periodMode: 'ytd' | 'month' = 'ytd',
+    month: number = 12
+  ): Promise<TravelExpenseDetail[]> {
+    let expenses = costCenterId === "all"
+      ? Array.from(this.expenses.values())
+      : Array.from(this.expenses.values()).filter(
+          expense => expense.costCenterId === costCenterId
+        );
+    
+    // Filter to travel expenses only
+    expenses = expenses.filter(exp => 
+      exp.summaryAccount && exp.summaryAccount.toLowerCase().includes('travel')
+    );
+    
+    // Apply period filtering
+    expenses = expenses.filter(exp => {
+      const expMonth = exp.month || 12;
+      if (periodMode === 'ytd') {
+        return expMonth <= month;
+      } else {
+        return expMonth === month;
+      }
+    });
+    
+    // Filter by case code
+    if (caseCode === 'No Case Code') {
+      expenses = expenses.filter(exp => !exp.caseCode);
+    } else {
+      expenses = expenses.filter(exp => exp.caseCode === caseCode);
+    }
+    
+    return expenses.map(exp => ({
+      id: exp.id,
+      summaryAccount: exp.summaryAccount || '',
+      accountName: exp.accountName || '',
+      caseCode: exp.caseCode || '',
+      caseName: exp.caseName || '',
+      period: exp.period || '',
+      lineDescription: exp.lineDescription || '',
+      teeEmployeeName: exp.teeEmployeeName || '',
+      teeAttachment: exp.teeAttachment || '',
+      amount: exp.amount,
+    }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   }
 }
 

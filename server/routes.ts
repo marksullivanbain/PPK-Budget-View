@@ -379,5 +379,64 @@ export async function registerRoutes(
     }
   });
 
+  // Travel Detail endpoints
+  app.get("/api/travel/:costCenterId/summary", isAuthenticated, async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const periodMode = (req.query.periodMode as string) || 'ytd';
+      const month = parseInt(req.query.month as string) || 12;
+      
+      const userEmail = getUserEmail(req);
+      if (!userEmail) {
+        return res.status(403).json({ error: "No email found" });
+      }
+      
+      if (costCenterId !== "all" && !hasAccessToPractice(userEmail, costCenterId)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const summary = await storage.getTravelSummaryByCaseCode(
+        costCenterId,
+        periodMode as 'ytd' | 'month',
+        month
+      );
+      res.json(summary);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch travel summary" });
+    }
+  });
+
+  app.get("/api/travel/:costCenterId/expenses", isAuthenticated, async (req, res) => {
+    try {
+      const { costCenterId } = req.params;
+      const caseCode = req.query.caseCode as string;
+      const periodMode = (req.query.periodMode as string) || 'ytd';
+      const month = parseInt(req.query.month as string) || 12;
+      
+      if (!caseCode) {
+        return res.status(400).json({ error: "caseCode query parameter required" });
+      }
+      
+      const userEmail = getUserEmail(req);
+      if (!userEmail) {
+        return res.status(403).json({ error: "No email found" });
+      }
+      
+      if (costCenterId !== "all" && !hasAccessToPractice(userEmail, costCenterId)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const expenses = await storage.getTravelExpenseDetails(
+        costCenterId,
+        caseCode,
+        periodMode as 'ytd' | 'month',
+        month
+      );
+      res.json(expenses);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch travel expenses" });
+    }
+  });
+
   return httpServer;
 }
