@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, Search, ArrowDown, ArrowUp } from "lucide-react";
+import { X, Search, ArrowDown, ArrowUp, Filter, Check } from "lucide-react";
 import type { ExpenseDetail } from "@shared/schema";
 
 interface ExpenseDetailsProps {
@@ -44,6 +47,8 @@ export function ExpenseDetails({
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
+  const [selectedCaseCodes, setSelectedCaseCodes] = useState<Set<string>>(new Set());
+  const [caseCodeSearch, setCaseCodeSearch] = useState("");
 
   const { data: expenses, isLoading } = useQuery<ExpenseDetail[]>({
     queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue, periodMode, month, caseGroup }],
@@ -59,6 +64,32 @@ export function ExpenseDetails({
     enabled: !!costCenterId && !!filterValue,
   });
 
+  const uniqueCaseCodes = useMemo(() => {
+    if (!expenses) return [];
+    const codeMap = new Map<string, string>();
+    for (const exp of expenses) {
+      if (exp.caseCode) {
+        const existing = codeMap.get(exp.caseCode);
+        if (!existing && exp.caseName) {
+          codeMap.set(exp.caseCode, exp.caseName);
+        } else if (!existing) {
+          codeMap.set(exp.caseCode, "");
+        }
+      }
+    }
+    return Array.from(codeMap.entries())
+      .map(([code, name]) => ({ code, name }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [expenses]);
+
+  const filteredCaseCodeOptions = useMemo(() => {
+    if (!caseCodeSearch) return uniqueCaseCodes;
+    const search = caseCodeSearch.toLowerCase();
+    return uniqueCaseCodes.filter(
+      cc => cc.code.toLowerCase().includes(search) || cc.name.toLowerCase().includes(search)
+    );
+  }, [uniqueCaseCodes, caseCodeSearch]);
+
   const filteredExpenses = (expenses?.filter(exp => {
     const matchesSearch = searchTerm === "" || 
       exp.lineDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,8 +98,11 @@ export function ExpenseDetails({
     
     const matchesPeriod = periodFilter === "all" || 
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
+
+    const matchesCaseCode = selectedCaseCodes.size === 0 || 
+      (exp.caseCode && selectedCaseCodes.has(exp.caseCode));
     
-    return matchesSearch && matchesPeriod;
+    return matchesSearch && matchesPeriod && matchesCaseCode;
   }) ?? []).sort((a, b) => {
     return sortDirection === 'desc' 
       ? Math.abs(b.amount) - Math.abs(a.amount)
@@ -79,7 +113,47 @@ export function ExpenseDetails({
     setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
   };
 
+  const toggleCaseCode = (code: string) => {
+    setSelectedCaseCodes(prev => {
+      const next = new Set(prev);
+      if (next.has(code)) {
+        next.delete(code);
+      } else {
+        next.add(code);
+      }
+      return next;
+    });
+  };
+
+  const clearCaseCodeFilter = () => {
+    setSelectedCaseCodes(new Set());
+    setCaseCodeSearch("");
+  };
+
+  const selectAllVisible = () => {
+    setSelectedCaseCodes(prev => {
+      const next = new Set(prev);
+      for (const cc of filteredCaseCodeOptions) {
+        next.add(cc.code);
+      }
+      return next;
+    });
+  };
+
+  const deselectAllVisible = () => {
+    setSelectedCaseCodes(prev => {
+      const next = new Set(prev);
+      for (const cc of filteredCaseCodeOptions) {
+        next.delete(cc.code);
+      }
+      return next;
+    });
+  };
+
   const uniquePeriods = Array.from(new Set(expenses?.map(e => e.period).filter(Boolean) ?? []));
+
+  const allVisibleSelected = filteredCaseCodeOptions.length > 0 && 
+    filteredCaseCodeOptions.every(cc => selectedCaseCodes.has(cc.code));
 
   return (
     <Card className="p-5 flex flex-col border-card-border" data-testid="card-expense-details">
@@ -108,38 +182,146 @@ export function ExpenseDetails({
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <span className="text-sm text-muted-foreground self-center">
-          Showing {filteredExpenses.length} of {expenses?.length ?? 0} records
-        </span>
-        <div className="flex-1" />
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Search:</span>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Vendor, description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 w-48"
-              data-testid="input-expense-search"
-            />
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <span className="text-sm text-muted-foreground self-center">
+            Showing {filteredExpenses.length} of {expenses?.length ?? 0} records
+          </span>
+          <div className="flex-1" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Search:</span>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Vendor, description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-48"
+                  data-testid="input-expense-search"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Period:</span>
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger className="w-32" data-testid="select-period-filter">
+                  <SelectValue placeholder="All Periods" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Periods</SelectItem>
+                  {uniquePeriods.map(period => (
+                    <SelectItem key={period} value={period || 'unknown'}>{period}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Case Code:</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5"
+                    data-testid="button-case-code-filter"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    {selectedCaseCodes.size === 0 
+                      ? "All Codes" 
+                      : `${selectedCaseCodes.size} selected`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0" align="end">
+                  <div className="p-3 border-b border-border">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search case codes..."
+                        value={caseCodeSearch}
+                        onChange={(e) => setCaseCodeSearch(e.target.value)}
+                        className="pl-8"
+                        data-testid="input-case-code-search"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={allVisibleSelected ? deselectAllVisible : selectAllVisible}
+                        data-testid="button-toggle-all-case-codes"
+                      >
+                        {allVisibleSelected ? "Deselect All" : "Select All"}
+                      </Button>
+                      {selectedCaseCodes.size > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={clearCaseCodeFilter}
+                          data-testid="button-clear-case-codes"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto p-1">
+                    {filteredCaseCodeOptions.length === 0 ? (
+                      <div className="py-4 text-center text-sm text-muted-foreground">
+                        No case codes found
+                      </div>
+                    ) : (
+                      filteredCaseCodeOptions.map(cc => (
+                        <label
+                          key={cc.code}
+                          className="flex items-center gap-2.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
+                          data-testid={`checkbox-case-code-${cc.code}`}
+                        >
+                          <Checkbox
+                            checked={selectedCaseCodes.has(cc.code)}
+                            onCheckedChange={() => toggleCaseCode(cc.code)}
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-foreground">{cc.code}</span>
+                            {cc.name && (
+                              <span className="text-xs text-muted-foreground truncate">{cc.name}</span>
+                            )}
+                          </div>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Period:</span>
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-32" data-testid="select-period-filter">
-              <SelectValue placeholder="All Periods" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Periods</SelectItem>
-              {uniquePeriods.map(period => (
-                <SelectItem key={period} value={period || 'unknown'}>{period}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
+        {selectedCaseCodes.size > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5" data-testid="selected-case-codes">
+            <span className="text-xs text-muted-foreground mr-1">Case codes:</span>
+            {Array.from(selectedCaseCodes).sort().map(code => (
+              <Badge
+                key={code}
+                variant="secondary"
+                className="gap-1 cursor-pointer"
+                onClick={() => toggleCaseCode(code)}
+                data-testid={`badge-case-code-${code}`}
+              >
+                {code}
+                <X className="w-3 h-3" />
+              </Badge>
+            ))}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={clearCaseCodeFilter}
+              data-testid="button-clear-all-case-codes"
+            >
+              Clear all
+            </Button>
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -165,7 +347,7 @@ export function ExpenseDetails({
             <span>Period</span>
             <button 
               onClick={toggleSort}
-              className="flex items-center justify-end gap-1 cursor-pointer hover:text-foreground transition-colors"
+              className="flex items-center justify-end gap-1 cursor-pointer transition-colors"
               data-testid="button-sort-amount"
             >
               <span>Amount</span>
