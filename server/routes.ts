@@ -410,7 +410,7 @@ export async function registerRoutes(
       const caseCodes = group.caseCodes.map(cc => cc.caseCode);
       const expenses = await storage.getExpensesForCaseCodes(practiceId, caseCodes, month);
 
-      const headers = ["Practice", "Budget Group", "Case Code", "Case Name", "Account Name", "Summary Account", "Period", "Line Description", "Vendor", "Amount"];
+      const headers = ["Practice", "Budget Group", "Case Code", "Case Name", "Account Name", "Summary Account", "Period", "Line Description", "Document Description", "T&E Employee", "Vendor", "Amount"];
       const csvRows = [headers.join(",")];
       for (const exp of expenses) {
         const row = [
@@ -422,6 +422,8 @@ export async function registerRoutes(
           csvEscape(exp.summaryAccount || ''),
           csvEscape(exp.period || ''),
           csvEscape(exp.lineDescription || ''),
+          csvEscape(exp.documentDescription || ''),
+          csvEscape(exp.teeEmployeeName || ''),
           csvEscape(exp.vendorName || ''),
           exp.amount.toString()
         ];
