@@ -16,6 +16,13 @@ function hasAllPracticesAccess(email: string): boolean {
   return practices !== null && practices.includes('All Practices');
 }
 
+function csvEscape(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -376,6 +383,58 @@ export async function registerRoutes(
       }
     } catch (error) {
       res.status(500).json({ error: "Failed to assign case code" });
+    }
+  });
+
+  // Export expense data for a budget group's case codes as CSV
+  app.get("/api/budget-tracking/:practiceId/export/:groupId", isAuthenticated, async (req, res) => {
+    try {
+      const { practiceId, groupId } = req.params;
+      const month = parseInt(req.query.month as string) || 12;
+      const userEmail = getUserEmail(req);
+
+      const costCenter = await storage.getCostCenter(practiceId);
+      if (!costCenter) {
+        return res.status(404).json({ error: "Practice not found" });
+      }
+      if (!hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+
+      const data = await storage.getDynamicBudgetData(practiceId, month);
+      const group = data.groups.find(g => g.id === groupId);
+      if (!group) {
+        return res.status(404).json({ error: "Budget group not found" });
+      }
+
+      const caseCodes = group.caseCodes.map(cc => cc.caseCode);
+      const expenses = await storage.getExpensesForCaseCodes(practiceId, caseCodes, month);
+
+      const headers = ["Practice", "Budget Group", "Case Code", "Case Name", "Account Name", "Summary Account", "Period", "Line Description", "Vendor", "Amount"];
+      const csvRows = [headers.join(",")];
+      for (const exp of expenses) {
+        const row = [
+          csvEscape(costCenter.name),
+          csvEscape(group.name),
+          csvEscape(exp.caseCode || ''),
+          csvEscape(exp.caseName || ''),
+          csvEscape(exp.accountName || ''),
+          csvEscape(exp.summaryAccount || ''),
+          csvEscape(exp.period || ''),
+          csvEscape(exp.lineDescription || ''),
+          csvEscape(exp.vendorName || ''),
+          exp.amount.toString()
+        ];
+        csvRows.push(row.join(","));
+      }
+
+      const csv = csvRows.join("\n");
+      const filename = `${costCenter.name.replace(/[^a-zA-Z0-9]/g, '_')}_${group.name.replace(/[^a-zA-Z0-9]/g, '_')}_expenses.csv`;
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export data" });
     }
   });
 

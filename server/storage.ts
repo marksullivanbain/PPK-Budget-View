@@ -77,6 +77,7 @@ export interface IStorage {
   
   getDynamicBudgetData(practiceId: string, month: number): Promise<DynamicBudgetData>;
   getCaseCodesWithExpenses(practiceId: string, month: number): Promise<CaseCodeWithExpense[]>;
+  getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number): Promise<Expense[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -1424,6 +1425,21 @@ export class MemStorage implements IStorage {
       amount: exp.amount,
     }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  }
+
+  async getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number): Promise<Expense[]> {
+    const caseCodeSet = new Set(caseCodes);
+    const categories = await this.getSpendCategories(practiceId);
+    const compensationCategoryIds = new Set(
+      categories.filter(c => c.name === "Compensation").map(c => c.id)
+    );
+
+    return Array.from(this.expenses.values()).filter(exp => {
+      if (exp.costCenterId !== practiceId) return false;
+      if (exp.month > month) return false;
+      if (compensationCategoryIds.has(exp.categoryId)) return false;
+      return caseCodeSet.has(exp.caseCode || '');
+    });
   }
 }
 

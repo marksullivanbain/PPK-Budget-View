@@ -127,6 +127,7 @@ The following practices are consolidated for reporting:
 - `POST /api/budget-tracking/:practiceId/groups` - Create a new budget group
 - `PUT /api/budget-tracking/groups/:groupId` - Update group name/budget
 - `DELETE /api/budget-tracking/groups/:groupId` - Delete a group (also removes case code mappings)
+- `GET /api/budget-tracking/:practiceId/export/:groupId?month=N` - Export expense data for a group's case codes as CSV (10 columns: Practice, Budget Group, Case Code, Case Name, Account Name, Summary Account, Period, Line Description, Vendor, Amount)
 - `POST /api/budget-tracking/:practiceId/assign` - Assign/unassign case code to group
 
 ## Data Model

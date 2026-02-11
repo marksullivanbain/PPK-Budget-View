@@ -25,8 +25,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, LayoutDashboard, TrendingUp, Users, Plus, Trash2, GripVertical, Edit2, Check, X, Wallet, Plane } from "lucide-react";
+import { LogOut, LayoutDashboard, TrendingUp, Users, Plus, Trash2, GripVertical, Edit2, Check, X, Wallet, Plane, Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CostCenter, DynamicBudgetData, CaseCodeWithExpense, BudgetGroupWithCodes } from "@shared/schema";
 
@@ -132,12 +133,45 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
     setIsEditing(false);
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
   const variance = group.ytdBudget - group.ytdActual;
   const isOverBudget = variance < 0;
 
+  const handleDownload = async () => {
+    if (group.caseCodes.length === 0) {
+      toast({ title: "No case codes", description: "Add case codes to this group before downloading.", variant: "destructive" });
+      return;
+    }
+    setIsDownloading(true);
+    try {
+      const res = await fetch(`/api/budget-tracking/${practiceId}/export/${group.id}?month=${month}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch ? filenameMatch[1] : `${group.name}_expenses.csv`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "Download started", description: `Exported ${group.caseCodes.length} case codes to CSV.` });
+    } catch {
+      toast({ title: "Export failed", description: "Could not download the expense data. Please try again.", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <Card className="p-4 border-card-border" data-testid={`budget-group-${group.id}`}>
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between gap-1 mb-3">
         {isEditing ? (
           <div className="flex-1 flex items-center gap-2">
             <Input
@@ -162,9 +196,21 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
             </Button>
           </div>
         )}
-        <Button size="icon" variant="ghost" onClick={() => onDelete(group.id)} data-testid="button-delete-group">
-          <Trash2 className="w-4 h-4 text-destructive" />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleDownload}
+            disabled={group.caseCodes.length === 0 || isDownloading}
+            data-testid={`button-download-group-${group.id}`}
+            title="Download expense data for this group"
+          >
+            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => onDelete(group.id)} data-testid="button-delete-group">
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        </div>
       </div>
 
       {isEditing && (
