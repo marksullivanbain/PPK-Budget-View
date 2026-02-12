@@ -323,8 +323,18 @@ export async function registerRoutes(
   app.put("/api/budget-tracking/groups/:groupId", isAuthenticated, async (req, res) => {
     try {
       const groupId = req.params.groupId as string;
+      const userEmail = getUserEmail(req);
+
+      const group = await storage.getBudgetGroupById(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "Budget group not found" });
+      }
+      const costCenter = await storage.getCostCenter(group.practiceId);
+      if (costCenter && !hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+
       const { name, allocatedBudget, displayOrder } = req.body;
-      
       const updates: any = {};
       if (name !== undefined) updates.name = name;
       if (allocatedBudget !== undefined) updates.allocatedBudget = allocatedBudget;
@@ -345,8 +355,18 @@ export async function registerRoutes(
   app.delete("/api/budget-tracking/groups/:groupId", isAuthenticated, async (req, res) => {
     try {
       const groupId = req.params.groupId as string;
+      const userEmail = getUserEmail(req);
+
+      const group = await storage.getBudgetGroupById(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "Budget group not found" });
+      }
+      const costCenter = await storage.getCostCenter(group.practiceId);
+      if (costCenter && !hasAccessToPractice(userEmail || '', costCenter.name)) {
+        return res.status(403).json({ error: "Access denied to this practice" });
+      }
+
       const success = await storage.deleteBudgetGroup(groupId);
-      
       if (!success) {
         return res.status(404).json({ error: "Budget group not found" });
       }

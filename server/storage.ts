@@ -67,6 +67,7 @@ export interface IStorage {
   
   // Dynamic Budget Group methods
   getBudgetGroups(practiceId: string): Promise<BudgetGroup[]>;
+  getBudgetGroupById(id: string): Promise<BudgetGroup | undefined>;
   createBudgetGroup(group: InsertBudgetGroup): Promise<BudgetGroup>;
   updateBudgetGroup(id: string, updates: Partial<InsertBudgetGroup>): Promise<BudgetGroup | undefined>;
   deleteBudgetGroup(id: string): Promise<boolean>;
@@ -1094,6 +1095,11 @@ export class MemStorage implements IStorage {
   async getBudgetGroups(practiceId: string): Promise<BudgetGroup[]> {
     const groups = await db.select().from(budgetGroups).where(eq(budgetGroups.practiceId, practiceId));
     return groups.sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  async getBudgetGroupById(id: string): Promise<BudgetGroup | undefined> {
+    const [group] = await db.select().from(budgetGroups).where(eq(budgetGroups.id, id));
+    return group;
   }
 
   async createBudgetGroup(group: InsertBudgetGroup): Promise<BudgetGroup> {
