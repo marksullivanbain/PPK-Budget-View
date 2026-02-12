@@ -1327,13 +1327,29 @@ export class MemStorage implements IStorage {
   async getTravelSummaryByCaseCode(
     costCenterId: string,
     periodMode: 'ytd' | 'month' = 'ytd',
-    month: number = 12
+    month: number = 12,
+    allowedPractices?: string[] | null
   ): Promise<TravelCaseCodeSummary[]> {
-    let expenses = costCenterId === "all"
-      ? Array.from(this.expenses.values())
-      : Array.from(this.expenses.values()).filter(
-          expense => expense.costCenterId === costCenterId
+    let expenses: Expense[];
+    if (costCenterId === "all") {
+      if (allowedPractices !== null && allowedPractices !== undefined && !allowedPractices.includes('All Practices')) {
+        const allowedCostCenterIds = new Set<string>();
+        for (const cc of this.costCenters.values()) {
+          if (allowedPractices.includes(cc.name)) {
+            allowedCostCenterIds.add(cc.id);
+          }
+        }
+        expenses = Array.from(this.expenses.values()).filter(
+          exp => allowedCostCenterIds.has(exp.costCenterId)
         );
+      } else {
+        expenses = Array.from(this.expenses.values());
+      }
+    } else {
+      expenses = Array.from(this.expenses.values()).filter(
+        expense => expense.costCenterId === costCenterId
+      );
+    }
     
     // Filter to travel expenses only (summaryAccount contains "Travel")
     expenses = expenses.filter(exp => 
@@ -1382,13 +1398,29 @@ export class MemStorage implements IStorage {
     costCenterId: string,
     caseCode: string,
     periodMode: 'ytd' | 'month' = 'ytd',
-    month: number = 12
+    month: number = 12,
+    allowedPractices?: string[] | null
   ): Promise<TravelExpenseDetail[]> {
-    let expenses = costCenterId === "all"
-      ? Array.from(this.expenses.values())
-      : Array.from(this.expenses.values()).filter(
-          expense => expense.costCenterId === costCenterId
+    let expenses: Expense[];
+    if (costCenterId === "all") {
+      if (allowedPractices !== null && allowedPractices !== undefined && !allowedPractices.includes('All Practices')) {
+        const allowedCostCenterIds = new Set<string>();
+        for (const cc of this.costCenters.values()) {
+          if (allowedPractices.includes(cc.name)) {
+            allowedCostCenterIds.add(cc.id);
+          }
+        }
+        expenses = Array.from(this.expenses.values()).filter(
+          exp => allowedCostCenterIds.has(exp.costCenterId)
         );
+      } else {
+        expenses = Array.from(this.expenses.values());
+      }
+    } else {
+      expenses = Array.from(this.expenses.values()).filter(
+        expense => expense.costCenterId === costCenterId
+      );
+    }
     
     // Filter to travel expenses only
     expenses = expenses.filter(exp => 

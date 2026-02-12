@@ -451,15 +451,24 @@ export async function registerRoutes(
       if (!userEmail) {
         return res.status(403).json({ error: "No email found" });
       }
-      
-      if (costCenterId !== "all" && !hasAccessToPractice(userEmail, costCenterId)) {
-        return res.status(403).json({ error: "Access denied" });
+
+      const allowedPractices = getPracticesForEmail(userEmail);
+
+      if (costCenterId !== "all") {
+        const costCenter = await storage.getCostCenter(costCenterId);
+        if (!costCenter) {
+          return res.status(404).json({ error: "Cost center not found" });
+        }
+        if (!hasAccessToPractice(userEmail, costCenter.name)) {
+          return res.status(403).json({ error: "Access denied" });
+        }
       }
       
       const summary = await storage.getTravelSummaryByCaseCode(
         costCenterId,
         periodMode as 'ytd' | 'month',
-        month
+        month,
+        allowedPractices
       );
       res.json(summary);
     } catch (error) {
@@ -482,16 +491,25 @@ export async function registerRoutes(
       if (!userEmail) {
         return res.status(403).json({ error: "No email found" });
       }
-      
-      if (costCenterId !== "all" && !hasAccessToPractice(userEmail, costCenterId)) {
-        return res.status(403).json({ error: "Access denied" });
+
+      const allowedPractices = getPracticesForEmail(userEmail);
+
+      if (costCenterId !== "all") {
+        const costCenter = await storage.getCostCenter(costCenterId);
+        if (!costCenter) {
+          return res.status(404).json({ error: "Cost center not found" });
+        }
+        if (!hasAccessToPractice(userEmail, costCenter.name)) {
+          return res.status(403).json({ error: "Access denied" });
+        }
       }
       
       const expenses = await storage.getTravelExpenseDetails(
         costCenterId,
         caseCode,
         periodMode as 'ytd' | 'month',
-        month
+        month,
+        allowedPractices
       );
       res.json(expenses);
     } catch (error) {
