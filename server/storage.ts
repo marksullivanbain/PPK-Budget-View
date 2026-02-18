@@ -755,7 +755,7 @@ export class MemStorage implements IStorage {
     // Apply period filtering if specified
     if (periodMode && month) {
       expenses = expenses.filter(exp => {
-        const expMonth = exp.postingPeriod || 12;
+        const expMonth = exp.month || 12;
         if (periodMode === 'ytd') {
           return expMonth <= month;
         } else {
