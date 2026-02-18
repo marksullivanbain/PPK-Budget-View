@@ -73,7 +73,7 @@ shared/
 - Expense year is extracted from column Z (index 25) of expense CSVs
 - Each expense record stores its year; filtering methods check year field to isolate data
 - All API endpoints accept `year` query parameter (e.g., `?year=2026`)
-- IP Teams page does not have multi-year support (only 2025 IP data available)
+- IP Teams page supports multi-year (2025 and 2026 IP data available via year selector)
 
 ## Budget Column Mapping (Full Year 2025 file format)
 - **Practice**: Column I (index 8) - Cost Center Name
@@ -111,11 +111,12 @@ The following practices are consolidated for reporting:
 - `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value&year=2025` - Get expense line items for drill-down
 - `GET /api/cost-centers/:costCenterId/trends?year=2025` - Get monthly trend data for charts
 - `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N&year=2025` - Get key variances for All Practices view
-- `GET /api/ip-teams/practices` - Get list of practices with IP Teams data
-- `GET /api/ip-teams/data?practice=X&month=N` - Get IP Teams investment tracking data
+- `GET /api/ip-teams/practices?year=2026` - Get list of practices with IP Teams data
+- `GET /api/ip-teams/data?practice=X&month=N&year=2026` - Get IP Teams investment tracking data
 
 ## IP Teams Investment Tracking
-- Data source: `attached_assets/IP_data_(2025)_*.csv` - Non-cash investment tracking
+- Data sources: `attached_assets/IP_data_(2025)_*.csv` and `attached_assets/IP_data_(Jan_2026)_*.csv` - Non-cash investment tracking
+- Multi-year support: Year selector on IP Teams page, data stored per year
 - Three investment types: Traditional, Interlock, Rotations
 - Columns: Cost Center (A), Type (E), Monthly amounts (P-AA), YTD (AB), CY25/Budget (AC), Name (J), Case (K)
 - Shows per-person entries with monthly breakdown, YTD totals, and budget comparison

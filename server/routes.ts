@@ -222,8 +222,9 @@ export async function registerRoutes(
     try {
       const userEmail = getUserEmail(req);
       const allowedPractices = getPracticesForEmail(userEmail || '');
+      const year = parseInt(req.query.year as string) || 2026;
       
-      const allPractices = await storage.getIPTeamsPractices();
+      const allPractices = await storage.getIPTeamsPractices(year);
       
       // Filter practices based on access control
       let filteredPractices = allPractices;
@@ -244,6 +245,7 @@ export async function registerRoutes(
       const allowedPractices = getPracticesForEmail(userEmail || '');
       const practice = req.query.practice as string | null;
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2026;
       
       // Check access to requested practice
       if (practice && allowedPractices !== null && !allowedPractices.includes('All Practices')) {
@@ -252,7 +254,7 @@ export async function registerRoutes(
         }
       }
       
-      const data = await storage.getIPTeamsData(practice, month, allowedPractices);
+      const data = await storage.getIPTeamsData(practice, month, allowedPractices, year);
       res.json(data);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch IP teams data" });

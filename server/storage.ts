@@ -62,8 +62,8 @@ export interface IStorage {
   
   getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number, year?: number): Promise<KeyVarianceItem[]>;
   
-  getIPTeamsPractices(): Promise<string[]>;
-  getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData>;
+  getIPTeamsPractices(year?: number): Promise<string[]>;
+  getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null, year?: number): Promise<IPTeamData>;
   
   // Dynamic Budget Group methods
   getBudgetGroups(practiceId: string): Promise<BudgetGroup[]>;
@@ -114,7 +114,7 @@ export class MemStorage implements IStorage {
   private monthlyBudgets: Map<string, number[]>;  // "year:categoryId" -> monthly amounts array
   private expenses: Map<string, Expense>;
   private costCenterIdMap: Map<string, string>;
-  private ipTeamEntries: IPTeamEntry[];
+  private ipTeamEntriesByYear: Map<number, IPTeamEntry[]>;
   private latestMonthByYear: Map<number, number>;
 
   constructor() {
@@ -125,7 +125,7 @@ export class MemStorage implements IStorage {
     this.monthlyBudgets = new Map();
     this.expenses = new Map();
     this.costCenterIdMap = new Map();
-    this.ipTeamEntries = [];
+    this.ipTeamEntriesByYear = new Map();
     this.latestMonthByYear = new Map();
     
     this.loadCSVData();
@@ -1002,46 +1002,53 @@ export class MemStorage implements IStorage {
   }
 
   private loadIPTeamsData() {
-    try {
-      const ipTeamsPath = "attached_assets/IP_data_(2025)_1769541304144.csv";
-      const rows = parseIPTeamsCSV(ipTeamsPath);
-      
-      let id = 1;
-      for (const row of rows) {
-        this.ipTeamEntries.push({
-          id: `ip-${id++}`,
-          costCenter: row.costCenter,
-          type: row.type,
-          interlock1: row.interlock1,
-          interlock2: row.interlock2,
-          interlock3: row.interlock3,
-          serviceLine: row.serviceLine,
-          name: row.name,
-          caseCode: row.caseCode,
-          caseName: row.caseName,
-          level: row.level,
-          percentage: row.percentage,
-          monthlyAmounts: row.monthlyAmounts,
-          ytd: row.ytd,
-          cy25: row.cy25,
-        });
+    const ipFiles: { year: number; path: string }[] = [
+      { year: 2025, path: "attached_assets/IP_data_(2025)_1769541304144.csv" },
+      { year: 2026, path: "attached_assets/IP_data_(Jan_2026)_1771435732755.csv" },
+    ];
+
+    for (const { year, path: ipPath } of ipFiles) {
+      try {
+        const rows = parseIPTeamsCSV(ipPath);
+        const entries: IPTeamEntry[] = [];
+        let id = 1;
+        for (const row of rows) {
+          entries.push({
+            id: `ip-${year}-${id++}`,
+            costCenter: row.costCenter,
+            type: row.type,
+            interlock1: row.interlock1,
+            interlock2: row.interlock2,
+            interlock3: row.interlock3,
+            serviceLine: row.serviceLine,
+            name: row.name,
+            caseCode: row.caseCode,
+            caseName: row.caseName,
+            level: row.level,
+            percentage: row.percentage,
+            monthlyAmounts: row.monthlyAmounts,
+            ytd: row.ytd,
+            cy25: row.cy25,
+          });
+        }
+        this.ipTeamEntriesByYear.set(year, entries);
+        console.log(`Loaded ${entries.length} IP team entries for ${year}`);
+      } catch (error) {
+        console.error(`Error loading IP Teams data for ${year}:`, error);
       }
-      
-      console.log(`Loaded ${this.ipTeamEntries.length} IP team entries`);
-    } catch (error) {
-      console.error("Error loading IP Teams data:", error);
     }
   }
 
-  async getIPTeamsPractices(): Promise<string[]> {
+  async getIPTeamsPractices(year: number = 2025): Promise<string[]> {
+    const entries = this.ipTeamEntriesByYear.get(year) || [];
     const practices = new Set<string>();
-    for (const entry of this.ipTeamEntries) {
+    for (const entry of entries) {
       practices.add(entry.costCenter);
     }
     return Array.from(practices).sort();
   }
 
-  async getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData> {
+  async getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null, year: number = 2025): Promise<IPTeamData> {
     // Helper to check if practice matches (handles missing "Practice" suffix)
     const practiceMatches = (value: string, targetPractice: string): boolean => {
       if (!value || value === 'n/a') return false;
@@ -1067,10 +1074,12 @@ export class MemStorage implements IStorage {
       );
     };
     
+    const ipEntries = this.ipTeamEntriesByYear.get(year) || [];
+    
     // Split by type first, filtering by access control
-    const allTraditional = this.ipTeamEntries.filter(e => e.type === 'Traditional' && isAccessible(e));
-    const allInterlock = this.ipTeamEntries.filter(e => e.type === 'Interlock' && isAccessible(e));
-    const allRotations = this.ipTeamEntries.filter(e => e.type === 'Rotations' && isAccessible(e));
+    const allTraditional = ipEntries.filter(e => e.type === 'Traditional' && isAccessible(e));
+    const allInterlock = ipEntries.filter(e => e.type === 'Interlock' && isAccessible(e));
+    const allRotations = ipEntries.filter(e => e.type === 'Rotations' && isAccessible(e));
     
     let traditionalRows = allTraditional;
     let interlockRows = allInterlock;
@@ -1148,7 +1157,7 @@ export class MemStorage implements IStorage {
     };
     
     // Get practices list, filtered by access control
-    let practices = await this.getIPTeamsPractices();
+    let practices = await this.getIPTeamsPractices(year);
     if (allowedPractices && !allowedPractices.includes('All Practices')) {
       practices = practices.filter(p => allowedPractices.includes(p));
     }

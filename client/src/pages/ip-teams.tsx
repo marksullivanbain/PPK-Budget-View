@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut, Wallet, Plane } from "lucide-react";
+import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut, Wallet, Plane, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { IPTeamData, IPTeamEntry, IPTeamSummary } from "@shared/schema";
 
@@ -224,15 +224,31 @@ function PersonDetailTable({ entries, month }: { entries: IPTeamEntry[]; month: 
 
 export default function IPTeamsPage() {
   const { user } = useAuth();
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
   const [selectedPractice, setSelectedPractice] = useState<string>("");
-  const [selectedMonth, setSelectedMonth] = useState<string>("12");
+  const [selectedMonth, setSelectedMonth] = useState<string>("1");
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   
+  const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
+    queryKey: [`/api/latest-month?year=${selectedYear}`],
+  });
+
+  useEffect(() => {
+    if (latestMonthData) {
+      setSelectedMonth(String(latestMonthData.latestMonth));
+    }
+  }, [latestMonthData]);
+
+  useEffect(() => {
+    setSelectedPractice("");
+    setSelectedCaseCode(null);
+  }, [selectedYear]);
+
   const { data: userAccess } = useQuery<{ canSeeAllPractices: boolean }>({
     queryKey: ['/api/user-access'],
   });
 
-  const queryParams = new URLSearchParams({ month: selectedMonth });
+  const queryParams = new URLSearchParams({ month: selectedMonth, year: selectedYear });
   if (selectedPractice && selectedPractice !== 'all') {
     queryParams.set('practice', selectedPractice);
   }
@@ -327,6 +343,17 @@ export default function IPTeamsPage() {
             </div>
             
             <div className="flex gap-3">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[100px]" data-testid="select-year">
+                  <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={selectedPractice} onValueChange={setSelectedPractice}>
                 <SelectTrigger className="w-[200px]" data-testid="select-practice">
                   <SelectValue placeholder="Select Practice" />
