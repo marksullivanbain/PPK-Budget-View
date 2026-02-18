@@ -28,8 +28,11 @@ export function parseAccessTable(): AccessEntry[] {
   const files = fs.readdirSync(assetsDir);
   const accessFiles = files
     .filter(f => f.includes('Security_Access_Table') && f.endsWith('.csv'))
-    .sort()
-    .reverse(); // Latest file first (highest timestamp)
+    .sort((a, b) => {
+      const tsA = parseInt(a.match(/_(\d+)\.csv$/)?.[1] || '0');
+      const tsB = parseInt(b.match(/_(\d+)\.csv$/)?.[1] || '0');
+      return tsB - tsA;
+    });
   
   const accessFile = accessFiles[0];
   
@@ -68,8 +71,10 @@ export function parseAccessTable(): AccessEntry[] {
     const employeeName = fields[1]?.trim();
     const bainEmail = fields[2]?.trim();
     
-    if (practiceName && bainEmail) {
-      const email = extractEmail(bainEmail);
+    const emailSource = bainEmail || employeeName || '';
+    
+    if (practiceName && emailSource && emailSource.includes('@')) {
+      const email = extractEmail(emailSource);
       entries.push({
         practiceName,
         employeeName,
