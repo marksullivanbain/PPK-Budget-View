@@ -7,7 +7,7 @@ interface KpiCardProps {
   subtitle?: string;
   icon: "dollar" | "wallet" | "percent" | "variance";
   trend?: "up" | "down";
-  accentColor?: "default" | "green";
+  accentColor?: "default" | "green" | "red";
 }
 
 export function KpiCard({ title, value, subtitle, icon, trend, accentColor = "default" }: KpiCardProps) {
@@ -29,7 +29,7 @@ export function KpiCard({ title, value, subtitle, icon, trend, accentColor = "de
       <div className="flex flex-col gap-1">
         <span 
           className={`text-3xl font-semibold tracking-tight ${
-            accentColor === "green" ? "text-emerald-400" : "text-foreground"
+            accentColor === "green" ? "text-emerald-400" : accentColor === "red" ? "text-red-400" : "text-foreground"
           }`}
           data-testid={`text-kpi-value-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >

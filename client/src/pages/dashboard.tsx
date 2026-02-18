@@ -348,7 +348,7 @@ export default function Dashboard() {
                 subtitle={dashboardData.isUnderBudget ? "Under budget" : "Over budget"}
                 icon="variance"
                 trend={dashboardData.isUnderBudget ? "down" : "up"}
-                accentColor={dashboardData.isUnderBudget ? "green" : "default"}
+                accentColor={dashboardData.isUnderBudget ? "green" : "red"}
               />
             </div>
 
