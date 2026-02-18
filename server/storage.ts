@@ -135,7 +135,7 @@ export class MemStorage implements IStorage {
   private loadCSVData() {
     try {
       const budgetPath2025 = "attached_assets/2025_Budget_by_Category_1769533343675.csv";
-      const budgetPath2026 = "attached_assets/2026_Budget_by_Category_1771431742331.csv";
+      const budgetPath2026 = "attached_assets/2026_Budget_by_Category_1771432595886.csv";
       const expensePath2025 = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
       const expensePath2026 = "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771430599669.csv";
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
