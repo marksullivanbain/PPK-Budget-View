@@ -33,7 +33,7 @@ export default function TravelDetail() {
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [expenseSearchTerm, setExpenseSearchTerm] = useState("");
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [expenseSortDirection, setExpenseSortDirection] = useState<'desc' | 'asc'>('desc');
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({

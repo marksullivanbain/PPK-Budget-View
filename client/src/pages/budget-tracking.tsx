@@ -275,7 +275,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }:
 export default function BudgetTracking() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 

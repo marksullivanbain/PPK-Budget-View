@@ -77,7 +77,7 @@ export async function registerRoutes(
       // Parse period filter parameters
       const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       const caseGroupFilter = req.query.caseGroup as string | undefined;
       
       // Allow "all" as a special case for combined view
@@ -198,7 +198,7 @@ export async function registerRoutes(
       const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
       const limit = parseInt(req.query.limit as string) || 20;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       
       const variances = await storage.getKeyVariances(periodMode, month, limit, year);
       res.json(variances);
@@ -264,7 +264,7 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied to this practice" });
       }
       
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       const trends = await storage.getMonthlyTrends(costCenterId, year);
       res.json(trends);
     } catch (error) {
@@ -279,7 +279,7 @@ export async function registerRoutes(
     try {
       const practiceId = req.params.practiceId as string;
       const month = parseInt(req.query.month as string) || 12;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       const userEmail = getUserEmail(req);
       
       const costCenter = await storage.getCostCenter(practiceId);
@@ -417,7 +417,7 @@ export async function registerRoutes(
     try {
       const { practiceId, groupId } = req.params;
       const month = parseInt(req.query.month as string) || 12;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       const userEmail = getUserEmail(req);
 
       const costCenter = await storage.getCostCenter(practiceId);
@@ -473,7 +473,7 @@ export async function registerRoutes(
       const { costCenterId } = req.params;
       const periodMode = (req.query.periodMode as string) || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       
       const userEmail = getUserEmail(req);
       if (!userEmail) {
@@ -511,7 +511,7 @@ export async function registerRoutes(
       const caseCode = req.query.caseCode as string;
       const periodMode = (req.query.periodMode as string) || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
-      const year = parseInt(req.query.year as string) || 2025;
+      const year = parseInt(req.query.year as string) || 2026;
       
       if (!caseCode) {
         return res.status(400).json({ error: "caseCode query parameter required" });
