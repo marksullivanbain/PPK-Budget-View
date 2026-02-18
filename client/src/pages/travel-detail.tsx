@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { CostCenterSelector } from "@/components/cost-center-selector";
@@ -29,12 +29,26 @@ export default function TravelDetail() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState("all");
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
-  const [selectedMonth, setSelectedMonth] = useState<number>(12);
+  const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [expenseSearchTerm, setExpenseSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [expenseSortDirection, setExpenseSortDirection] = useState<'desc' | 'asc'>('desc');
+
+  const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
+    queryKey: ['/api/latest-month', selectedYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/latest-month?year=${selectedYear}`);
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (latestMonthData) {
+      setSelectedMonth(latestMonthData.latestMonth);
+    }
+  }, [latestMonthData]);
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { KpiCard } from "@/components/kpi-card";
@@ -83,8 +83,22 @@ export default function Dashboard() {
   const [selectedCaseGroup, setSelectedCaseGroup] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
-  const [selectedMonth, setSelectedMonth] = useState<number>(12);
+  const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [selectedYear, setSelectedYear] = useState<number>(2026);
+
+  const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
+    queryKey: ['/api/latest-month', selectedYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/latest-month?year=${selectedYear}`);
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (latestMonthData) {
+      setSelectedMonth(latestMonthData.latestMonth);
+    }
+  }, [latestMonthData]);
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],

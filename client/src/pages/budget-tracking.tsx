@@ -276,8 +276,22 @@ export default function BudgetTracking() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<number>(2026);
-  const [selectedMonth, setSelectedMonth] = useState<number>(12);
+  const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
+  const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
+    queryKey: ['/api/latest-month', selectedYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/latest-month?year=${selectedYear}`);
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (latestMonthData) {
+      setSelectedMonth(latestMonthData.latestMonth);
+    }
+  }, [latestMonthData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

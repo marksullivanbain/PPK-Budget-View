@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -58,6 +58,14 @@ export default function Trends() {
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [spendFilter, setSpendFilter] = useState<SpendFilter>('all');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
+
+  const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
+    queryKey: ['/api/latest-month', selectedYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/latest-month?year=${selectedYear}`);
+      return res.json();
+    },
+  });
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],

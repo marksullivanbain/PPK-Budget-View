@@ -38,6 +38,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/latest-month", isAuthenticated, async (req, res) => {
+    try {
+      const year = parseInt(req.query.year as string) || 2026;
+      const latestMonth = storage.getLatestMonth(year);
+      res.json({ year, latestMonth });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch latest month" });
+    }
+  });
+
   // Get all cost centers (filtered by user access)
   app.get("/api/cost-centers", isAuthenticated, async (req, res) => {
     try {

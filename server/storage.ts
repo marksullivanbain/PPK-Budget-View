@@ -115,6 +115,7 @@ export class MemStorage implements IStorage {
   private expenses: Map<string, Expense>;
   private costCenterIdMap: Map<string, string>;
   private ipTeamEntries: IPTeamEntry[];
+  private latestMonthByYear: Map<number, number>;
 
   constructor() {
     this.users = new Map();
@@ -125,6 +126,7 @@ export class MemStorage implements IStorage {
     this.expenses = new Map();
     this.costCenterIdMap = new Map();
     this.ipTeamEntries = [];
+    this.latestMonthByYear = new Map();
     
     this.loadCSVData();
     this.loadIPTeamsData();
@@ -315,10 +317,29 @@ export class MemStorage implements IStorage {
       
       console.log(`Loaded ${this.costCenters.size} cost centers, ${this.spendCategories.size} categories, ${this.expenses.size} expenses`);
       
+      this.computeLatestMonths();
+      
     } catch (error) {
       console.error("Error loading CSV data, falling back to seed data:", error);
       this.seedFallbackData();
     }
+  }
+
+  private computeLatestMonths() {
+    this.latestMonthByYear = new Map();
+    for (const expense of this.expenses.values()) {
+      const current = this.latestMonthByYear.get(expense.year) || 0;
+      if (expense.month > current) {
+        this.latestMonthByYear.set(expense.year, expense.month);
+      }
+    }
+    for (const [year, month] of this.latestMonthByYear.entries()) {
+      console.log(`Latest expense month for ${year}: ${month}`);
+    }
+  }
+
+  getLatestMonth(year: number): number {
+    return this.latestMonthByYear.get(year) || 1;
   }
 
   private seedFallbackData() {
