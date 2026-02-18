@@ -49,6 +49,7 @@ export interface ExpenseRow {
   normalizedSpendType: string;
   coreProgram: string | null;
   amount: number;
+  year: number;
   // Detail fields
   lineDescription: string;
   summaryAccount: string;
@@ -230,6 +231,8 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
       const caseName = fields[16]?.trim() || '';
       const summaryAccount = fields[20]?.trim() || '';
       const accountName = fields[22]?.trim() || '';
+      const yearField = parseInt(fields[25]?.trim() || '2025');
+      const year = isNaN(yearField) ? 2025 : yearField;
       const period = fields[26]?.trim() || '';
       const documentDescription = fields[30]?.trim() || '';
       const lineDescription = fields[33]?.trim() || '';
@@ -270,6 +273,7 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
           normalizedSpendType,
           coreProgram: caseGroupCode || null,
           amount,
+          year,
           lineDescription,
           summaryAccount,
           accountName,

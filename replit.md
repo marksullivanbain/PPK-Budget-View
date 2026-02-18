@@ -62,8 +62,18 @@ shared/
 
 ## Data Source
 - Budget data: `attached_assets/2025_Budget_by_Category_*.csv` - Full year 2025 budget (sums 12 monthly columns)
-- Expense data: `attached_assets/Full_Practice_Expense_data_(2025)*.csv` - Full year 2025, 53,413 expense records (~40MB)
+- Expense data (2025): `attached_assets/Full_Practice_Expense_data_(2025)*.csv` - Full year 2025, 53,413 expense records (~40MB)
+- Expense data (2026): `attached_assets/Full_Practice_Expense_data_(2026)*.csv` - 2026 expense records
 - Marketing mapping: `attached_assets/Replit_Marketing_Mapping_Table_*.csv` - Maps Case Group IDs to practices
+
+## Multi-Year Support
+- System supports multiple years (currently 2025 and 2026) via year selector dropdown on all pages
+- Year parameter defaults to 2025 for backward compatibility
+- Budget data is only available for 2025; 2026 shows $0 budget (no budget CSV for 2026)
+- Expense year is extracted from column Z (index 25) of expense CSVs
+- Each expense record stores its year; filtering methods check year field to isolate data
+- All API endpoints accept `year` query parameter (e.g., `?year=2026`)
+- IP Teams page does not have multi-year support (only 2025 IP data available)
 
 ## Budget Column Mapping (Full Year 2025 file format)
 - **Practice**: Column I (index 8) - Cost Center Name
@@ -95,12 +105,12 @@ The following practices are consolidated for reporting:
 
 ## API Endpoints
 - `GET /api/cost-centers` - List all cost centers
-- `GET /api/dashboard/:costCenterId?periodMode=ytd|month&month=1-12` - Get dashboard summary for a cost center with period filtering
+- `GET /api/dashboard/:costCenterId?periodMode=ytd|month&month=1-12&year=2025` - Get dashboard summary for a cost center with period filtering
 - `GET /api/cost-centers/:costCenterId/categories` - Get spend categories
 - `GET /api/cost-centers/:costCenterId/expenses` - Get expenses
-- `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value` - Get expense line items for drill-down
-- `GET /api/cost-centers/:costCenterId/trends` - Get monthly trend data for charts
-- `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N` - Get key variances for All Practices view
+- `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value&year=2025` - Get expense line items for drill-down
+- `GET /api/cost-centers/:costCenterId/trends?year=2025` - Get monthly trend data for charts
+- `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N&year=2025` - Get key variances for All Practices view
 - `GET /api/ip-teams/practices` - Get list of practices with IP Teams data
 - `GET /api/ip-teams/data?practice=X&month=N` - Get IP Teams investment tracking data
 
@@ -123,11 +133,11 @@ The following practices are consolidated for reporting:
 - Budget display shows: Core Program Budget, Marketing Budget (separate), Total Program Budget
 
 ### API Endpoints (Budget Tracking)
-- `GET /api/budget-tracking/:practiceId?month=N` - Get budget groups and unassigned case codes
+- `GET /api/budget-tracking/:practiceId?month=N&year=2025` - Get budget groups and unassigned case codes
 - `POST /api/budget-tracking/:practiceId/groups` - Create a new budget group
 - `PUT /api/budget-tracking/groups/:groupId` - Update group name/budget
 - `DELETE /api/budget-tracking/groups/:groupId` - Delete a group (also removes case code mappings)
-- `GET /api/budget-tracking/:practiceId/export/:groupId?month=N` - Export expense data for a group's case codes as CSV (10 columns: Practice, Budget Group, Case Code, Case Name, Account Name, Summary Account, Period, Line Description, Vendor, Amount)
+- `GET /api/budget-tracking/:practiceId/export/:groupId?month=N&year=2025` - Export expense data for a group's case codes as CSV (10 columns: Practice, Budget Group, Case Code, Case Name, Account Name, Summary Account, Period, Line Description, Document Description, T&E Employee, Vendor, Amount)
 - `POST /api/budget-tracking/:practiceId/assign` - Assign/unassign case code to group
 
 ## Data Model

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CostCenterSelector } from "@/components/cost-center-selector";
-import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, MonthlyTrendData } from "@shared/schema";
 import {
@@ -56,15 +57,16 @@ export default function Trends() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [spendFilter, setSpendFilter] = useState<SpendFilter>('all');
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
   });
 
   const { data: trendData, isLoading: trendLoading } = useQuery<MonthlyTrendData[]>({
-    queryKey: ['/api/cost-centers', selectedCostCenterId, 'trends'],
+    queryKey: ['/api/cost-centers', selectedCostCenterId, 'trends', selectedYear],
     queryFn: async () => {
-      const response = await fetch(`/api/cost-centers/${selectedCostCenterId}/trends`, { 
+      const response = await fetch(`/api/cost-centers/${selectedCostCenterId}/trends?year=${selectedYear}`, { 
         credentials: 'include' 
       });
       if (!response.ok) throw new Error('Failed to fetch trend data');
@@ -110,7 +112,7 @@ export default function Trends() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-trends-title">
-                2025 {selectedCostCenter?.name || 'Cost'} Trends
+                {selectedYear} {selectedCostCenter?.name || 'Cost'} Trends
               </h1>
               <p className="text-sm text-muted-foreground">
                 Monthly cost trends and variance analysis
@@ -167,13 +169,30 @@ export default function Trends() {
                 </Link>
               </Button>
             </div>
-            {costCenters && costCenters.length > 0 && (
-              <CostCenterSelector
-                costCenters={costCenters}
-                selectedId={selectedCostCenterId}
-                onSelect={setSelectedCostCenterId}
-              />
-            )}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select 
+                  value={selectedYear.toString()} 
+                  onValueChange={(value) => setSelectedYear(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[100px]" data-testid="select-year">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {costCenters && costCenters.length > 0 && (
+                <CostCenterSelector
+                  costCenters={costCenters}
+                  selectedId={selectedCostCenterId}
+                  onSelect={setSelectedCostCenterId}
+                />
+              )}
+            </div>
           </div>
         </header>
 

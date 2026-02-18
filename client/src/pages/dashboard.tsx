@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
     queryKey: ['/api/cost-centers'],
@@ -102,9 +103,9 @@ export default function Dashboard() {
   };
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery<DashboardSummary>({
-    queryKey: ['/api/dashboard', selectedCostCenterId, periodMode, selectedMonth, selectedCaseGroup],
+    queryKey: ['/api/dashboard', selectedCostCenterId, periodMode, selectedMonth, selectedCaseGroup, selectedYear],
     queryFn: async () => {
-      let url = `/api/dashboard/${selectedCostCenterId}?periodMode=${periodMode}&month=${selectedMonth}`;
+      let url = `/api/dashboard/${selectedCostCenterId}?periodMode=${periodMode}&month=${selectedMonth}&year=${selectedYear}`;
       if (selectedCaseGroup) {
         url += `&caseGroup=${encodeURIComponent(selectedCaseGroup)}`;
       }
@@ -182,7 +183,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
-                {selectedCostCenter?.name || 'Practice'} Expense Dashboard - 2025
+                {selectedCostCenter?.name || 'Practice'} Expense Dashboard - {selectedYear}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {periodMode === 'ytd' 
@@ -244,6 +245,18 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select 
+                  value={selectedYear.toString()} 
+                  onValueChange={(value) => setSelectedYear(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[100px]" data-testid="select-year">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2025">2025</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select 
                   value={periodMode} 
                   onValueChange={(value: 'ytd' | 'month') => setPeriodMode(value)}
@@ -356,7 +369,7 @@ export default function Dashboard() {
             </div>
 
             {selectedCostCenterId === "all" ? (
-              <KeyVariances periodMode={periodMode} month={selectedMonth} />
+              <KeyVariances periodMode={periodMode} month={selectedMonth} year={selectedYear} />
             ) : (
               <>
                 {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
@@ -367,6 +380,7 @@ export default function Dashboard() {
                     filterLabel={getSelectedSpendCategoryInfo()!.label}
                     filterColor={getSelectedSpendCategoryInfo()!.color}
                     onClearFilter={clearFilter}
+                    year={selectedYear}
                   />
                 )}
 
@@ -378,6 +392,7 @@ export default function Dashboard() {
                     filterLabel={getSelectedProgramInfo()!.label}
                     filterColor={getSelectedProgramInfo()!.color}
                     onClearFilter={clearFilter}
+                    year={selectedYear}
                   />
                 )}
                 
@@ -392,6 +407,7 @@ export default function Dashboard() {
                     periodMode={periodMode}
                     month={selectedMonth}
                     caseGroup={selectedCaseGroup || undefined}
+                    year={selectedYear}
                   />
                 )}
               </>

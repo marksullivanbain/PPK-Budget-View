@@ -77,6 +77,7 @@ export async function registerRoutes(
       // Parse period filter parameters
       const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2025;
       const caseGroupFilter = req.query.caseGroup as string | undefined;
       
       // Allow "all" as a special case for combined view
@@ -92,7 +93,7 @@ export async function registerRoutes(
         }
       }
       
-      const summary = await storage.getDashboardSummary(costCenterId, periodMode, month, caseGroupFilter);
+      const summary = await storage.getDashboardSummary(costCenterId, periodMode, month, caseGroupFilter, year);
       res.json(summary);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch dashboard data" });
@@ -148,7 +149,8 @@ export async function registerRoutes(
     try {
       const costCenterId = req.params.costCenterId as string;
       const userEmail = getUserEmail(req);
-      const { filterType, filterValue, periodMode, month, caseGroup } = req.query;
+      const { filterType, filterValue, periodMode, month, caseGroup, year: yearParam } = req.query;
+      const year = yearParam ? parseInt(yearParam as string) : 2025;
       
       // Validate cost center exists and check access
       const costCenter = await storage.getCostCenter(costCenterId);
@@ -173,7 +175,8 @@ export async function registerRoutes(
         filterValue as string,
         periodMode as 'ytd' | 'month' | undefined,
         month ? parseInt(month as string) : undefined,
-        caseGroup as string | undefined
+        caseGroup as string | undefined,
+        year
       );
       res.json(details);
     } catch (error) {
@@ -195,8 +198,9 @@ export async function registerRoutes(
       const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
       const limit = parseInt(req.query.limit as string) || 20;
+      const year = parseInt(req.query.year as string) || 2025;
       
-      const variances = await storage.getKeyVariances(periodMode, month, limit);
+      const variances = await storage.getKeyVariances(periodMode, month, limit, year);
       res.json(variances);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch key variances" });
@@ -260,7 +264,8 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied to this practice" });
       }
       
-      const trends = await storage.getMonthlyTrends(costCenterId);
+      const year = parseInt(req.query.year as string) || 2025;
+      const trends = await storage.getMonthlyTrends(costCenterId, year);
       res.json(trends);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch trend data" });
@@ -274,6 +279,7 @@ export async function registerRoutes(
     try {
       const practiceId = req.params.practiceId as string;
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2025;
       const userEmail = getUserEmail(req);
       
       const costCenter = await storage.getCostCenter(practiceId);
@@ -284,7 +290,7 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied to this practice" });
       }
       
-      const data = await storage.getDynamicBudgetData(practiceId, month);
+      const data = await storage.getDynamicBudgetData(practiceId, month, year);
       res.json(data);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch budget tracking data" });
@@ -411,6 +417,7 @@ export async function registerRoutes(
     try {
       const { practiceId, groupId } = req.params;
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2025;
       const userEmail = getUserEmail(req);
 
       const costCenter = await storage.getCostCenter(practiceId);
@@ -421,14 +428,14 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied to this practice" });
       }
 
-      const data = await storage.getDynamicBudgetData(practiceId, month);
+      const data = await storage.getDynamicBudgetData(practiceId, month, year);
       const group = data.groups.find(g => g.id === groupId);
       if (!group) {
         return res.status(404).json({ error: "Budget group not found" });
       }
 
       const caseCodes = group.caseCodes.map(cc => cc.caseCode);
-      const expenses = await storage.getExpensesForCaseCodes(practiceId, caseCodes, month);
+      const expenses = await storage.getExpensesForCaseCodes(practiceId, caseCodes, month, year);
 
       const headers = ["Practice", "Budget Group", "Case Code", "Case Name", "Account Name", "Summary Account", "Period", "Line Description", "Document Description", "T&E Employee", "Vendor", "Amount"];
       const csvRows = [headers.join(",")];
@@ -466,6 +473,7 @@ export async function registerRoutes(
       const { costCenterId } = req.params;
       const periodMode = (req.query.periodMode as string) || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2025;
       
       const userEmail = getUserEmail(req);
       if (!userEmail) {
@@ -488,7 +496,8 @@ export async function registerRoutes(
         costCenterId,
         periodMode as 'ytd' | 'month',
         month,
-        allowedPractices
+        allowedPractices,
+        year
       );
       res.json(summary);
     } catch (error) {
@@ -502,6 +511,7 @@ export async function registerRoutes(
       const caseCode = req.query.caseCode as string;
       const periodMode = (req.query.periodMode as string) || 'ytd';
       const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2025;
       
       if (!caseCode) {
         return res.status(400).json({ error: "caseCode query parameter required" });
@@ -529,7 +539,8 @@ export async function registerRoutes(
         caseCode,
         periodMode as 'ytd' | 'month',
         month,
-        allowedPractices
+        allowedPractices,
+        year
       );
       res.json(expenses);
     } catch (error) {

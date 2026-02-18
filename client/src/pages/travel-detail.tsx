@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane, Search, ArrowDown, ArrowUp, X, ExternalLink } from "lucide-react";
+import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane, Search, ArrowDown, ArrowUp, X, ExternalLink, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, TravelCaseCodeSummary, TravelExpenseDetail } from "@shared/schema";
 
@@ -33,6 +33,7 @@ export default function TravelDetail() {
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [expenseSearchTerm, setExpenseSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [expenseSortDirection, setExpenseSortDirection] = useState<'desc' | 'asc'>('desc');
 
   const { data: costCenters, isLoading: costCentersLoading } = useQuery<CostCenter[]>({
@@ -44,18 +45,18 @@ export default function TravelDetail() {
   });
 
   const { data: travelSummary, isLoading: summaryLoading } = useQuery<TravelCaseCodeSummary[]>({
-    queryKey: ['/api/travel', selectedCostCenterId, 'summary', { periodMode, month: selectedMonth }],
+    queryKey: ['/api/travel', selectedCostCenterId, 'summary', { periodMode, month: selectedMonth, year: selectedYear }],
     queryFn: async () => {
-      const res = await fetch(`/api/travel/${selectedCostCenterId}/summary?periodMode=${periodMode}&month=${selectedMonth}`);
+      const res = await fetch(`/api/travel/${selectedCostCenterId}/summary?periodMode=${periodMode}&month=${selectedMonth}&year=${selectedYear}`);
       if (!res.ok) throw new Error('Failed to fetch travel summary');
       return res.json();
     },
   });
 
   const { data: travelExpenses, isLoading: expensesLoading } = useQuery<TravelExpenseDetail[]>({
-    queryKey: ['/api/travel', selectedCostCenterId, 'expenses', { caseCode: selectedCaseCode, periodMode, month: selectedMonth }],
+    queryKey: ['/api/travel', selectedCostCenterId, 'expenses', { caseCode: selectedCaseCode, periodMode, month: selectedMonth, year: selectedYear }],
     queryFn: async () => {
-      const res = await fetch(`/api/travel/${selectedCostCenterId}/expenses?caseCode=${encodeURIComponent(selectedCaseCode!)}&periodMode=${periodMode}&month=${selectedMonth}`);
+      const res = await fetch(`/api/travel/${selectedCostCenterId}/expenses?caseCode=${encodeURIComponent(selectedCaseCode!)}&periodMode=${periodMode}&month=${selectedMonth}&year=${selectedYear}`);
       if (!res.ok) throw new Error('Failed to fetch travel expenses');
       return res.json();
     },
@@ -148,6 +149,19 @@ export default function TravelDetail() {
           
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Select 
+                value={selectedYear.toString()} 
+                onValueChange={(value) => setSelectedYear(parseInt(value))}
+              >
+                <SelectTrigger className="w-[100px]" data-testid="select-year">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={periodMode} onValueChange={(value) => setPeriodMode(value as 'ytd' | 'month')}>
                 <SelectTrigger className="w-[100px]" data-testid="select-period-mode">
                   <SelectValue />

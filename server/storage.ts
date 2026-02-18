@@ -51,16 +51,16 @@ export interface IStorage {
   getBudgets(categoryId: string): Promise<Budget[]>;
   createBudget(budget: InsertBudget): Promise<Budget>;
   
-  getExpenses(costCenterId: string): Promise<Expense[]>;
+  getExpenses(costCenterId: string, year?: number): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   
-  getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<DashboardSummary>;
+  getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string, year?: number): Promise<DashboardSummary>;
   
-  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account' | 'caseCode', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string): Promise<ExpenseDetail[]>;
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account' | 'caseCode', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string, year?: number): Promise<ExpenseDetail[]>;
   
-  getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]>;
+  getMonthlyTrends(costCenterId: string, year?: number): Promise<MonthlyTrendData[]>;
   
-  getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number): Promise<KeyVarianceItem[]>;
+  getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit?: number, year?: number): Promise<KeyVarianceItem[]>;
   
   getIPTeamsPractices(): Promise<string[]>;
   getIPTeamsData(practice: string | null, month: number, allowedPractices?: string[] | null): Promise<IPTeamData>;
@@ -76,9 +76,9 @@ export interface IStorage {
   assignCaseCodeToGroup(practiceId: string, caseCode: string, groupId: string): Promise<CaseCodeMapping>;
   removeCaseCodeFromGroup(practiceId: string, caseCode: string): Promise<boolean>;
   
-  getDynamicBudgetData(practiceId: string, month: number): Promise<DynamicBudgetData>;
-  getCaseCodesWithExpenses(practiceId: string, month: number): Promise<CaseCodeWithExpense[]>;
-  getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number): Promise<Expense[]>;
+  getDynamicBudgetData(practiceId: string, month: number, year?: number): Promise<DynamicBudgetData>;
+  getCaseCodesWithExpenses(practiceId: string, month: number, year?: number): Promise<CaseCodeWithExpense[]>;
+  getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number, year?: number): Promise<Expense[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -133,14 +133,24 @@ export class MemStorage implements IStorage {
   private loadCSVData() {
     try {
       const budgetPath = "attached_assets/2025_Budget_by_Category_1769533343675.csv";
-      const expensePath = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
+      const expensePath2025 = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
+      const expensePath2026 = "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771430599669.csv";
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
       const marketingMapping = parseMarketingMappingCSV(marketingMappingPath);
       const budgetRows = parseBudgetCSV(budgetPath, marketingMapping);
-      const expenseRows = parseExpenseCSV(expensePath, marketingMapping);
+      const expenseRows2025 = parseExpenseCSV(expensePath2025, marketingMapping);
       
-      const aggregated = aggregateData(budgetRows, expenseRows);
+      let expenseRows2026: typeof expenseRows2025 = [];
+      try {
+        expenseRows2026 = parseExpenseCSV(expensePath2026, marketingMapping);
+        console.log(`Loaded ${expenseRows2026.length} expense rows from 2026 data`);
+      } catch (e) {
+        console.log("No 2026 expense data found, skipping");
+      }
+      
+      const allExpenseRows = [...expenseRows2025, ...expenseRows2026];
+      const aggregated = aggregateData(budgetRows, allExpenseRows);
       
       let costCenterIndex = 1;
       const costCenterNames: string[] = [];
@@ -218,7 +228,7 @@ export class MemStorage implements IStorage {
       
       let expenseIndex = 1;
       let skippedExpenses = 0;
-      for (const row of expenseRows) {
+      for (const row of allExpenseRows) {
         const costCenterId = this.costCenterIdMap.get(row.practice);
         if (!costCenterId) {
           skippedExpenses++;
@@ -241,7 +251,7 @@ export class MemStorage implements IStorage {
           costCenterId,
           programCategory: row.coreProgram,
           month: parseMonthFromPeriod(row.period),
-          year: 2025,
+          year: row.year,
           lineDescription: row.lineDescription,
           summaryAccount: row.summaryAccount,
           accountName: row.accountName,
@@ -353,13 +363,19 @@ export class MemStorage implements IStorage {
     return newBudget;
   }
 
-  async getExpenses(costCenterId: string): Promise<Expense[]> {
+  async getExpenses(costCenterId: string, year?: number): Promise<Expense[]> {
+    let result: Expense[];
     if (costCenterId === "all") {
-      return Array.from(this.expenses.values());
+      result = Array.from(this.expenses.values());
+    } else {
+      result = Array.from(this.expenses.values()).filter(
+        expense => expense.costCenterId === costCenterId
+      );
     }
-    return Array.from(this.expenses.values()).filter(
-      expense => expense.costCenterId === costCenterId
-    );
+    if (year) {
+      result = result.filter(e => e.year === year);
+    }
+    return result;
   }
 
   async createExpense(expense: InsertExpense): Promise<Expense> {
@@ -391,9 +407,9 @@ export class MemStorage implements IStorage {
     return newExpense;
   }
 
-  async getDashboardSummary(costCenterId: string, periodMode: 'ytd' | 'month' = 'ytd', month: number = 12, caseGroupFilter?: string): Promise<DashboardSummary> {
+  async getDashboardSummary(costCenterId: string, periodMode: 'ytd' | 'month' = 'ytd', month: number = 12, caseGroupFilter?: string, year: number = 2025): Promise<DashboardSummary> {
     const categories = await this.getSpendCategories(costCenterId);
-    const allExpenses = await this.getExpenses(costCenterId);
+    const allExpenses = await this.getExpenses(costCenterId, year);
     
     // Filter expenses by period
     const expenses = allExpenses.filter(e => {
@@ -406,8 +422,9 @@ export class MemStorage implements IStorage {
       }
     });
     
-    // Helper to calculate budget for period
+    // Helper to calculate budget for period (budgets only available for 2025)
     const getBudgetForPeriod = (categoryId: string): number => {
+      if (year !== 2025) return 0;
       const monthlyAmounts = this.monthlyBudgets.get(categoryId);
       if (!monthlyAmounts) return 0;
       
@@ -667,12 +684,13 @@ export class MemStorage implements IStorage {
     filterValue: string,
     periodMode?: 'ytd' | 'month',
     month?: number,
-    caseGroupFilter?: string
+    caseGroupFilter?: string,
+    year: number = 2025
   ): Promise<ExpenseDetail[]> {
     let expenses = costCenterId === "all" 
-      ? Array.from(this.expenses.values())
+      ? Array.from(this.expenses.values()).filter(e => e.year === year)
       : Array.from(this.expenses.values()).filter(
-          expense => expense.costCenterId === costCenterId
+          expense => expense.costCenterId === costCenterId && expense.year === year
         );
     
     // Apply period filtering if specified
@@ -773,10 +791,10 @@ export class MemStorage implements IStorage {
     })).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   }
 
-  async getMonthlyTrends(costCenterId: string): Promise<MonthlyTrendData[]> {
+  async getMonthlyTrends(costCenterId: string, year: number = 2025): Promise<MonthlyTrendData[]> {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const categories = await this.getSpendCategories(costCenterId);
-    const allExpenses = await this.getExpenses(costCenterId);
+    const allExpenses = await this.getExpenses(costCenterId, year);
     
     const result: MonthlyTrendData[] = [];
     
@@ -795,19 +813,21 @@ export class MemStorage implements IStorage {
       // Calculate actual spend for this month
       const actual = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
       
-      // Calculate budget for this month using the monthlyBudgets map
+      // Calculate budget for this month using the monthlyBudgets map (budgets only for 2025)
       let monthBudget = 0;
       let compensationBudget = 0;
       let programBudget = 0;
-      for (const category of categories) {
-        const monthlyAmounts = this.monthlyBudgets.get(category.id);
-        if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
-          const catBudget = monthlyAmounts[month - 1] || 0;
-          monthBudget += catBudget;
-          if (compensationCategoryIds.includes(category.id)) {
-            compensationBudget += catBudget;
-          } else {
-            programBudget += catBudget;
+      if (year === 2025) {
+        for (const category of categories) {
+          const monthlyAmounts = this.monthlyBudgets.get(category.id);
+          if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
+            const catBudget = monthlyAmounts[month - 1] || 0;
+            monthBudget += catBudget;
+            if (compensationCategoryIds.includes(category.id)) {
+              compensationBudget += catBudget;
+            } else {
+              programBudget += catBudget;
+            }
           }
         }
       }
@@ -861,12 +881,13 @@ export class MemStorage implements IStorage {
     return result;
   }
 
-  async getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit: number = 20): Promise<KeyVarianceItem[]> {
+  async getKeyVariances(periodMode: 'ytd' | 'month', month: number, limit: number = 20, year: number = 2025): Promise<KeyVarianceItem[]> {
     const costCenters = await this.getCostCenters();
     const variances: KeyVarianceItem[] = [];
 
-    // Helper to calculate budget for period
+    // Helper to calculate budget for period (budgets only for 2025)
     const getBudgetForPeriod = (categoryId: string): number => {
+      if (year !== 2025) return 0;
       const monthlyAmounts = this.monthlyBudgets.get(categoryId);
       if (!monthlyAmounts) return 0;
       
@@ -881,7 +902,7 @@ export class MemStorage implements IStorage {
     // Process each practice
     for (const costCenter of costCenters) {
       const categories = await this.getSpendCategories(costCenter.id);
-      const allExpenses = await this.getExpenses(costCenter.id);
+      const allExpenses = await this.getExpenses(costCenter.id, year);
       
       // Filter expenses by period
       const expenses = allExpenses.filter(e => {
@@ -1151,7 +1172,7 @@ export class MemStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getCaseCodesWithExpenses(practiceId: string, month: number): Promise<CaseCodeWithExpense[]> {
+  async getCaseCodesWithExpenses(practiceId: string, month: number, year: number = 2025): Promise<CaseCodeWithExpense[]> {
     // Get cost center info
     const costCenter = await this.getCostCenter(practiceId);
     if (!costCenter) return [];
@@ -1172,6 +1193,7 @@ export class MemStorage implements IStorage {
     const expenseArray = Array.from(this.expenses.values());
     for (const expense of expenseArray) {
       if (expense.costCenterId !== practiceId) continue;
+      if (expense.year !== year) continue;
       // Exclude compensation by checking category (more reliable than spendType field)
       if (compensationCategoryIds.has(expense.categoryId)) continue;
       if (expense.month > month) continue; // Only YTD expenses
@@ -1204,7 +1226,7 @@ export class MemStorage implements IStorage {
     return result.sort((a, b) => Math.abs(b.ytdActual) - Math.abs(a.ytdActual));
   }
 
-  async getDynamicBudgetData(practiceId: string, month: number): Promise<DynamicBudgetData> {
+  async getDynamicBudgetData(practiceId: string, month: number, year: number = 2025): Promise<DynamicBudgetData> {
     const costCenter = await this.getCostCenter(practiceId);
     if (!costCenter) {
       return {
@@ -1220,21 +1242,23 @@ export class MemStorage implements IStorage {
       };
     }
     
-    // Calculate core program budget and marketing budget separately
+    // Calculate core program budget and marketing budget separately (budgets only for 2025)
     let coreProgramBudget = 0;
     let marketingBudget = 0;
     const categoryArray = Array.from(this.spendCategories.values());
-    const budgetArray = Array.from(this.budgets.values());
-    for (const category of categoryArray) {
-      if (category.costCenterId !== practiceId) continue;
-      if (category.name === 'Compensation') continue;
-      
-      for (const budget of budgetArray) {
-        if (budget.categoryId === category.id) {
-          if (category.name === 'Marketing') {
-            marketingBudget += budget.amount;
-          } else {
-            coreProgramBudget += budget.amount;
+    if (year === 2025) {
+      const budgetArray = Array.from(this.budgets.values());
+      for (const category of categoryArray) {
+        if (category.costCenterId !== practiceId) continue;
+        if (category.name === 'Compensation') continue;
+        
+        for (const budget of budgetArray) {
+          if (budget.categoryId === category.id) {
+            if (category.name === 'Marketing') {
+              marketingBudget += budget.amount;
+            } else {
+              coreProgramBudget += budget.amount;
+            }
           }
         }
       }
@@ -1242,7 +1266,7 @@ export class MemStorage implements IStorage {
     const totalProgramBudget = coreProgramBudget + marketingBudget;
     
     // Get all case codes with expenses
-    const allCaseCodes = await this.getCaseCodesWithExpenses(practiceId, month);
+    const allCaseCodes = await this.getCaseCodesWithExpenses(practiceId, month, year);
     
     // Get budget groups
     let groups = await this.getBudgetGroups(practiceId);
@@ -1334,7 +1358,8 @@ export class MemStorage implements IStorage {
     costCenterId: string,
     periodMode: 'ytd' | 'month' = 'ytd',
     month: number = 12,
-    allowedPractices?: string[] | null
+    allowedPractices?: string[] | null,
+    year: number = 2025
   ): Promise<TravelCaseCodeSummary[]> {
     let expenses: Expense[];
     if (costCenterId === "all") {
@@ -1346,14 +1371,14 @@ export class MemStorage implements IStorage {
           }
         }
         expenses = Array.from(this.expenses.values()).filter(
-          exp => allowedCostCenterIds.has(exp.costCenterId)
+          exp => allowedCostCenterIds.has(exp.costCenterId) && exp.year === year
         );
       } else {
-        expenses = Array.from(this.expenses.values());
+        expenses = Array.from(this.expenses.values()).filter(exp => exp.year === year);
       }
     } else {
       expenses = Array.from(this.expenses.values()).filter(
-        expense => expense.costCenterId === costCenterId
+        expense => expense.costCenterId === costCenterId && expense.year === year
       );
     }
     
@@ -1405,7 +1430,8 @@ export class MemStorage implements IStorage {
     caseCode: string,
     periodMode: 'ytd' | 'month' = 'ytd',
     month: number = 12,
-    allowedPractices?: string[] | null
+    allowedPractices?: string[] | null,
+    year: number = 2025
   ): Promise<TravelExpenseDetail[]> {
     let expenses: Expense[];
     if (costCenterId === "all") {
@@ -1417,14 +1443,14 @@ export class MemStorage implements IStorage {
           }
         }
         expenses = Array.from(this.expenses.values()).filter(
-          exp => allowedCostCenterIds.has(exp.costCenterId)
+          exp => allowedCostCenterIds.has(exp.costCenterId) && exp.year === year
         );
       } else {
-        expenses = Array.from(this.expenses.values());
+        expenses = Array.from(this.expenses.values()).filter(exp => exp.year === year);
       }
     } else {
       expenses = Array.from(this.expenses.values()).filter(
-        expense => expense.costCenterId === costCenterId
+        expense => expense.costCenterId === costCenterId && expense.year === year
       );
     }
     
@@ -1465,7 +1491,7 @@ export class MemStorage implements IStorage {
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   }
 
-  async getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number): Promise<Expense[]> {
+  async getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number, year: number = 2025): Promise<Expense[]> {
     const caseCodeSet = new Set(caseCodes);
     const categories = await this.getSpendCategories(practiceId);
     const compensationCategoryIds = new Set(
@@ -1474,6 +1500,7 @@ export class MemStorage implements IStorage {
 
     return Array.from(this.expenses.values()).filter(exp => {
       if (exp.costCenterId !== practiceId) return false;
+      if (exp.year !== year) return false;
       if (exp.month > month) return false;
       if (compensationCategoryIds.has(exp.categoryId)) return false;
       return caseCodeSet.has(exp.caseCode || '');

@@ -21,6 +21,7 @@ interface ExpenseDetailsProps {
   periodMode?: 'ytd' | 'month';
   month?: number;
   caseGroup?: string;
+  year?: number;
 }
 
 function formatCurrency(amount: number): string {
@@ -43,6 +44,7 @@ export function ExpenseDetails({
   periodMode,
   month,
   caseGroup,
+  year,
 }: ExpenseDetailsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
@@ -51,12 +53,13 @@ export function ExpenseDetails({
   const [caseCodeSearch, setCaseCodeSearch] = useState("");
 
   const { data: expenses, isLoading } = useQuery<ExpenseDetail[]>({
-    queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue, periodMode, month, caseGroup }],
+    queryKey: ['/api/cost-centers', costCenterId, 'expense-details', { filterType, filterValue, periodMode, month, caseGroup, year }],
     queryFn: async () => {
       let url = `/api/cost-centers/${costCenterId}/expense-details?filterType=${filterType}&filterValue=${encodeURIComponent(filterValue)}`;
       if (periodMode) url += `&periodMode=${periodMode}`;
       if (month) url += `&month=${month}`;
       if (caseGroup) url += `&caseGroup=${encodeURIComponent(caseGroup)}`;
+      if (year) url += `&year=${year}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch expense details');
       return response.json();

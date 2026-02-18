@@ -109,12 +109,13 @@ function DroppableContainer({ id, children, className }: DroppableContainerProps
 interface BudgetGroupCardProps {
   group: BudgetGroupWithCodes;
   month: number;
+  year: number;
   practiceId: string;
   onUpdate: (id: string, updates: { name?: string; allocatedBudget?: number }) => void;
   onDelete: (id: string) => void;
 }
 
-function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: BudgetGroupCardProps) {
+function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }: BudgetGroupCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
   const [editBudget, setEditBudget] = useState(group.allocatedBudget.toString());
@@ -145,7 +146,7 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
     }
     setIsDownloading(true);
     try {
-      const res = await fetch(`/api/budget-tracking/${practiceId}/export/${group.id}?month=${month}`, {
+      const res = await fetch(`/api/budget-tracking/${practiceId}/export/${group.id}?month=${month}&year=${year}`, {
         credentials: 'include'
       });
       if (!res.ok) throw new Error('Export failed');
@@ -274,6 +275,7 @@ function BudgetGroupCard({ group, month, practiceId, onUpdate, onDelete }: Budge
 export default function BudgetTracking() {
   const { user } = useAuth();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [selectedMonth, setSelectedMonth] = useState<number>(12);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
@@ -296,9 +298,9 @@ export default function BudgetTracking() {
   }, [costCenters, selectedCostCenterId]);
 
   const { data: budgetData, isLoading: budgetDataLoading, refetch } = useQuery<DynamicBudgetData>({
-    queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth],
+    queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear],
     queryFn: async () => {
-      const res = await fetch(`/api/budget-tracking/${selectedCostCenterId}?month=${selectedMonth}`, {
+      const res = await fetch(`/api/budget-tracking/${selectedCostCenterId}?month=${selectedMonth}&year=${selectedYear}`, {
         credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to fetch budget data');
@@ -316,7 +318,7 @@ export default function BudgetTracking() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear] });
     }
   });
 
@@ -325,7 +327,7 @@ export default function BudgetTracking() {
       return apiRequest('PUT', `/api/budget-tracking/groups/${id}`, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear] });
     }
   });
 
@@ -334,7 +336,7 @@ export default function BudgetTracking() {
       return apiRequest('DELETE', `/api/budget-tracking/groups/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear] });
     }
   });
 
@@ -346,7 +348,7 @@ export default function BudgetTracking() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear] });
     }
   });
 
@@ -456,6 +458,19 @@ export default function BudgetTracking() {
           </div>
           
           <div className="flex items-center gap-3 flex-wrap">
+            <Select 
+              value={selectedYear.toString()} 
+              onValueChange={(value) => setSelectedYear(parseInt(value))}
+            >
+              <SelectTrigger className="w-[100px]" data-testid="select-year">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
               <SelectTrigger className="w-[140px]" data-testid="select-month">
                 <SelectValue placeholder="Select month" />
@@ -577,6 +592,7 @@ export default function BudgetTracking() {
                   key={group.id}
                   group={group}
                   month={selectedMonth}
+                  year={selectedYear}
                   practiceId={selectedCostCenterId}
                   onUpdate={(id, updates) => updateGroupMutation.mutate({ id, updates })}
                   onDelete={(id) => deleteGroupMutation.mutate(id)}

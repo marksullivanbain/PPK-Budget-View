@@ -7,6 +7,7 @@ import type { KeyVarianceItem } from "@shared/schema";
 interface KeyVariancesProps {
   periodMode: 'ytd' | 'month';
   month: number;
+  year?: number;
 }
 
 function formatCurrency(amount: number): string {
@@ -83,11 +84,11 @@ function VarianceRowSkeleton() {
   );
 }
 
-export function KeyVariances({ periodMode, month }: KeyVariancesProps) {
+export function KeyVariances({ periodMode, month, year }: KeyVariancesProps) {
   const { data: variances, isLoading, error } = useQuery<KeyVarianceItem[]>({
-    queryKey: ['/api/key-variances', periodMode, month],
+    queryKey: ['/api/key-variances', periodMode, month, year],
     queryFn: async () => {
-      const url = `/api/key-variances?periodMode=${periodMode}&month=${month}&limit=20`;
+      const url = `/api/key-variances?periodMode=${periodMode}&month=${month}&limit=20${year ? `&year=${year}` : ''}`;
       const response = await fetch(url, { credentials: 'include' });
       if (response.status === 403) {
         throw new Error('ACCESS_DENIED');
