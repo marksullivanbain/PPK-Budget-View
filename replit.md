@@ -69,7 +69,7 @@ shared/
 ## Multi-Year Support
 - System supports multiple years (currently 2025 and 2026) via year selector dropdown on all pages
 - Year parameter defaults to 2026 (current year)
-- Budget data is only available for 2025; 2026 shows $0 budget (no budget CSV for 2026)
+- Budget data available for both 2025 and 2026 (separate CSV files)
 - Expense year is extracted from column Z (index 25) of expense CSVs
 - Each expense record stores its year; filtering methods check year field to isolate data
 - All API endpoints accept `year` query parameter (e.g., `?year=2026`)

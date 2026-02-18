@@ -111,7 +111,7 @@ export class MemStorage implements IStorage {
   private costCenters: Map<string, CostCenter>;
   private spendCategories: Map<string, SpendCategory>;
   private budgets: Map<string, Budget>;
-  private monthlyBudgets: Map<string, number[]>;  // categoryId -> monthly amounts array
+  private monthlyBudgets: Map<string, number[]>;  // "year:categoryId" -> monthly amounts array
   private expenses: Map<string, Expense>;
   private costCenterIdMap: Map<string, string>;
   private ipTeamEntries: IPTeamEntry[];
@@ -132,13 +132,23 @@ export class MemStorage implements IStorage {
 
   private loadCSVData() {
     try {
-      const budgetPath = "attached_assets/2025_Budget_by_Category_1769533343675.csv";
+      const budgetPath2025 = "attached_assets/2025_Budget_by_Category_1769533343675.csv";
+      const budgetPath2026 = "attached_assets/2026_Budget_by_Category_1771431742331.csv";
       const expensePath2025 = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
       const expensePath2026 = "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771430599669.csv";
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
       const marketingMapping = parseMarketingMappingCSV(marketingMappingPath);
-      const budgetRows = parseBudgetCSV(budgetPath, marketingMapping);
+      const budgetRows2025 = parseBudgetCSV(budgetPath2025, marketingMapping);
+      
+      let budgetRows2026: typeof budgetRows2025 = [];
+      try {
+        budgetRows2026 = parseBudgetCSV(budgetPath2026, marketingMapping);
+        console.log(`Loaded ${budgetRows2026.length} budget rows from 2026 data`);
+      } catch (e) {
+        console.log("No 2026 budget data found, skipping");
+      }
+      
       const expenseRows2025 = parseExpenseCSV(expensePath2025, marketingMapping);
       
       let expenseRows2026: typeof expenseRows2025 = [];
@@ -150,7 +160,8 @@ export class MemStorage implements IStorage {
       }
       
       const allExpenseRows = [...expenseRows2025, ...expenseRows2026];
-      const aggregated = aggregateData(budgetRows, allExpenseRows);
+      const aggregated = aggregateData(budgetRows2025, allExpenseRows);
+      const aggregated2026 = aggregateData(budgetRows2026, []);
       
       let costCenterIndex = 1;
       const costCenterNames: string[] = [];
@@ -185,16 +196,46 @@ export class MemStorage implements IStorage {
             costCenterId,
           });
           
-          // Store monthly amounts array
-          this.monthlyBudgets.set(catId, monthlyAmounts);
+          this.monthlyBudgets.set(`2025:${catId}`, monthlyAmounts);
           
-          // Calculate annual total for default budget display
           const annualAmount = monthlyAmounts.reduce((sum, val) => sum + val, 0);
-          this.budgets.set(`bud-${catId}`, {
-            id: `bud-${catId}`,
+          this.budgets.set(`bud-2025-${catId}`, {
+            id: `bud-2025-${catId}`,
             categoryId: catId,
             amount: Math.round(annualAmount),
             year: 2025,
+          });
+        });
+      });
+      
+      // Load 2026 budget data into the same category structure
+      Array.from(aggregated2026.categoryBudgets.entries()).forEach(([costCenterName, budgetMap]) => {
+        const costCenterId = this.costCenterIdMap.get(costCenterName);
+        if (!costCenterId) return;
+        
+        Array.from(budgetMap.entries()).forEach(([categoryName, monthlyAmounts]) => {
+          const catKey = `${costCenterName}|${categoryName}`;
+          let catId = categoryIdMap.get(catKey);
+          
+          if (!catId) {
+            catId = `cat-${categoryIndex++}`;
+            categoryIdMap.set(catKey, catId);
+            this.spendCategories.set(catId, {
+              id: catId,
+              name: categoryName,
+              color: getCategoryColor(categoryName),
+              costCenterId,
+            });
+          }
+          
+          this.monthlyBudgets.set(`2026:${catId}`, monthlyAmounts);
+          
+          const annualAmount = monthlyAmounts.reduce((sum, val) => sum + val, 0);
+          this.budgets.set(`bud-2026-${catId}`, {
+            id: `bud-2026-${catId}`,
+            categoryId: catId,
+            amount: Math.round(annualAmount),
+            year: 2026,
           });
         });
       });
@@ -422,16 +463,13 @@ export class MemStorage implements IStorage {
       }
     });
     
-    // Helper to calculate budget for period (budgets only available for 2025)
     const getBudgetForPeriod = (categoryId: string): number => {
-      if (year !== 2025) return 0;
-      const monthlyAmounts = this.monthlyBudgets.get(categoryId);
+      const monthlyAmounts = this.monthlyBudgets.get(`${year}:${categoryId}`);
       if (!monthlyAmounts) return 0;
       
       if (periodMode === 'month') {
         return monthlyAmounts[month - 1] || 0;
       } else {
-        // YTD: sum months 0 to month-1
         return monthlyAmounts.slice(0, month).reduce((sum, val) => sum + val, 0);
       }
     };
@@ -813,21 +851,18 @@ export class MemStorage implements IStorage {
       // Calculate actual spend for this month
       const actual = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
       
-      // Calculate budget for this month using the monthlyBudgets map (budgets only for 2025)
       let monthBudget = 0;
       let compensationBudget = 0;
       let programBudget = 0;
-      if (year === 2025) {
-        for (const category of categories) {
-          const monthlyAmounts = this.monthlyBudgets.get(category.id);
-          if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
-            const catBudget = monthlyAmounts[month - 1] || 0;
-            monthBudget += catBudget;
-            if (compensationCategoryIds.includes(category.id)) {
-              compensationBudget += catBudget;
-            } else {
-              programBudget += catBudget;
-            }
+      for (const category of categories) {
+        const monthlyAmounts = this.monthlyBudgets.get(`${year}:${category.id}`);
+        if (monthlyAmounts && Array.isArray(monthlyAmounts)) {
+          const catBudget = monthlyAmounts[month - 1] || 0;
+          monthBudget += catBudget;
+          if (compensationCategoryIds.includes(category.id)) {
+            compensationBudget += catBudget;
+          } else {
+            programBudget += catBudget;
           }
         }
       }
@@ -885,16 +920,13 @@ export class MemStorage implements IStorage {
     const costCenters = await this.getCostCenters();
     const variances: KeyVarianceItem[] = [];
 
-    // Helper to calculate budget for period (budgets only for 2025)
     const getBudgetForPeriod = (categoryId: string): number => {
-      if (year !== 2025) return 0;
-      const monthlyAmounts = this.monthlyBudgets.get(categoryId);
+      const monthlyAmounts = this.monthlyBudgets.get(`${year}:${categoryId}`);
       if (!monthlyAmounts) return 0;
       
       if (periodMode === 'month') {
         return monthlyAmounts[month - 1] || 0;
       } else {
-        // YTD: sum months 0 to month-1
         return monthlyAmounts.slice(0, month).reduce((sum, val) => sum + val, 0);
       }
     };
@@ -1242,23 +1274,20 @@ export class MemStorage implements IStorage {
       };
     }
     
-    // Calculate core program budget and marketing budget separately (budgets only for 2025)
     let coreProgramBudget = 0;
     let marketingBudget = 0;
     const categoryArray = Array.from(this.spendCategories.values());
-    if (year === 2025) {
-      const budgetArray = Array.from(this.budgets.values());
-      for (const category of categoryArray) {
-        if (category.costCenterId !== practiceId) continue;
-        if (category.name === 'Compensation') continue;
-        
-        for (const budget of budgetArray) {
-          if (budget.categoryId === category.id) {
-            if (category.name === 'Marketing') {
-              marketingBudget += budget.amount;
-            } else {
-              coreProgramBudget += budget.amount;
-            }
+    const budgetArray = Array.from(this.budgets.values()).filter(b => b.year === year);
+    for (const category of categoryArray) {
+      if (category.costCenterId !== practiceId) continue;
+      if (category.name === 'Compensation') continue;
+      
+      for (const budget of budgetArray) {
+        if (budget.categoryId === category.id) {
+          if (category.name === 'Marketing') {
+            marketingBudget += budget.amount;
+          } else {
+            coreProgramBudget += budget.amount;
           }
         }
       }
