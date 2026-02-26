@@ -217,6 +217,26 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin-summary", isAuthenticated, async (req, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      const allowedPractices = getPracticesForEmail(userEmail || '');
+
+      if (!allowedPractices || !allowedPractices.includes('All Practices')) {
+        return res.status(403).json({ error: "Access denied - requires All Practices access" });
+      }
+
+      const periodMode = (req.query.periodMode as 'ytd' | 'month') || 'ytd';
+      const month = parseInt(req.query.month as string) || 12;
+      const year = parseInt(req.query.year as string) || 2026;
+
+      const summary = await storage.getAdminSummary(periodMode, month, year);
+      res.json(summary);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch admin summary" });
+    }
+  });
+
   // Get IP Teams practices list
   app.get("/api/ip-teams/practices", isAuthenticated, async (req, res) => {
     try {

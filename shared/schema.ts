@@ -259,6 +259,45 @@ export interface BudgetGroupWithCodes extends BudgetGroup {
   variance: number; // ytdBudget - ytdActual
 }
 
+export interface AdminPracticeSummary {
+  practice: string;
+  group: 'Industries' | 'Capabilities' | 'Other PPK';
+  actuals: {
+    compensation: number;
+    programs: number;
+    databases: number;
+    bcn: number;
+    total: number;
+  };
+  budget: {
+    compensation: number;
+    programs: number;
+    databases: number;
+    bcn: number;
+    total: number;
+  };
+  variance: {
+    compensation: number;
+    programs: number;
+    databases: number;
+    bcn: number;
+    total: number;
+    percentVariance: number;
+  };
+}
+
+export interface AdminSummaryData {
+  practices: AdminPracticeSummary[];
+  totals: {
+    actuals: { compensation: number; programs: number; databases: number; bcn: number; total: number };
+    budget: { compensation: number; programs: number; databases: number; bcn: number; total: number };
+    variance: { compensation: number; programs: number; databases: number; bcn: number; total: number; percentVariance: number };
+  };
+  month: number;
+  year: number;
+  periodMode: string;
+}
+
 export interface DynamicBudgetData {
   practiceId: string;
   practiceName: string;

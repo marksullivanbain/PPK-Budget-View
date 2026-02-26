@@ -28,6 +28,8 @@ import {
   type DynamicBudgetData,
   type TravelCaseCodeSummary,
   type TravelExpenseDetail,
+  type AdminPracticeSummary,
+  type AdminSummaryData,
   budgetGroups,
   caseCodeMappings
 } from "@shared/schema";
@@ -79,6 +81,8 @@ export interface IStorage {
   getDynamicBudgetData(practiceId: string, month: number, year?: number): Promise<DynamicBudgetData>;
   getCaseCodesWithExpenses(practiceId: string, month: number, year?: number): Promise<CaseCodeWithExpense[]>;
   getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number, year?: number): Promise<Expense[]>;
+  
+  getAdminSummary(periodMode: 'ytd' | 'month', month: number, year: number): Promise<AdminSummaryData>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -999,6 +1003,148 @@ export class MemStorage implements IStorage {
     
     // Return top N
     return variances.slice(0, limit);
+  }
+
+  async getAdminSummary(periodMode: 'ytd' | 'month' = 'ytd', month: number = 12, year: number = 2025): Promise<AdminSummaryData> {
+    const PRACTICE_GROUPS: Record<string, 'Industries' | 'Capabilities' | 'Other PPK'> = {
+      'CP Practice': 'Industries',
+      'Retail Practice': 'Industries',
+      'FS Practice': 'Industries',
+      'PEG Practice': 'Industries',
+      'TMT Practice': 'Industries',
+      'HLS Practice': 'Industries',
+      'AMS Practice': 'Industries',
+      'ENR Practice': 'Industries',
+      'Other Industry': 'Industries',
+      'PI Practice': 'Capabilities',
+      'Customer Practice': 'Capabilities',
+      'S&T Practice': 'Capabilities',
+      'Further Practice': 'Capabilities',
+      'M&A Practice': 'Capabilities',
+      'Organization Practice': 'Capabilities',
+      'ET Practice': 'Capabilities',
+      'AIS Practice': 'Capabilities',
+      'MTG Practice': 'Capabilities',
+      'Practice Area Program Office': 'Other PPK',
+      'Commercial Operations': 'Other PPK',
+    };
+
+    const costCenters = await this.getCostCenters();
+    const practices: AdminPracticeSummary[] = [];
+
+    const getBudgetForPeriod = (categoryId: string): number => {
+      const monthlyAmounts = this.monthlyBudgets.get(`${year}:${categoryId}`);
+      if (!monthlyAmounts) return 0;
+      if (periodMode === 'month') {
+        return monthlyAmounts[month - 1] || 0;
+      } else {
+        return monthlyAmounts.slice(0, month).reduce((sum, val) => sum + val, 0);
+      }
+    };
+
+    for (const costCenter of costCenters) {
+      const categories = await this.getSpendCategories(costCenter.id);
+      const allExpenses = await this.getExpenses(costCenter.id, year);
+
+      const filteredExpenses = allExpenses.filter(e => {
+        if (!e.month) return true;
+        if (periodMode === 'month') return e.month === month;
+        return e.month <= month;
+      });
+
+      const actuals = { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0 };
+      const budget = { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0 };
+
+      for (const category of categories) {
+        const catExpenses = filteredExpenses.filter(e => e.categoryId === category.id);
+        const actual = catExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const budgetAmt = getBudgetForPeriod(category.id);
+
+        const catName = category.name;
+        if (catName === 'Compensation') {
+          actuals.compensation += actual;
+          budget.compensation += budgetAmt;
+        } else if (catName === 'Databases') {
+          actuals.databases += actual;
+          budget.databases += budgetAmt;
+        } else if (catName === 'BCN') {
+          actuals.bcn += actual;
+          budget.bcn += budgetAmt;
+        } else {
+          actuals.programs += actual;
+          budget.programs += budgetAmt;
+        }
+      }
+
+      actuals.total = actuals.compensation + actuals.programs + actuals.databases + actuals.bcn;
+      budget.total = budget.compensation + budget.programs + budget.databases + budget.bcn;
+
+      const variance = {
+        compensation: Math.round(budget.compensation - actuals.compensation),
+        programs: Math.round(budget.programs - actuals.programs),
+        databases: Math.round(budget.databases - actuals.databases),
+        bcn: Math.round(budget.bcn - actuals.bcn),
+        total: Math.round(budget.total - actuals.total),
+        percentVariance: budget.total !== 0 ? Math.round(((budget.total - actuals.total) / budget.total) * 100) : 0,
+      };
+
+      practices.push({
+        practice: costCenter.name,
+        group: PRACTICE_GROUPS[costCenter.name] || 'Other PPK',
+        actuals: {
+          compensation: Math.round(actuals.compensation),
+          programs: Math.round(actuals.programs),
+          databases: Math.round(actuals.databases),
+          bcn: Math.round(actuals.bcn),
+          total: Math.round(actuals.total),
+        },
+        budget: {
+          compensation: Math.round(budget.compensation),
+          programs: Math.round(budget.programs),
+          databases: Math.round(budget.databases),
+          bcn: Math.round(budget.bcn),
+          total: Math.round(budget.total),
+        },
+        variance,
+      });
+    }
+
+    const groupOrder = ['Industries', 'Capabilities', 'Other PPK'];
+    practices.sort((a, b) => {
+      const groupDiff = groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group);
+      if (groupDiff !== 0) return groupDiff;
+      return a.practice.localeCompare(b.practice);
+    });
+
+    const totals = {
+      actuals: { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0 },
+      budget: { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0 },
+      variance: { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0, percentVariance: 0 },
+    };
+
+    for (const p of practices) {
+      totals.actuals.compensation += p.actuals.compensation;
+      totals.actuals.programs += p.actuals.programs;
+      totals.actuals.databases += p.actuals.databases;
+      totals.actuals.bcn += p.actuals.bcn;
+      totals.actuals.total += p.actuals.total;
+      totals.budget.compensation += p.budget.compensation;
+      totals.budget.programs += p.budget.programs;
+      totals.budget.databases += p.budget.databases;
+      totals.budget.bcn += p.budget.bcn;
+      totals.budget.total += p.budget.total;
+      totals.variance.compensation += p.variance.compensation;
+      totals.variance.programs += p.variance.programs;
+      totals.variance.databases += p.variance.databases;
+      totals.variance.bcn += p.variance.bcn;
+      totals.variance.total += p.variance.total;
+    }
+
+    totals.variance.percentVariance = totals.budget.total !== 0
+      ? Math.round((totals.variance.total / totals.budget.total) * 100)
+      : 0;
+
+    return { practices, totals, month, year, periodMode };
   }
 
   private loadIPTeamsData() {
