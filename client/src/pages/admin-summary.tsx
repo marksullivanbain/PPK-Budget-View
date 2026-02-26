@@ -23,9 +23,28 @@ function formatK(value: number): string {
   return value.toLocaleString();
 }
 
-function varianceClass(value: number): string {
-  if (value === 0) return "text-muted-foreground";
-  return value < 0 ? "text-red-500" : "text-emerald-500";
+function varianceBg(value: number): string {
+  if (value === 0) return "bg-muted/40 text-muted-foreground";
+  return value < 0 ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400";
+}
+
+function NumCell({ value, isBold, isVariance }: { value: number; isBold?: boolean; isVariance?: boolean }) {
+  if (value === 0 && !isBold) {
+    return <span className="text-muted-foreground/50">-</span>;
+  }
+  const formatted = formatK(value);
+  if (isVariance) {
+    return (
+      <span className={`inline-block px-2 py-0.5 rounded-md text-xs tabular-nums ${isBold ? 'font-semibold' : ''} ${varianceBg(value)}`}>
+        {formatted}
+      </span>
+    );
+  }
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-md text-xs tabular-nums bg-muted/40 ${isBold ? 'font-semibold' : ''}`}>
+      {formatted}
+    </span>
+  );
 }
 
 function VarianceIndicator({ value }: { value: number }) {
@@ -33,7 +52,7 @@ function VarianceIndicator({ value }: { value: number }) {
   const isPositive = value > 0;
   return (
     <span
-      className={`inline-block w-2.5 h-2.5 rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-red-500'}`}
+      className={`inline-block w-2 h-2 rounded-full ${isPositive ? 'bg-emerald-500' : 'bg-red-500'}`}
       data-testid={`indicator-${isPositive ? 'under' : 'over'}-budget`}
     />
   );
@@ -316,27 +335,27 @@ export default function AdminSummary() {
                           {group}
                         </td>
                       </tr>
-                      {groupPractices.map(p => (
-                        <tr key={p.practice} className="border-b border-border/50 hover:bg-muted/20 transition-colors" data-testid={`row-practice-${p.practice}`}>
-                          <td className="p-2 pl-5 text-foreground sticky left-0 bg-card z-10">{p.practice}</td>
-                          <td className="text-right p-2 border-l border-border tabular-nums">{formatK(p.actuals.compensation)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.actuals.programs)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.actuals.databases)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.actuals.bcn)}</td>
-                          <td className="text-right p-2 font-semibold tabular-nums">{formatK(p.actuals.total)}</td>
-                          <td className="text-right p-2 border-l border-border tabular-nums">{formatK(p.budget.compensation)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.budget.programs)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.budget.databases)}</td>
-                          <td className="text-right p-2 tabular-nums">{formatK(p.budget.bcn)}</td>
-                          <td className="text-right p-2 font-semibold tabular-nums">{formatK(p.budget.total)}</td>
-                          <td className={`text-right p-2 border-l border-border tabular-nums ${varianceClass(p.variance.compensation)}`}>{formatK(p.variance.compensation)}</td>
-                          <td className={`text-right p-2 tabular-nums ${varianceClass(p.variance.programs)}`}>{formatK(p.variance.programs)}</td>
-                          <td className={`text-right p-2 tabular-nums ${varianceClass(p.variance.databases)}`}>{formatK(p.variance.databases)}</td>
-                          <td className={`text-right p-2 tabular-nums ${varianceClass(p.variance.bcn)}`}>{formatK(p.variance.bcn)}</td>
-                          <td className={`text-right p-2 font-semibold tabular-nums ${varianceClass(p.variance.total)}`}>{formatK(p.variance.total)}</td>
-                          <td className="text-right p-2 tabular-nums">
+                      {groupPractices.map((p, idx) => (
+                        <tr key={p.practice} className={`border-b border-border/30 hover:bg-muted/30 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`} data-testid={`row-practice-${p.practice}`}>
+                          <td className={`p-2 pl-5 text-foreground sticky left-0 z-10 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>{p.practice}</td>
+                          <td className="text-right p-1.5 border-l border-border"><NumCell value={p.actuals.compensation} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.actuals.programs} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.actuals.databases} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.actuals.bcn} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.actuals.total} isBold /></td>
+                          <td className="text-right p-1.5 border-l border-border"><NumCell value={p.budget.compensation} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.budget.programs} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.budget.databases} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.budget.bcn} /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.budget.total} isBold /></td>
+                          <td className="text-right p-1.5 border-l border-border"><NumCell value={p.variance.compensation} isVariance /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.variance.programs} isVariance /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.variance.databases} isVariance /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.variance.bcn} isVariance /></td>
+                          <td className="text-right p-1.5"><NumCell value={p.variance.total} isVariance isBold /></td>
+                          <td className="text-right p-1.5">
                             <span className="inline-flex items-center gap-1.5">
-                              <span className={varianceClass(p.variance.total)}>
+                              <span className={`inline-block px-2 py-0.5 rounded-md text-xs tabular-nums ${varianceBg(p.variance.total)}`}>
                                 {p.variance.percentVariance !== 0 ? `${p.variance.percentVariance}%` : '-'}
                               </span>
                               <VarianceIndicator value={p.variance.total} />
@@ -344,23 +363,23 @@ export default function AdminSummary() {
                           </td>
                         </tr>
                       ))}
-                      <tr className="border-b-2 border-border bg-muted/30 font-semibold text-xs">
-                        <td className="p-1.5 pl-5 text-muted-foreground italic sticky left-0 bg-muted/30 z-10">{group} Subtotal</td>
-                        <td className="text-right p-1.5 border-l border-border tabular-nums">{formatK(groupTotals.actuals.compensation)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.actuals.programs)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.actuals.databases)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.actuals.bcn)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.actuals.total)}</td>
-                        <td className="text-right p-1.5 border-l border-border tabular-nums">{formatK(groupTotals.budget.compensation)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.budget.programs)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.budget.databases)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.budget.bcn)}</td>
-                        <td className="text-right p-1.5 tabular-nums">{formatK(groupTotals.budget.total)}</td>
-                        <td className={`text-right p-1.5 border-l border-border tabular-nums ${varianceClass(groupTotals.variance.compensation)}`}>{formatK(groupTotals.variance.compensation)}</td>
-                        <td className={`text-right p-1.5 tabular-nums ${varianceClass(groupTotals.variance.programs)}`}>{formatK(groupTotals.variance.programs)}</td>
-                        <td className={`text-right p-1.5 tabular-nums ${varianceClass(groupTotals.variance.databases)}`}>{formatK(groupTotals.variance.databases)}</td>
-                        <td className={`text-right p-1.5 tabular-nums ${varianceClass(groupTotals.variance.bcn)}`}>{formatK(groupTotals.variance.bcn)}</td>
-                        <td className={`text-right p-1.5 tabular-nums ${varianceClass(groupTotals.variance.total)}`}>{formatK(groupTotals.variance.total)}</td>
+                      <tr className="border-b-2 border-border bg-muted/40">
+                        <td className="p-1.5 pl-5 text-muted-foreground italic text-xs font-semibold sticky left-0 bg-muted/40 z-10">{group} Subtotal</td>
+                        <td className="text-right p-1.5 border-l border-border"><NumCell value={groupTotals.actuals.compensation} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.actuals.programs} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.actuals.databases} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.actuals.bcn} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.actuals.total} isBold /></td>
+                        <td className="text-right p-1.5 border-l border-border"><NumCell value={groupTotals.budget.compensation} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.budget.programs} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.budget.databases} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.budget.bcn} isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.budget.total} isBold /></td>
+                        <td className="text-right p-1.5 border-l border-border"><NumCell value={groupTotals.variance.compensation} isVariance isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.variance.programs} isVariance isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.variance.databases} isVariance isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.variance.bcn} isVariance isBold /></td>
+                        <td className="text-right p-1.5"><NumCell value={groupTotals.variance.total} isVariance isBold /></td>
                         <td className="text-right p-1.5"></td>
                       </tr>
                     </Fragment>
@@ -368,24 +387,24 @@ export default function AdminSummary() {
                 })}
                 <tr className="bg-muted border-t-2 border-foreground/30 font-bold" data-testid="row-total">
                   <td className="p-2 pl-3 text-foreground sticky left-0 bg-muted z-10">Total Cost Center PPK</td>
-                  <td className="text-right p-2 border-l border-border tabular-nums">{formatK(summaryData.totals.actuals.compensation)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.actuals.programs)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.actuals.databases)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.actuals.bcn)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.actuals.total)}</td>
-                  <td className="text-right p-2 border-l border-border tabular-nums">{formatK(summaryData.totals.budget.compensation)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.budget.programs)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.budget.databases)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.budget.bcn)}</td>
-                  <td className="text-right p-2 tabular-nums">{formatK(summaryData.totals.budget.total)}</td>
-                  <td className={`text-right p-2 border-l border-border tabular-nums ${varianceClass(summaryData.totals.variance.compensation)}`}>{formatK(summaryData.totals.variance.compensation)}</td>
-                  <td className={`text-right p-2 tabular-nums ${varianceClass(summaryData.totals.variance.programs)}`}>{formatK(summaryData.totals.variance.programs)}</td>
-                  <td className={`text-right p-2 tabular-nums ${varianceClass(summaryData.totals.variance.databases)}`}>{formatK(summaryData.totals.variance.databases)}</td>
-                  <td className={`text-right p-2 tabular-nums ${varianceClass(summaryData.totals.variance.bcn)}`}>{formatK(summaryData.totals.variance.bcn)}</td>
-                  <td className={`text-right p-2 tabular-nums ${varianceClass(summaryData.totals.variance.total)}`}>{formatK(summaryData.totals.variance.total)}</td>
-                  <td className="text-right p-2 tabular-nums">
+                  <td className="text-right p-1.5 border-l border-border"><NumCell value={summaryData.totals.actuals.compensation} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.actuals.programs} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.actuals.databases} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.actuals.bcn} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.actuals.total} isBold /></td>
+                  <td className="text-right p-1.5 border-l border-border"><NumCell value={summaryData.totals.budget.compensation} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.budget.programs} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.budget.databases} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.budget.bcn} isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.budget.total} isBold /></td>
+                  <td className="text-right p-1.5 border-l border-border"><NumCell value={summaryData.totals.variance.compensation} isVariance isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.variance.programs} isVariance isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.variance.databases} isVariance isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.variance.bcn} isVariance isBold /></td>
+                  <td className="text-right p-1.5"><NumCell value={summaryData.totals.variance.total} isVariance isBold /></td>
+                  <td className="text-right p-1.5">
                     <span className="inline-flex items-center gap-1.5">
-                      <span className={varianceClass(summaryData.totals.variance.total)}>
+                      <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums ${varianceBg(summaryData.totals.variance.total)}`}>
                         {summaryData.totals.variance.percentVariance}%
                       </span>
                       <VarianceIndicator value={summaryData.totals.variance.total} />
