@@ -60,7 +60,7 @@ function VarianceRow({ item }: { item: KeyVarianceItem }) {
             <TrendingDown className="w-4 h-4" />
           )}
           <span className="text-sm font-semibold" data-testid="variance-amount">
-            {isOverBudget ? '-' : '+'}{formatCurrency(Math.abs(item.variance))}
+            {isOverBudget ? '+' : '-'}{formatCurrency(Math.abs(item.variance))}
           </span>
         </div>
       </div>

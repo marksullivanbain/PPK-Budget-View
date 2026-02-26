@@ -352,7 +352,7 @@ export default function Dashboard() {
               />
               <KpiCard
                 title="Variance"
-                value={`${dashboardData.isUnderBudget ? '+' : '-'}${formatCurrency(Math.round(Math.abs(dashboardData.variance)))}`}
+                value={`${dashboardData.isUnderBudget ? '-' : '+'}${formatCurrency(Math.round(Math.abs(dashboardData.variance)))}`}
                 subtitle={dashboardData.isUnderBudget ? "Under budget" : "Over budget"}
                 icon="variance"
                 trend={dashboardData.isUnderBudget ? "down" : "up"}
