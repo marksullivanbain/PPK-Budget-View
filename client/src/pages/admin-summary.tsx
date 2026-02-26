@@ -16,30 +16,23 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 
 function formatK(value: number): string {
   if (value === 0) return "-";
-  const absVal = Math.abs(value);
-  if (absVal >= 1000) {
-    const k = Math.round(value / 1000);
-    return k.toLocaleString();
-  }
-  return value.toLocaleString();
+  const k = Math.round(value / 1000);
+  if (k === 0) return "-";
+  return k.toLocaleString();
 }
 
 function formatVarianceK(value: number): string {
   if (value === 0) return "-";
-  const absVal = Math.abs(value);
-  let num: string;
-  if (absVal >= 1000) {
-    num = Math.abs(Math.round(value / 1000)).toLocaleString();
-  } else {
-    num = Math.abs(value).toLocaleString();
-  }
-  if (value > 0) return `-${num}`;
-  if (value < 0) return `+${num}`;
+  const k = Math.round(value / 1000);
+  if (k === 0) return "-";
+  const num = Math.abs(k).toLocaleString();
+  if (k > 0) return `-${num}`;
+  if (k < 0) return `+${num}`;
   return num;
 }
 
 function varianceBg(value: number): string {
-  if (value === 0) return "bg-muted/40 text-muted-foreground";
+  if (value === 0 || Math.round(value / 1000) === 0) return "bg-muted/40 text-muted-foreground";
   return value < 0 ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400";
 }
 
