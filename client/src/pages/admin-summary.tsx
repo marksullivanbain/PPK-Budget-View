@@ -24,6 +24,20 @@ function formatK(value: number): string {
   return value.toLocaleString();
 }
 
+function formatVarianceK(value: number): string {
+  if (value === 0) return "-";
+  const absVal = Math.abs(value);
+  let num: string;
+  if (absVal >= 1000) {
+    num = Math.abs(Math.round(value / 1000)).toLocaleString();
+  } else {
+    num = Math.abs(value).toLocaleString();
+  }
+  if (value > 0) return `-${num}`;
+  if (value < 0) return `+${num}`;
+  return num;
+}
+
 function varianceBg(value: number): string {
   if (value === 0) return "bg-muted/40 text-muted-foreground";
   return value < 0 ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400";
@@ -33,7 +47,7 @@ function NumCell({ value, isBold, isVariance }: { value: number; isBold?: boolea
   if (value === 0 && !isBold) {
     return <span className="text-muted-foreground/50">-</span>;
   }
-  const formatted = formatK(value);
+  const formatted = isVariance ? formatVarianceK(value) : formatK(value);
   if (isVariance) {
     return (
       <span className={`inline-block px-2 py-0.5 rounded-md text-xs tabular-nums ${isBold ? 'font-semibold' : ''} ${varianceBg(value)}`}>
@@ -433,7 +447,7 @@ export default function AdminSummary() {
                           <td className="text-right p-1.5">
                             <span className="inline-flex items-center gap-1.5">
                               <span className={`inline-block px-2 py-0.5 rounded-md text-xs tabular-nums ${varianceBg(p.variance.total)}`}>
-                                {p.variance.percentVariance !== 0 ? `${p.variance.percentVariance}%` : '-'}
+                                {p.variance.percentVariance !== 0 ? `${p.variance.percentVariance > 0 ? '-' : '+'}${Math.abs(p.variance.percentVariance)}%` : '-'}
                               </span>
                               <VarianceIndicator value={p.variance.total} />
                             </span>
@@ -482,7 +496,7 @@ export default function AdminSummary() {
                   <td className="text-right p-1.5">
                     <span className="inline-flex items-center gap-1.5">
                       <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums ${varianceBg(summaryData.totals.variance.total)}`}>
-                        {summaryData.totals.variance.percentVariance}%
+                        {summaryData.totals.variance.percentVariance !== 0 ? `${summaryData.totals.variance.percentVariance > 0 ? '-' : '+'}${Math.abs(summaryData.totals.variance.percentVariance)}%` : '-'}
                       </span>
                       <VarianceIndicator value={summaryData.totals.variance.total} />
                     </span>
