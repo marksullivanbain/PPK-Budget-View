@@ -237,6 +237,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin-summary/expense-details", isAuthenticated, async (req, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      const allowedPractices = getPracticesForEmail(userEmail || '');
+
+      if (!allowedPractices || !allowedPractices.includes('All Practices')) {
+        return res.status(403).json({ error: "Access denied - requires All Practices access" });
+      }
+
+      const { practice, spendType, periodMode, month, year: yearParam } = req.query;
+      if (!practice || !spendType) {
+        return res.status(400).json({ error: "practice and spendType are required" });
+      }
+
+      const validSpendTypes = ['compensation', 'programs', 'databases', 'bcn'];
+      if (!validSpendTypes.includes(spendType as string)) {
+        return res.status(400).json({ error: `spendType must be one of: ${validSpendTypes.join(', ')}` });
+      }
+
+      const year = parseInt(yearParam as string) || 2026;
+      const pm = (periodMode as 'ytd' | 'month') || 'ytd';
+      const m = parseInt(month as string) || 12;
+      const details = await storage.getAdminExpenseDetails(
+        practice as string,
+        spendType as string,
+        pm,
+        m,
+        year
+      );
+      res.json(details);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch admin expense details" });
+    }
+  });
+
   // Get IP Teams practices list
   app.get("/api/ip-teams/practices", isAuthenticated, async (req, res) => {
     try {

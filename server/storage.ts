@@ -83,6 +83,7 @@ export interface IStorage {
   getExpensesForCaseCodes(practiceId: string, caseCodes: string[], month: number, year?: number): Promise<Expense[]>;
   
   getAdminSummary(periodMode: 'ytd' | 'month', month: number, year: number): Promise<AdminSummaryData>;
+  getAdminExpenseDetails(practiceName: string, spendType: string, periodMode: 'ytd' | 'month', month: number, year: number): Promise<ExpenseDetail[]>;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -1147,6 +1148,56 @@ export class MemStorage implements IStorage {
       : 0;
 
     return { practices, totals, month, year, periodMode };
+  }
+
+  async getAdminExpenseDetails(
+    practiceName: string, 
+    spendType: string, 
+    periodMode: 'ytd' | 'month', 
+    month: number, 
+    year: number
+  ): Promise<ExpenseDetail[]> {
+    const costCenter = Array.from(this.costCenters.values()).find(cc => cc.name === practiceName);
+    if (!costCenter) return [];
+
+    let expenses = Array.from(this.expenses.values()).filter(
+      e => e.costCenterId === costCenter.id && e.year === year
+    );
+
+    if (periodMode === 'month') {
+      expenses = expenses.filter(e => (e.month || 12) === month);
+    } else {
+      expenses = expenses.filter(e => (e.month || 12) <= month);
+    }
+
+    const spendTypeCategories: Record<string, string[]> = {
+      'compensation': ['Compensation'],
+      'programs': ['General', 'IP'],
+      'databases': ['Databases'],
+      'bcn': ['BCN'],
+    };
+
+    const allowedCategoryNames = spendTypeCategories[spendType] || [];
+    const categoryIds = Array.from(this.spendCategories.values())
+      .filter(cat => allowedCategoryNames.includes(cat.name))
+      .map(cat => cat.id);
+
+    const filtered = expenses.filter(e => categoryIds.includes(e.categoryId));
+    const isCompensation = spendType === 'compensation';
+
+    return filtered.map(exp => ({
+      id: exp.id,
+      lineDescription: exp.description,
+      amount: exp.amount,
+      caseCode: exp.caseCode || '',
+      caseName: exp.caseName || '',
+      vendorName: exp.vendorName || '',
+      period: exp.period || '',
+      summaryAccount: exp.summaryAccount || '',
+      documentDescription: exp.documentDescription || '',
+      sapInvoiceDocUrl: isCompensation ? undefined : exp.sapInvoiceDocUrl || undefined,
+      tAndEEmployee: isCompensation ? undefined : (exp as any).tAndEEmployee || undefined,
+    }));
   }
 
   private loadIPTeamsData() {

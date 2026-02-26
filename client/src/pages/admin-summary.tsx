@@ -1,14 +1,15 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useMemo, useRef, Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Download } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Download, X, Search, ArrowDown, ArrowUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import type { AdminSummaryData } from "@shared/schema";
+import type { AdminSummaryData, ExpenseDetail } from "@shared/schema";
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
@@ -58,11 +59,34 @@ function VarianceIndicator({ value }: { value: number }) {
   );
 }
 
+const SPEND_TYPE_LABELS: Record<string, string> = {
+  compensation: 'Compensation',
+  programs: 'Programs',
+  databases: 'Databases',
+  bcn: 'BCN',
+  total: 'Total',
+};
+
+function formatCurrency(amount: number): string {
+  const absAmount = Math.abs(amount);
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(absAmount);
+  return amount < 0 ? `-${formatted}` : formatted;
+}
+
 export default function AdminSummary() {
   const { user } = useAuth();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
+  const [drillDown, setDrillDown] = useState<{ practice: string; spendType: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   const { data: latestMonthData } = useQuery<{ year: number; latestMonth: number }>({
     queryKey: ['/api/latest-month', selectedYear],
@@ -88,6 +112,48 @@ export default function AdminSummary() {
     },
     enabled: userAccess?.canSeeAllPractices === true,
   });
+
+  const { data: expenseDetails, isLoading: detailsLoading } = useQuery<ExpenseDetail[]>({
+    queryKey: ['/api/admin-summary/expense-details', drillDown?.practice, drillDown?.spendType, periodMode, selectedMonth, selectedYear],
+    queryFn: async () => {
+      if (!drillDown) return [];
+      const url = `/api/admin-summary/expense-details?practice=${encodeURIComponent(drillDown.practice)}&spendType=${drillDown.spendType}&periodMode=${periodMode}&month=${selectedMonth}&year=${selectedYear}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch expense details');
+      return response.json();
+    },
+    enabled: !!drillDown,
+  });
+
+  const filteredDetails = useMemo(() => {
+    if (!expenseDetails) return [];
+    let items = [...expenseDetails];
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      items = items.filter(e =>
+        (e.lineDescription || '').toLowerCase().includes(term) ||
+        (e.vendorName || '').toLowerCase().includes(term) ||
+        (e.caseCode || '').toLowerCase().includes(term) ||
+        (e.caseName || '').toLowerCase().includes(term)
+      );
+    }
+    items.sort((a, b) => sortDirection === 'desc'
+      ? Math.abs(b.amount) - Math.abs(a.amount)
+      : Math.abs(a.amount) - Math.abs(b.amount)
+    );
+    return items;
+  }, [expenseDetails, searchTerm, sortDirection]);
+
+  const handleDrillDown = (practice: string, spendType: string) => {
+    if (drillDown?.practice === practice && drillDown?.spendType === spendType) {
+      setDrillDown(null);
+    } else {
+      setDrillDown({ practice, spendType });
+      setSearchTerm("");
+      setSortDirection('desc');
+      setTimeout(() => detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  };
 
   const getUserInitials = () => {
     if (!user) return '?';
@@ -338,10 +404,21 @@ export default function AdminSummary() {
                       {groupPractices.map((p, idx) => (
                         <tr key={p.practice} className={`border-b border-border/30 hover:bg-muted/30 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`} data-testid={`row-practice-${p.practice}`}>
                           <td className={`p-2 pl-5 text-foreground sticky left-0 z-10 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>{p.practice}</td>
-                          <td className="text-right p-1.5 border-l border-border"><NumCell value={p.actuals.compensation} /></td>
-                          <td className="text-right p-1.5"><NumCell value={p.actuals.programs} /></td>
-                          <td className="text-right p-1.5"><NumCell value={p.actuals.databases} /></td>
-                          <td className="text-right p-1.5"><NumCell value={p.actuals.bcn} /></td>
+                          {(['compensation', 'programs', 'databases', 'bcn'] as const).map(st => (
+                            <td key={`actual-${st}`} className={`text-right p-1.5 ${st === 'compensation' ? 'border-l border-border' : ''}`}>
+                              {p.actuals[st] !== 0 ? (
+                                <button
+                                  onClick={() => handleDrillDown(p.practice, st)}
+                                  className={`cursor-pointer transition-all ${drillDown?.practice === p.practice && drillDown?.spendType === st ? 'ring-2 ring-primary rounded-md' : 'hover:ring-1 hover:ring-muted-foreground/40 rounded-md'}`}
+                                  data-testid={`button-drill-${p.practice}-${st}`}
+                                >
+                                  <NumCell value={p.actuals[st]} />
+                                </button>
+                              ) : (
+                                <NumCell value={0} />
+                              )}
+                            </td>
+                          ))}
                           <td className="text-right p-1.5"><NumCell value={p.actuals.total} isBold /></td>
                           <td className="text-right p-1.5 border-l border-border"><NumCell value={p.budget.compensation} /></td>
                           <td className="text-right p-1.5"><NumCell value={p.budget.programs} /></td>
@@ -415,6 +492,98 @@ export default function AdminSummary() {
             </table>
           </Card>
         ) : null}
+
+        {drillDown && (
+          <div ref={detailsRef} className="mt-4">
+            <Card className="border-card-border" data-testid="admin-expense-details">
+              <div className="p-4 border-b border-border flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="font-semibold text-foreground" data-testid="text-drill-down-title">
+                    {drillDown.practice} — {SPEND_TYPE_LABELS[drillDown.spendType]} Expenses
+                  </h3>
+                  {expenseDetails && (
+                    <span className="text-xs text-muted-foreground">
+                      {filteredDetails.length} item{filteredDetails.length !== 1 ? 's' : ''}
+                      {searchTerm && ` (filtered from ${expenseDetails.length})`}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search expenses..."
+                      className="pl-8 h-8 w-[200px] text-sm"
+                      data-testid="input-search-admin-expenses"
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSortDirection(d => d === 'desc' ? 'asc' : 'desc')}
+                    className="h-8 px-2"
+                    data-testid="button-sort-admin-expenses"
+                  >
+                    {sortDirection === 'desc' ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDrillDown(null)}
+                    className="h-8 px-2"
+                    data-testid="button-close-admin-expenses"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto">
+                {detailsLoading ? (
+                  <div className="p-4 space-y-2">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                  </div>
+                ) : filteredDetails.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm">
+                    {searchTerm ? 'No matching expenses found.' : 'No expenses found.'}
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-card z-10">
+                      <tr className="border-b border-border text-xs text-muted-foreground">
+                        <th className="text-left p-2 pl-4 w-[30%]">Description</th>
+                        <th className="text-left p-2">Case Code</th>
+                        <th className="text-left p-2">Case Name</th>
+                        <th className="text-left p-2">Vendor</th>
+                        <th className="text-left p-2">Period</th>
+                        <th className="text-right p-2 pr-4">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDetails.map((exp, i) => (
+                        <tr key={exp.id || i} className={`border-b border-border/30 ${i % 2 === 0 ? '' : 'bg-muted/10'}`} data-testid={`row-admin-expense-${i}`}>
+                          <td className="p-2 pl-4 text-foreground truncate max-w-[300px]" title={exp.lineDescription}>
+                            {exp.lineDescription || '-'}
+                          </td>
+                          <td className="p-2 text-muted-foreground font-mono text-xs">{exp.caseCode || '-'}</td>
+                          <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.caseName}>{exp.caseName || '-'}</td>
+                          <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.vendorName}>{exp.vendorName || '-'}</td>
+                          <td className="p-2 text-muted-foreground whitespace-nowrap">{exp.period || '-'}</td>
+                          <td className={`p-2 pr-4 text-right tabular-nums font-medium whitespace-nowrap ${exp.amount >= 0 ? 'text-foreground' : 'text-red-400'}`}>
+                            {formatCurrency(exp.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

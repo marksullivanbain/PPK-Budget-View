@@ -49,7 +49,7 @@ shared/
 - Spend Type Breakdown with progress bars per category
 - Program Spend Breakdown: Groups by Account Name (column AB), excludes Compensation, shows items ≥$1k (Month mode) or ≥$20k (YTD mode)
 - Total Program Spend = Total Spend minus Compensation actual
-- **Admin Summary**: Admin-only practice-level summary table showing actuals/budget/variance by spend type (Comp, Programs, DBs, BCN), grouped by Industries/Capabilities/Other PPK with subtotals and color-coded variance indicators
+- **Admin Summary**: Admin-only practice-level summary table showing actuals/budget/variance by spend type (Comp, Programs, DBs, BCN), grouped by Industries/Capabilities/Other PPK with subtotals and color-coded variance indicators. Excludes Marketing case groups. Clickable actuals cells drill down to show individual expense line items below the table with search and sort.
 - **Expense Details Drill-Down**: Click any category or program to see individual expense line items with search and period filters
 - **Case Group Interaction**: Separated filtering from drill-down - single click opens expense details (no dashboard refresh), filter icon button filters entire dashboard
 - Dark theme UI matching the original design
@@ -113,6 +113,7 @@ The following practices are consolidated for reporting:
 - `GET /api/cost-centers/:costCenterId/trends?year=2025` - Get monthly trend data for charts
 - `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N&year=2025` - Get key variances for All Practices view
 - `GET /api/admin-summary?periodMode=ytd|month&month=1-12&year=2025` - Admin-only practice summary with actuals/budget/variance by spend type
+- `GET /api/admin-summary/expense-details?practice=X&spendType=Y&periodMode=ytd|month&month=1-12&year=2025` - Admin expense drill-down (spendType: compensation|programs|databases|bcn)
 - `GET /api/ip-teams/practices?year=2026` - Get list of practices with IP Teams data
 - `GET /api/ip-teams/data?practice=X&month=N&year=2026` - Get IP Teams investment tracking data
 
