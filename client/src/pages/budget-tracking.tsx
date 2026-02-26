@@ -247,7 +247,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }:
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground">Variance</span>
           <span className={`font-medium ${isOverBudget ? 'text-red-500' : 'text-green-500'}`}>
-            {formatCurrency(variance)}
+            {variance === 0 ? formatCurrency(0) : `${isOverBudget ? '+' : '-'}${formatCurrency(Math.abs(variance))}`}
           </span>
         </div>
       </div>
