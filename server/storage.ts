@@ -1056,6 +1056,8 @@ export class MemStorage implements IStorage {
       const budget = { compensation: 0, programs: 0, databases: 0, bcn: 0, total: 0 };
 
       for (const category of categories) {
+        if (category.name === 'Marketing') continue;
+
         const catExpenses = filteredExpenses.filter(e => e.categoryId === category.id);
         const actual = catExpenses.reduce((sum, e) => sum + e.amount, 0);
         const budgetAmt = getBudgetForPeriod(category.id);
