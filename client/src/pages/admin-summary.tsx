@@ -566,7 +566,8 @@ export default function AdminSummary() {
                         <th className="text-left p-2">Case Name</th>
                         <th className="text-left p-2">Vendor</th>
                         <th className="text-left p-2">Period</th>
-                        <th className="text-right p-2 pr-4">Amount</th>
+                        <th className="text-right p-2">Amount</th>
+                        <th className="text-left p-2 pr-4">Link</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -579,8 +580,21 @@ export default function AdminSummary() {
                           <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.caseName}>{exp.caseName || '-'}</td>
                           <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.vendorName}>{exp.vendorName || '-'}</td>
                           <td className="p-2 text-muted-foreground whitespace-nowrap">{exp.period || '-'}</td>
-                          <td className={`p-2 pr-4 text-right tabular-nums font-medium whitespace-nowrap ${exp.amount >= 0 ? 'text-foreground' : 'text-red-400'}`}>
+                          <td className={`p-2 text-right tabular-nums font-medium whitespace-nowrap ${exp.amount >= 0 ? 'text-foreground' : 'text-red-400'}`}>
                             {formatCurrency(exp.amount)}
+                          </td>
+                          <td className="p-2 pr-4 text-muted-foreground">
+                            {exp.sapInvoiceDocUrl ? (
+                              <a
+                                href={exp.sapInvoiceDocUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:underline"
+                                data-testid={`link-invoice-${i}`}
+                              >
+                                View
+                              </a>
+                            ) : '-'}
                           </td>
                         </tr>
                       ))}
