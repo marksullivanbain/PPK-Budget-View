@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useCostCenter } from "@/hooks/use-cost-center";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { CostCenterSelector } from "@/components/cost-center-selector";
@@ -29,7 +30,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 export default function TravelDetail() {
   const { user } = useAuth();
   const { isDemoPractice, maskPracticeName } = useDemoMode();
-  const [selectedCostCenterId, setSelectedCostCenterId] = useState("all");
+  const { selectedCostCenterId, setSelectedCostCenterId } = useCostCenter();
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [selectedCaseCode, setSelectedCaseCode] = useState<string | null>(null);
@@ -59,6 +60,16 @@ export default function TravelDetail() {
   const { data: userAccess } = useQuery<{ canSeeAllPractices: boolean }>({
     queryKey: ['/api/user-access'],
   });
+
+  useEffect(() => {
+    if (costCenters && costCenters.length > 0 && !selectedCostCenterId && userAccess !== undefined) {
+      if (userAccess.canSeeAllPractices) {
+        setSelectedCostCenterId("all");
+      } else {
+        setSelectedCostCenterId(costCenters[0].id);
+      }
+    }
+  }, [costCenters, selectedCostCenterId, userAccess, setSelectedCostCenterId]);
 
   const { data: travelSummary, isLoading: summaryLoading } = useQuery<TravelCaseCodeSummary[]>({
     queryKey: ['/api/travel', selectedCostCenterId, 'summary', { periodMode, month: selectedMonth, year: selectedYear }],

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCostCenter } from "@/hooks/use-cost-center";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { KpiCard } from "@/components/kpi-card";
@@ -79,7 +80,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 export default function Dashboard() {
   const { user } = useAuth();
   const { maskPracticeName, isDemoMode } = useDemoMode();
-  const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
+  const { selectedCostCenterId, setSelectedCostCenterId } = useCostCenter();
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
   const [selectedCaseGroup, setSelectedCaseGroup] = useState<string | null>(null);
@@ -132,14 +133,15 @@ export default function Dashboard() {
     enabled: !!selectedCostCenterId,
   });
 
-  // Set initial cost center when data loads
-  if (costCenters && costCenters.length > 0 && !selectedCostCenterId && userAccess !== undefined) {
-    if (userAccess.canSeeAllPractices) {
-      setSelectedCostCenterId("all");
-    } else {
-      setSelectedCostCenterId(costCenters[0].id);
+  useEffect(() => {
+    if (costCenters && costCenters.length > 0 && !selectedCostCenterId && userAccess !== undefined) {
+      if (userAccess.canSeeAllPractices) {
+        setSelectedCostCenterId("all");
+      } else {
+        setSelectedCostCenterId(costCenters[0].id);
+      }
     }
-  }
+  }, [costCenters, selectedCostCenterId, userAccess, setSelectedCostCenterId]);
 
   const handleSpendCategoryClick = (categoryId: string) => {
     if (selectedSpendCategory === categoryId) {

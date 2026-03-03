@@ -12,6 +12,7 @@ import TravelDetail from "@/pages/travel-detail";
 import AdminSummary from "@/pages/admin-summary";
 import { useAuth } from "@/hooks/use-auth";
 import { DemoModeProvider } from "@/hooks/use-demo-mode";
+import { CostCenterProvider } from "@/hooks/use-cost-center";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LogIn, BarChart3 } from "lucide-react";
@@ -82,12 +83,14 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DemoModeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <AppContent />
-        </TooltipProvider>
-      </DemoModeProvider>
+      <CostCenterProvider>
+        <DemoModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <AppContent />
+          </TooltipProvider>
+        </DemoModeProvider>
+      </CostCenterProvider>
     </QueryClientProvider>
   );
 }

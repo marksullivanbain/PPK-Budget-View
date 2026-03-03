@@ -9,7 +9,7 @@ An internal expense and cost tracking dashboard for cost center managers. The da
 - **Database**: PostgreSQL (for auth sessions)
 - **Authentication**: Replit Auth (OpenID Connect)
 - **Styling**: Tailwind CSS + shadcn/ui components
-- **State Management**: TanStack React Query
+- **State Management**: TanStack React Query + React Context (shared cost center selection)
 - **Routing**: Wouter
 
 ## Project Structure

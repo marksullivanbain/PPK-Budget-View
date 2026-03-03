@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCostCenter } from "@/hooks/use-cost-center";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -57,7 +58,7 @@ type SpendFilter = 'all' | 'compensation' | 'programs';
 export default function Trends() {
   const { user } = useAuth();
   const { maskPracticeName } = useDemoMode();
-  const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
+  const { selectedCostCenterId, setSelectedCostCenterId } = useCostCenter();
   const [spendFilter, setSpendFilter] = useState<SpendFilter>('all');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
 
@@ -92,9 +93,11 @@ export default function Trends() {
     return (first + last).toUpperCase() || user.email?.[0]?.toUpperCase() || '?';
   };
 
-  if (costCenters && costCenters.length > 0 && !selectedCostCenterId) {
-    setSelectedCostCenterId(costCenters[0].id);
-  }
+  useEffect(() => {
+    if (costCenters && costCenters.length > 0 && !selectedCostCenterId) {
+      setSelectedCostCenterId(costCenters[0].id);
+    }
+  }, [costCenters, selectedCostCenterId, setSelectedCostCenterId]);
 
   const selectedCostCenter = costCenters?.find(c => c.id === selectedCostCenterId);
   const isLoading = costCentersLoading || trendLoading || !trendData;

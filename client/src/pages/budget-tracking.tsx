@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCostCenter } from "@/hooks/use-cost-center";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { 
@@ -278,7 +279,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete, b
 export default function BudgetTracking() {
   const { user } = useAuth();
   const { maskPracticeName, isDemoPractice } = useDemoMode();
-  const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
+  const { selectedCostCenterId, setSelectedCostCenterId } = useCostCenter();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -313,7 +314,7 @@ export default function BudgetTracking() {
     if (costCenters && costCenters.length > 0 && !selectedCostCenterId) {
       setSelectedCostCenterId(costCenters[0].id);
     }
-  }, [costCenters, selectedCostCenterId]);
+  }, [costCenters, selectedCostCenterId, setSelectedCostCenterId]);
 
   const selectedCostCenter = costCenters?.find(c => c.id === selectedCostCenterId);
   const blurDetail = isDemoPractice(selectedCostCenter?.name || '');
