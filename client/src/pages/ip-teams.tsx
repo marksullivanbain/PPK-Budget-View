@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, User, UsersRound, TrendingUp, LayoutDashboard, LogOut, Wallet, Plane, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { IPTeamData, IPTeamEntry, IPTeamSummary } from "@shared/schema";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -224,6 +225,7 @@ function PersonDetailTable({ entries, month }: { entries: IPTeamEntry[]; month: 
 
 export default function IPTeamsPage() {
   const { user } = useAuth();
+  const { maskPracticeName } = useDemoMode();
   const [selectedYear, setSelectedYear] = useState<string>("2026");
   const [selectedPractice, setSelectedPractice] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("1");
@@ -364,7 +366,7 @@ export default function IPTeamsPage() {
                   )}
                   {data?.practices.map((practice) => (
                     <SelectItem key={practice} value={practice}>
-                      {practice}
+                      {maskPracticeName(practice)}
                     </SelectItem>
                   ))}
                 </SelectContent>

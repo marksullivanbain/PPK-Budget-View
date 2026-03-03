@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { CostCenter } from "@shared/schema";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 
 interface CostCenterSelectorProps {
   costCenters: CostCenter[];
@@ -15,6 +16,7 @@ interface CostCenterSelectorProps {
 }
 
 export function CostCenterSelector({ costCenters, selectedId, onSelect, showAllPractices = false }: CostCenterSelectorProps) {
+  const { maskPracticeName } = useDemoMode();
   return (
     <div className="flex items-center gap-3">
       <span className="text-sm text-muted-foreground whitespace-nowrap">Cost Center:</span>
@@ -30,7 +32,7 @@ export function CostCenterSelector({ costCenters, selectedId, onSelect, showAllP
           )}
           {costCenters.map((center) => (
             <SelectItem key={center.id} value={center.id} data-testid={`option-cost-center-${center.id}`}>
-              {center.name}
+              {maskPracticeName(center.name)}
             </SelectItem>
           ))}
         </SelectContent>

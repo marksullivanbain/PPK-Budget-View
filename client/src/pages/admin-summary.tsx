@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Download, X, Search, ArrowDown, ArrowUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { AdminSummaryData, ExpenseDetail } from "@shared/schema";
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -87,6 +88,7 @@ function formatCurrency(amount: number): string {
 
 export default function AdminSummary() {
   const { user } = useAuth();
+  const { maskPracticeName } = useDemoMode();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
@@ -176,7 +178,7 @@ export default function AdminSummary() {
       'Var Comp', 'Var Prog', 'Var DBs', 'Var BCN', 'Var Total', 'Var %'
     ];
     const rows = summaryData.practices.map(p => [
-      p.practice, p.group,
+      maskPracticeName(p.practice), p.group,
       p.actuals.compensation, p.actuals.programs, p.actuals.databases, p.actuals.bcn, p.actuals.total,
       p.budget.compensation, p.budget.programs, p.budget.databases, p.budget.bcn, p.budget.total,
       p.variance.compensation, p.variance.programs, p.variance.databases, p.variance.bcn, p.variance.total, `${p.variance.percentVariance}%`
@@ -410,7 +412,7 @@ export default function AdminSummary() {
                       </tr>
                       {groupPractices.map((p, idx) => (
                         <tr key={p.practice} className={`border-b border-border/30 hover:bg-muted/30 transition-colors ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`} data-testid={`row-practice-${p.practice}`}>
-                          <td className={`p-2 pl-5 text-foreground sticky left-0 z-10 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>{p.practice}</td>
+                          <td className={`p-2 pl-5 text-foreground sticky left-0 z-10 ${idx % 2 === 0 ? 'bg-card' : 'bg-muted/10'}`}>{maskPracticeName(p.practice)}</td>
                           {(['compensation', 'programs', 'databases', 'bcn'] as const).map(st => (
                             <td key={`actual-${st}`} className={`text-right p-1.5 ${st === 'compensation' ? 'border-l border-border' : ''}`}>
                               {p.actuals[st] !== 0 ? (
@@ -506,7 +508,7 @@ export default function AdminSummary() {
               <div className="p-4 border-b border-border flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <h3 className="font-semibold text-foreground" data-testid="text-drill-down-title">
-                    {drillDown.practice} — {SPEND_TYPE_LABELS[drillDown.spendType]} Expenses
+                    {maskPracticeName(drillDown.practice)} — {SPEND_TYPE_LABELS[drillDown.spendType]} Expenses
                   </h3>
                   {expenseDetails && (
                     <span className="text-xs text-muted-foreground">

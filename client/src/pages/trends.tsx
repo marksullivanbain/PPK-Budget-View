@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CostCenterSelector } from "@/components/cost-center-selector";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane, Calendar } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import { useAuth } from "@/hooks/use-auth";
 import type { CostCenter, MonthlyTrendData } from "@shared/schema";
 import {
@@ -55,6 +56,7 @@ type SpendFilter = 'all' | 'compensation' | 'programs';
 
 export default function Trends() {
   const { user } = useAuth();
+  const { maskPracticeName } = useDemoMode();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [spendFilter, setSpendFilter] = useState<SpendFilter>('all');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
@@ -120,7 +122,7 @@ export default function Trends() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-trends-title">
-                {selectedYear} {selectedCostCenter?.name || 'Cost'} Trends
+                {selectedYear} {maskPracticeName(selectedCostCenter?.name || 'Cost')} Trends
               </h1>
               <p className="text-sm text-muted-foreground">
                 Monthly cost trends and variance analysis

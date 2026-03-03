@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogOut, LayoutDashboard, TrendingUp, Users, Plus, Trash2, GripVertical, Edit2, Check, X, Wallet, Plane, Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CostCenter, DynamicBudgetData, CaseCodeWithExpense, BudgetGroupWithCodes } from "@shared/schema";
@@ -274,6 +275,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }:
 
 export default function BudgetTracking() {
   const { user } = useAuth();
+  const { maskPracticeName } = useDemoMode();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
@@ -549,7 +551,7 @@ export default function BudgetTracking() {
               <Card className="p-4 border-card-border">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h2 className="text-lg font-semibold">{budgetData.practiceName}</h2>
+                    <h2 className="text-lg font-semibold">{maskPracticeName(budgetData.practiceName)}</h2>
                     <p className="text-sm text-muted-foreground">
                       Non-compensation program budget allocation
                     </p>

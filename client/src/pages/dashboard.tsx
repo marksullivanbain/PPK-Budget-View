@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
 function formatCurrency(amount: number): string {
@@ -77,6 +78,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { maskPracticeName, isDemoMode } = useDemoMode();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedSpendCategory, setSelectedSpendCategory] = useState<string | null>(null);
   const [selectedProgramCategory, setSelectedProgramCategory] = useState<string | null>(null);
@@ -197,7 +199,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground" data-testid="text-dashboard-title">
-                {selectedCostCenter?.name || 'Practice'} Expense Dashboard - {selectedYear}
+                {maskPracticeName(selectedCostCenter?.name || 'Practice')} Expense Dashboard - {selectedYear}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {periodMode === 'ytd' 

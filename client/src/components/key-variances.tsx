@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { KeyVarianceItem } from "@shared/schema";
 
 interface KeyVariancesProps {
@@ -26,6 +27,7 @@ function formatCurrency(amount: number): string {
 }
 
 function VarianceRow({ item }: { item: KeyVarianceItem }) {
+  const { maskPracticeName } = useDemoMode();
   const isOverBudget = item.variance < 0;
   
   return (
@@ -35,7 +37,7 @@ function VarianceRow({ item }: { item: KeyVarianceItem }) {
     >
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm truncate text-foreground" data-testid="variance-practice">
-          {item.practice}
+          {maskPracticeName(item.practice)}
         </div>
         <div className="text-xs text-muted-foreground truncate" data-testid="variance-casegroup">
           {item.caseGroup}
@@ -85,6 +87,7 @@ function VarianceRowSkeleton() {
 }
 
 export function KeyVariances({ periodMode, month, year }: KeyVariancesProps) {
+  const { maskPracticeName } = useDemoMode();
   const { data: variances, isLoading, error } = useQuery<KeyVarianceItem[]>({
     queryKey: ['/api/key-variances', periodMode, month, year],
     queryFn: async () => {

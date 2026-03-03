@@ -11,6 +11,7 @@ import BudgetTracking from "@/pages/budget-tracking";
 import TravelDetail from "@/pages/travel-detail";
 import AdminSummary from "@/pages/admin-summary";
 import { useAuth } from "@/hooks/use-auth";
+import { DemoModeProvider } from "@/hooks/use-demo-mode";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LogIn, BarChart3 } from "lucide-react";
@@ -81,10 +82,12 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <AppContent />
-      </TooltipProvider>
+      <DemoModeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <AppContent />
+        </TooltipProvider>
+      </DemoModeProvider>
     </QueryClientProvider>
   );
 }
