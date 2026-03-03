@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LogOut, LayoutDashboard, TrendingUp, Users, Wallet, Plane, Search, ArrowDown, ArrowUp, X, ExternalLink, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { CostCenter, TravelCaseCodeSummary, TravelExpenseDetail } from "@shared/schema";
 
 function formatCurrency(amount: number): string {
@@ -27,6 +28,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 
 export default function TravelDetail() {
   const { user } = useAuth();
+  const { isDemoPractice, maskPracticeName } = useDemoMode();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState("all");
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
@@ -81,6 +83,10 @@ export default function TravelDetail() {
     if (!travelSummary) return 0;
     return travelSummary.reduce((sum, item) => sum + item.totalAmount, 0);
   }, [travelSummary]);
+
+  const selectedCostCenter = costCenters?.find(c => c.id === selectedCostCenterId);
+  const blur = isDemoPractice(selectedCostCenter?.name || '');
+  const bc = blur ? 'blur-sm select-none' : '';
 
   const filteredSummary = useMemo(() => {
     if (!travelSummary) return [];
@@ -298,12 +304,12 @@ export default function TravelDetail() {
                   data-testid={`card-travel-case-${item.caseCode.replace(/\s+/g, '-').toLowerCase()}`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="text-sm font-semibold text-foreground truncate">{item.caseCode}</span>
+                    <span className={`text-sm font-semibold text-foreground truncate ${bc}`}>{item.caseCode}</span>
                     <Badge variant="secondary" className="text-xs shrink-0">
                       {item.itemCount} items
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate mb-3" title={item.caseName}>
+                  <p className={`text-xs text-muted-foreground truncate mb-3 ${bc}`} title={blur ? '' : item.caseName}>
                     {item.caseName || 'No case name'}
                   </p>
                   <div className="flex items-end justify-between gap-2">
@@ -328,11 +334,11 @@ export default function TravelDetail() {
               <div className="flex flex-col gap-1">
                 <h3 className="text-lg font-semibold text-foreground">Expense Details</h3>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge data-testid="badge-selected-case-code">
+                  <Badge data-testid="badge-selected-case-code" className={bc}>
                     {selectedCaseCode}
                   </Badge>
                   {selectedCaseCodeInfo?.caseName && (
-                    <span className="text-sm text-muted-foreground">{selectedCaseCodeInfo.caseName}</span>
+                    <span className={`text-sm text-muted-foreground ${bc}`}>{selectedCaseCodeInfo.caseName}</span>
                   )}
                   <span className="text-sm text-muted-foreground">
                     ({selectedCaseCodeInfo?.itemCount ?? 0} items, {formatCurrency(selectedCaseCodeInfo?.totalAmount ?? 0)})
@@ -418,12 +424,12 @@ export default function TravelDetail() {
                           className="border-b border-border hover-elevate"
                           data-testid={`row-travel-expense-${expense.id}`}
                         >
-                          <td className="py-2.5 px-2 text-muted-foreground whitespace-nowrap">{expense.summaryAccount || '-'}</td>
-                          <td className="py-2.5 px-2 text-foreground max-w-[200px] truncate" title={expense.accountName}>{expense.accountName || '-'}</td>
-                          <td className="py-2.5 px-2 text-muted-foreground whitespace-nowrap">{expense.caseCode || '-'}</td>
+                          <td className={`py-2.5 px-2 text-muted-foreground whitespace-nowrap ${bc}`}>{expense.summaryAccount || '-'}</td>
+                          <td className={`py-2.5 px-2 text-foreground max-w-[200px] truncate ${bc}`} title={blur ? '' : expense.accountName}>{expense.accountName || '-'}</td>
+                          <td className={`py-2.5 px-2 text-muted-foreground whitespace-nowrap ${bc}`}>{expense.caseCode || '-'}</td>
                           <td className="py-2.5 px-2 text-muted-foreground whitespace-nowrap">{expense.period || '-'}</td>
-                          <td className="py-2.5 px-2 text-foreground max-w-[250px] truncate" title={expense.lineDescription}>{expense.lineDescription || '-'}</td>
-                          <td className="py-2.5 px-2 text-muted-foreground max-w-[150px] truncate" title={expense.teeEmployeeName}>{expense.teeEmployeeName || '-'}</td>
+                          <td className={`py-2.5 px-2 text-foreground max-w-[250px] truncate ${bc}`} title={blur ? '' : expense.lineDescription}>{expense.lineDescription || '-'}</td>
+                          <td className={`py-2.5 px-2 text-muted-foreground max-w-[150px] truncate ${bc}`} title={blur ? '' : expense.teeEmployeeName}>{expense.teeEmployeeName || '-'}</td>
                           <td className="py-2.5 px-2 text-muted-foreground">
                             {expense.teeAttachment ? (
                               <a

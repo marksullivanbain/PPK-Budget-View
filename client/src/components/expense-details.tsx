@@ -9,10 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, Search, ArrowDown, ArrowUp, Filter, Check } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { ExpenseDetail } from "@shared/schema";
 
 interface ExpenseDetailsProps {
   costCenterId: string;
+  costCenterName?: string;
   filterType: 'category' | 'program' | 'account' | 'caseCode';
   filterValue: string;
   filterLabel: string;
@@ -36,6 +38,7 @@ function formatCurrency(amount: number): string {
 
 export function ExpenseDetails({
   costCenterId,
+  costCenterName,
   filterType,
   filterValue,
   filterLabel,
@@ -46,6 +49,9 @@ export function ExpenseDetails({
   caseGroup,
   year,
 }: ExpenseDetailsProps) {
+  const { isDemoPractice } = useDemoMode();
+  const blur = isDemoPractice(costCenterName || '');
+  const bc = blur ? 'blur-sm select-none' : '';
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
@@ -170,7 +176,7 @@ export function ExpenseDetails({
                 className="w-2 h-2 rounded-full" 
                 style={{ backgroundColor: filterColor }}
               />
-              <span className="text-sm text-foreground">{filterLabel}</span>
+              <span className={`text-sm text-foreground ${filterType === 'caseCode' ? bc : ''}`}>{filterLabel}</span>
             </div>
           </div>
         </div>
@@ -285,9 +291,9 @@ export function ExpenseDetails({
                             onCheckedChange={() => toggleCaseCode(cc.code)}
                           />
                           <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-foreground">{cc.code}</span>
+                            <span className={`text-sm font-medium text-foreground ${bc}`}>{cc.code}</span>
                             {cc.name && (
-                              <span className="text-xs text-muted-foreground truncate">{cc.name}</span>
+                              <span className={`text-xs text-muted-foreground truncate ${bc}`}>{cc.name}</span>
                             )}
                           </div>
                         </label>
@@ -307,7 +313,7 @@ export function ExpenseDetails({
               <Badge
                 key={code}
                 variant="secondary"
-                className="gap-1 cursor-pointer"
+                className={`gap-1 cursor-pointer ${bc}`}
                 onClick={() => toggleCaseCode(code)}
                 data-testid={`badge-case-code-${code}`}
               >
@@ -376,16 +382,16 @@ export function ExpenseDetails({
                     className="grid grid-cols-[1fr_90px_120px_120px_60px_80px_60px] gap-3 py-3 border-b border-border text-sm hover-elevate rounded-md"
                     data-testid={`row-expense-${expense.id}`}
                   >
-                    <span className="text-foreground font-medium truncate" title={expense.lineDescription}>
+                    <span className={`text-foreground font-medium truncate ${bc}`} title={blur ? '' : expense.lineDescription}>
                       {expense.lineDescription || '-'}
                     </span>
-                    <span className="text-muted-foreground truncate" title={expense.caseCode}>
+                    <span className={`text-muted-foreground truncate ${bc}`} title={blur ? '' : expense.caseCode}>
                       {expense.caseCode || '-'}
                     </span>
-                    <span className="text-muted-foreground truncate" title={expense.caseName}>
+                    <span className={`text-muted-foreground truncate ${bc}`} title={blur ? '' : expense.caseName}>
                       {expense.caseName || '-'}
                     </span>
-                    <span className="text-muted-foreground truncate" title={expense.vendorName}>
+                    <span className={`text-muted-foreground truncate ${bc}`} title={blur ? '' : expense.vendorName}>
                       {expense.vendorName || '-'}
                     </span>
                     <span className="text-muted-foreground">

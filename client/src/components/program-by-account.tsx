@@ -2,10 +2,12 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { AccountSpendItem } from "@shared/schema";
 
 interface ProgramByAccountProps {
   caseCodeData: AccountSpendItem[];
+  costCenterName?: string;
   selectedCaseGroup?: string | null;
   selectedAccount?: string | null;
   onClearFilter?: () => void;
@@ -22,7 +24,9 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function ProgramByAccount({ caseCodeData, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick, periodMode = 'ytd' }: ProgramByAccountProps) {
+export function ProgramByAccount({ caseCodeData, costCenterName, selectedCaseGroup, selectedAccount, onClearFilter, onAccountClick, periodMode = 'ytd' }: ProgramByAccountProps) {
+  const { isDemoPractice } = useDemoMode();
+  const bc = isDemoPractice(costCenterName || '') ? 'blur-sm select-none' : '';
   const data = caseCodeData || [];
   const total = data.reduce((sum, item) => sum + item.amount, 0);
   const thresholdText = periodMode === 'month' ? '$1K' : '$20K';
@@ -89,7 +93,7 @@ export function ProgramByAccount({ caseCodeData, selectedCaseGroup, selectedAcco
                         className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-sm font-medium text-foreground truncate">
+                      <span className={`text-sm font-medium text-foreground truncate ${bc}`}>
                         {item.caseName ? `${item.account} - ${item.caseName}` : item.account}
                       </span>
                     </div>

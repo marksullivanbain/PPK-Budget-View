@@ -47,9 +47,10 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 interface DraggableCaseCodeProps {
   caseCode: CaseCodeWithExpense;
   isDragging?: boolean;
+  blur?: boolean;
 }
 
-function DraggableCaseCode({ caseCode, isDragging }: DraggableCaseCodeProps) {
+function DraggableCaseCode({ caseCode, isDragging, blur }: DraggableCaseCodeProps) {
   const {
     attributes,
     listeners,
@@ -75,9 +76,9 @@ function DraggableCaseCode({ caseCode, isDragging }: DraggableCaseCodeProps) {
       <div className="flex items-center gap-2">
         <GripVertical className="w-4 h-4 text-muted-foreground" />
         <div className="flex flex-col">
-          <span className="text-sm font-medium">{caseCode.caseCode}</span>
+          <span className={`text-sm font-medium ${blur ? 'blur-sm select-none' : ''}`}>{caseCode.caseCode}</span>
           {caseCode.caseName && (
-            <span className="text-xs text-muted-foreground truncate max-w-[200px]">{caseCode.caseName}</span>
+            <span className={`text-xs text-muted-foreground truncate max-w-[200px] ${blur ? 'blur-sm select-none' : ''}`}>{caseCode.caseName}</span>
           )}
         </div>
       </div>
@@ -114,9 +115,10 @@ interface BudgetGroupCardProps {
   practiceId: string;
   onUpdate: (id: string, updates: { name?: string; allocatedBudget?: number }) => void;
   onDelete: (id: string) => void;
+  blur?: boolean;
 }
 
-function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }: BudgetGroupCardProps) {
+function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete, blur }: BudgetGroupCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
   const [editBudget, setEditBudget] = useState(group.allocatedBudget.toString());
@@ -264,7 +266,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }:
             </div>
           ) : (
             group.caseCodes.map((caseCode) => (
-              <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} />
+              <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} blur={blur} />
             ))
           )}
         </SortableContext>
@@ -275,7 +277,7 @@ function BudgetGroupCard({ group, month, year, practiceId, onUpdate, onDelete }:
 
 export default function BudgetTracking() {
   const { user } = useAuth();
-  const { maskPracticeName } = useDemoMode();
+  const { maskPracticeName, isDemoPractice } = useDemoMode();
   const [selectedCostCenterId, setSelectedCostCenterId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
@@ -312,6 +314,9 @@ export default function BudgetTracking() {
       setSelectedCostCenterId(costCenters[0].id);
     }
   }, [costCenters, selectedCostCenterId]);
+
+  const selectedCostCenter = costCenters?.find(c => c.id === selectedCostCenterId);
+  const blurDetail = isDemoPractice(selectedCostCenter?.name || '');
 
   const { data: budgetData, isLoading: budgetDataLoading, refetch } = useQuery<DynamicBudgetData>({
     queryKey: ["/api/budget-tracking", selectedCostCenterId, selectedMonth, selectedYear],
@@ -612,6 +617,7 @@ export default function BudgetTracking() {
                   practiceId={selectedCostCenterId}
                   onUpdate={(id, updates) => updateGroupMutation.mutate({ id, updates })}
                   onDelete={(id) => deleteGroupMutation.mutate(id)}
+                  blur={blurDetail}
                 />
               ))}
             </div>
@@ -632,7 +638,7 @@ export default function BudgetTracking() {
                     </div>
                   ) : (
                     budgetData.unassignedCaseCodes.map((caseCode) => (
-                      <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} />
+                      <DraggableCaseCode key={caseCode.caseCode} caseCode={caseCode} blur={blurDetail} />
                     ))
                   )}
                 </SortableContext>
@@ -644,7 +650,7 @@ export default function BudgetTracking() {
                 <div className="p-2 bg-card rounded-md shadow-lg border">
                   <div className="flex items-center gap-2">
                     <GripVertical className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{activeCaseCode.caseCode}</span>
+                    <span className={`text-sm font-medium ${blurDetail ? 'blur-sm select-none' : ''}`}>{activeCaseCode.caseCode}</span>
                     <span className="text-sm">{formatCurrency(activeCaseCode.ytdActual)}</span>
                   </div>
                 </div>

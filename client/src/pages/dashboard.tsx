@@ -383,6 +383,7 @@ export default function Dashboard() {
                 />
                 <ProgramByAccount
                   caseCodeData={dashboardData.programByCaseCode || []}
+                  costCenterName={selectedCostCenter?.name}
                   selectedCaseGroup={selectedCaseGroup}
                   selectedAccount={selectedAccount}
                   onClearFilter={() => setSelectedCaseGroup(null)}
@@ -399,6 +400,7 @@ export default function Dashboard() {
                 {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
+                    costCenterName={selectedCostCenter?.name}
                     filterType="category"
                     filterValue={selectedSpendCategory}
                     filterLabel={getSelectedSpendCategoryInfo()!.label}
@@ -411,6 +413,7 @@ export default function Dashboard() {
                 {selectedProgramCategory && getSelectedProgramInfo() && (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
+                    costCenterName={selectedCostCenter?.name}
                     filterType="program"
                     filterValue={selectedProgramCategory}
                     filterLabel={getSelectedProgramInfo()!.label}
@@ -423,6 +426,7 @@ export default function Dashboard() {
                 {selectedAccount && (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
+                    costCenterName={selectedCostCenter?.name}
                     filterType={'caseCode'}
                     filterValue={selectedAccount}
                     filterLabel={selectedCaseGroup ? `${selectedCaseGroup} - ${selectedAccount}` : selectedAccount}

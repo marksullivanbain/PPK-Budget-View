@@ -88,7 +88,7 @@ function formatCurrency(amount: number): string {
 
 export default function AdminSummary() {
   const { user } = useAuth();
-  const { maskPracticeName } = useDemoMode();
+  const { maskPracticeName, isDemoPractice } = useDemoMode();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [periodMode, setPeriodMode] = useState<'ytd' | 'month'>('ytd');
   const [selectedMonth, setSelectedMonth] = useState<number>(1);
@@ -575,12 +575,12 @@ export default function AdminSummary() {
                     <tbody>
                       {filteredDetails.map((exp, i) => (
                         <tr key={exp.id || i} className={`border-b border-border/30 ${i % 2 === 0 ? '' : 'bg-muted/10'}`} data-testid={`row-admin-expense-${i}`}>
-                          <td className="p-2 pl-4 text-foreground truncate max-w-[300px]" title={exp.lineDescription}>
+                          <td className={`p-2 pl-4 text-foreground truncate max-w-[300px] ${isDemoPractice(drillDown.practice) ? 'blur-sm select-none' : ''}`} title={isDemoPractice(drillDown.practice) ? '' : exp.lineDescription}>
                             {exp.lineDescription || '-'}
                           </td>
-                          <td className="p-2 text-muted-foreground font-mono text-xs">{exp.caseCode || '-'}</td>
-                          <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.caseName}>{exp.caseName || '-'}</td>
-                          <td className="p-2 text-muted-foreground truncate max-w-[200px]" title={exp.vendorName}>{exp.vendorName || '-'}</td>
+                          <td className={`p-2 text-muted-foreground font-mono text-xs ${isDemoPractice(drillDown.practice) ? 'blur-sm select-none' : ''}`}>{exp.caseCode || '-'}</td>
+                          <td className={`p-2 text-muted-foreground truncate max-w-[200px] ${isDemoPractice(drillDown.practice) ? 'blur-sm select-none' : ''}`} title={isDemoPractice(drillDown.practice) ? '' : exp.caseName}>{exp.caseName || '-'}</td>
+                          <td className={`p-2 text-muted-foreground truncate max-w-[200px] ${isDemoPractice(drillDown.practice) ? 'blur-sm select-none' : ''}`} title={isDemoPractice(drillDown.practice) ? '' : exp.vendorName}>{exp.vendorName || '-'}</td>
                           <td className="p-2 text-muted-foreground whitespace-nowrap">{exp.period || '-'}</td>
                           <td className={`p-2 text-right tabular-nums font-medium whitespace-nowrap ${exp.amount >= 0 ? 'text-foreground' : 'text-red-400'}`}>
                             {formatCurrency(exp.amount)}
