@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCostCenter } from "@/hooks/use-cost-center";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { KpiCard } from "@/components/kpi-card";
 import { CompensationBreakdown } from "@/components/compensation-breakdown";
@@ -15,9 +15,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Sparkles, Loader2, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useDemoMode } from "@/hooks/use-demo-mode";
+import { apiRequest } from "@/lib/queryClient";
 import type { CostCenter, DashboardSummary } from "@shared/schema";
 
 function formatCurrency(amount: number): string {
@@ -189,6 +191,30 @@ export default function Dashboard() {
     if (!selectedProgramCategory || !dashboardData) return null;
     const program = dashboardData.programSpendBreakdown.find(p => p.category === selectedProgramCategory);
     return program ? { label: program.category, color: program.color } : null;
+  };
+
+  const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
+  const [aiSummaryText, setAiSummaryText] = useState<string | null>(null);
+
+  const aiSummaryMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/ai-summary", {
+        costCenterId: selectedCostCenterId,
+        periodMode,
+        month: selectedMonth,
+        year: selectedYear,
+      });
+      return res.json();
+    },
+    onSuccess: (data: { summary: string }) => {
+      setAiSummaryText(data.summary);
+    },
+  });
+
+  const handleGenerateInsights = () => {
+    setAiSummaryOpen(true);
+    setAiSummaryText(null);
+    aiSummaryMutation.mutate();
   };
 
   const isLoading = costCentersLoading || dashboardLoading || !dashboardData;
@@ -364,6 +390,24 @@ export default function Dashboard() {
               />
             </div>
 
+            <div className="flex items-center mb-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300"
+                onClick={handleGenerateInsights}
+                disabled={aiSummaryMutation.isPending}
+                data-testid="button-ai-insights"
+              >
+                {aiSummaryMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                AI Insights
+              </Button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <div className="flex flex-col gap-6">
                 <CompensationBreakdown
@@ -445,6 +489,35 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      <Dialog open={aiSummaryOpen} onOpenChange={setAiSummaryOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              AI Budget Insights
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {aiSummaryMutation.isPending && (
+              <div className="flex flex-col items-center gap-3 py-6">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+                <p className="text-sm text-muted-foreground">Analyzing budget data...</p>
+              </div>
+            )}
+            {aiSummaryMutation.isError && (
+              <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-4">
+                Failed to generate insights. Please try again.
+              </div>
+            )}
+            {aiSummaryText && (
+              <div className="text-sm text-foreground leading-relaxed bg-muted/50 rounded-lg p-4" data-testid="text-ai-summary">
+                {aiSummaryText}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

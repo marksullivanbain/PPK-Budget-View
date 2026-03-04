@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { getPracticesForEmail, hasAccessToPractice } from "./access-control";
+import { generateVarianceSummary } from "./ai-summary";
 
 // Helper to get user email from request
 function getUserEmail(req: Request): string | null {
@@ -612,6 +613,83 @@ export async function registerRoutes(
       res.json(expenses);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch travel expenses" });
+    }
+  });
+
+  app.post("/api/ai-summary", isAuthenticated, async (req, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      if (!userEmail) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { costCenterId, periodMode = 'ytd', month = 1, year = 2026 } = req.body;
+      if (!costCenterId) {
+        return res.status(400).json({ error: "costCenterId is required" });
+      }
+
+      if (costCenterId === "all") {
+        if (!hasAllPracticesAccess(userEmail)) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      } else {
+        const costCenter = await storage.getCostCenter(costCenterId);
+        if (!costCenter) {
+          return res.status(404).json({ error: "Cost center not found" });
+        }
+        if (!hasAccessToPractice(userEmail, costCenter.name)) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+
+      const dashboardData = await storage.getDashboardSummary(
+        costCenterId,
+        periodMode,
+        month,
+        undefined,
+        year
+      );
+
+      const costCenter = costCenterId === "all"
+        ? { name: "All Practices" }
+        : await storage.getCostCenter(costCenterId);
+
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const periodLabel = periodMode === 'ytd'
+        ? `YTD through ${monthNames[month - 1]} ${year}`
+        : `${monthNames[month - 1]} ${year}`;
+
+      const summary = await generateVarianceSummary({
+        practiceName: costCenter!.name,
+        periodLabel,
+        totalSpend: dashboardData.totalSpend,
+        totalBudget: dashboardData.totalBudget,
+        variance: dashboardData.variance,
+        isUnderBudget: dashboardData.isUnderBudget,
+        spendTypeBreakdown: dashboardData.spendTypeBreakdown.map(s => ({
+          categoryName: s.categoryName,
+          actual: s.actual,
+          budget: s.budget,
+          variance: s.variance,
+          isOverBudget: s.isOverBudget,
+          percentUsed: s.percentUsed,
+        })),
+        topExpenses: (dashboardData.programByCaseCode || []).slice(0, 8).map(e => ({
+          account: e.account,
+          amount: e.amount,
+          caseName: e.caseName,
+        })),
+        compensationBreakdown: (dashboardData.compensationByAccount || []).map(c => ({
+          account: c.account,
+          amount: c.amount,
+        })),
+      });
+
+      res.json({ summary });
+    } catch (error: any) {
+      console.error("AI summary error:", error?.message || error);
+      res.status(500).json({ error: "Failed to generate summary" });
     }
   });
 
