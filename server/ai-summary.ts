@@ -63,15 +63,43 @@ interface SummaryInput {
   topVendors: TopVendor[];
 }
 
+function consolidateCategories(breakdown: SpendCategory[]): SpendCategory[] {
+  const programCategories = ['IP', 'General'];
+  const toMerge = breakdown.filter(c => programCategories.includes(c.categoryName));
+  const rest = breakdown.filter(c => !programCategories.includes(c.categoryName));
+
+  if (toMerge.length > 0) {
+    const merged: SpendCategory = {
+      categoryName: 'Programs',
+      actual: toMerge.reduce((sum, c) => sum + c.actual, 0),
+      budget: toMerge.reduce((sum, c) => sum + c.budget, 0),
+      variance: 0,
+      isOverBudget: false,
+      percentUsed: 0,
+    };
+    merged.variance = merged.actual - merged.budget;
+    merged.isOverBudget = merged.variance > 0;
+    merged.percentUsed = merged.budget > 0 ? Math.round((merged.actual / merged.budget) * 100) : (merged.actual > 0 ? 100 : 0);
+    rest.push(merged);
+  }
+
+  return rest;
+}
+
 export async function generateVarianceSummary(input: SummaryInput): Promise<string> {
+  const consolidated = {
+    ...input,
+    spendTypeBreakdown: consolidateCategories(input.spendTypeBreakdown),
+  };
+
   if (openai) {
     try {
-      return await generateAISummary(input);
+      return await generateAISummary(consolidated);
     } catch (error: any) {
       console.log("AI summary failed, falling back to rule-based:", error?.message || error);
     }
   }
-  return generateRuleBasedSummary(input);
+  return generateRuleBasedSummary(consolidated);
 }
 
 async function generateAISummary(input: SummaryInput): Promise<string> {
