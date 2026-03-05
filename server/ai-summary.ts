@@ -6,7 +6,7 @@ const openai = new OpenAI({
   baseURL: PORTKEY_GATEWAY_URL,
   defaultHeaders: createHeaders({
     apiKey: process.env.OPENAI_API_KEY,
-    provider: "openai",
+    virtualKey: "ppk-cost-dashboard",
   }),
 });
 
