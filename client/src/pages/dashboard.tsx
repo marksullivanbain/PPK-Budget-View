@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useCostCenter } from "@/hooks/use-cost-center";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -195,6 +195,27 @@ export default function Dashboard() {
 
   const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
   const [aiSummaryText, setAiSummaryText] = useState<string | null>(null);
+  const hasAutoShownRef = useRef(false);
+
+  const triggerAiSummary = useCallback(async () => {
+    try {
+      const res = await apiRequest("POST", "/api/ai-summary", {
+        costCenterId: selectedCostCenterId,
+        periodMode,
+        month: selectedMonth,
+        year: selectedYear,
+      });
+      const data = await res.json();
+      setAiSummaryText(data.summary);
+      if (user && latestMonthData) {
+        const dataVersion = `${latestMonthData.year}-${latestMonthData.latestMonth}`;
+        const storageKey = `ai-insights-seen-${user.email || user.id}`;
+        localStorage.setItem(storageKey, dataVersion);
+      }
+    } catch {
+      setAiSummaryText(null);
+    }
+  }, [selectedCostCenterId, periodMode, selectedMonth, selectedYear, user, latestMonthData]);
 
   const aiSummaryMutation = useMutation({
     mutationFn: async () => {
@@ -208,8 +229,39 @@ export default function Dashboard() {
     },
     onSuccess: (data: { summary: string }) => {
       setAiSummaryText(data.summary);
+      if (user && latestMonthData) {
+        const dataVersion = `${latestMonthData.year}-${latestMonthData.latestMonth}`;
+        const storageKey = `ai-insights-seen-${user.email || user.id}`;
+        localStorage.setItem(storageKey, dataVersion);
+      }
     },
   });
+
+  useEffect(() => {
+    if (
+      hasAutoShownRef.current ||
+      !latestMonthData ||
+      !selectedCostCenterId ||
+      !dashboardData ||
+      !user ||
+      isDemoMode
+    ) return;
+
+    hasAutoShownRef.current = true;
+
+    const dataVersion = `${latestMonthData.year}-${latestMonthData.latestMonth}`;
+    const storageKey = `ai-insights-seen-${user.email || user.id}`;
+    const lastSeen = localStorage.getItem(storageKey);
+
+    if (lastSeen !== dataVersion) {
+      const timer = setTimeout(() => {
+        setAiSummaryOpen(true);
+        setAiSummaryText(null);
+        triggerAiSummary();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [latestMonthData, selectedCostCenterId, dashboardData, user, isDemoMode, triggerAiSummary]);
 
   const handleGenerateInsights = () => {
     setAiSummaryOpen(true);
@@ -499,13 +551,13 @@ export default function Dashboard() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            {aiSummaryMutation.isPending && (
+            {!aiSummaryText && !aiSummaryMutation.isError && (
               <div className="flex flex-col items-center gap-3 py-6">
                 <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
                 <p className="text-sm text-muted-foreground">Analyzing budget data...</p>
               </div>
             )}
-            {aiSummaryMutation.isError && (
+            {aiSummaryMutation.isError && !aiSummaryText && (
               <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-4">
                 Failed to generate insights. Please try again.
               </div>
