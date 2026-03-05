@@ -563,8 +563,10 @@ export default function Dashboard() {
               </div>
             )}
             {aiSummaryText && (
-              <div className="text-sm text-foreground leading-relaxed bg-muted/50 rounded-lg p-4" data-testid="text-ai-summary">
-                {aiSummaryText}
+              <div className="text-sm text-foreground leading-relaxed bg-muted/50 rounded-lg p-4 space-y-3" data-testid="text-ai-summary">
+                {aiSummaryText.split('\n\n').map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
               </div>
             )}
           </div>

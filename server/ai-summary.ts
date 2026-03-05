@@ -194,7 +194,13 @@ function generateRuleBasedSummary(input: SummaryInput): string {
     );
   }
 
-  return sentences.slice(0, 4).join(" ");
+  const varianceSentences = sentences.slice(0, -1);
+  const vendorSentence = sentences.length > 1 ? sentences[sentences.length - 1] : null;
+
+  if (vendorSentence && varianceSentences.length > 0) {
+    return varianceSentences.join(" ") + "\n\n" + vendorSentence;
+  }
+  return sentences.join(" ");
 }
 
 function buildPrompt(input: SummaryInput): string {
