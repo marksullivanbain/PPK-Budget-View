@@ -3,14 +3,21 @@ import { PORTKEY_GATEWAY_URL, createHeaders } from "portkey-ai";
 
 const portKeyApiKey = process.env.PORTKEY_API_KEY || process.env.OPENAI_API_KEY;
 
-const openai = new OpenAI({
-  apiKey: "X",
-  baseURL: PORTKEY_GATEWAY_URL,
-  defaultHeaders: createHeaders({
-    apiKey: portKeyApiKey!,
-    virtualKey: "ppk-cost-dashboard",
-  }),
-});
+function createClient() {
+  if (process.env.PORTKEY_API_KEY) {
+    return new OpenAI({
+      apiKey: "X",
+      baseURL: PORTKEY_GATEWAY_URL,
+      defaultHeaders: createHeaders({
+        apiKey: process.env.PORTKEY_API_KEY,
+        virtualKey: "openai---ppk-co-d2757e",
+      }),
+    });
+  }
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+const openai = createClient();
 
 interface SpendCategory {
   categoryName: string;
