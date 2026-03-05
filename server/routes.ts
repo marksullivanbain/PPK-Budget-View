@@ -667,7 +667,8 @@ export async function registerRoutes(
         return e.month <= month;
       });
 
-      const nonCompExpenses = periodExpenses.filter(
+      const latestMonthExpenses = allExpenses.filter(e => e.month === month);
+      const nonCompExpenses = latestMonthExpenses.filter(
         e => e.spendType !== 'Compensation' && e.vendorName && e.vendorName.trim() !== ''
       );
       const vendorMap = new Map<string, { total: number; count: number; caseAmounts: Map<string, { amount: number; caseName: string }> }>();
@@ -704,6 +705,7 @@ export async function registerRoutes(
       const summary = await generateVarianceSummary({
         practiceName: costCenter!.name,
         periodLabel,
+        vendorMonthLabel: `${monthNames[month - 1]}`,
         totalSpend: dashboardData.totalSpend,
         totalBudget: dashboardData.totalBudget,
         variance: dashboardData.variance,

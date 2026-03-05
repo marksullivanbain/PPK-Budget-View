@@ -53,6 +53,7 @@ interface TopVendor {
 interface SummaryInput {
   practiceName: string;
   periodLabel: string;
+  vendorMonthLabel: string;
   totalSpend: number;
   totalBudget: number;
   variance: number;
@@ -168,12 +169,13 @@ function generateRuleBasedSummary(input: SummaryInput): string {
   }
 
   if (input.topVendors.length > 0) {
+    const monthNote = input.vendorMonthLabel ? `In ${input.vendorMonthLabel}, the` : 'The';
     const topVendors = input.topVendors.slice(0, 2);
     if (topVendors.length === 1) {
       const v = topVendors[0];
       const caseInfo = v.topCaseName ? `, charged to ${v.topCaseName} (${v.topCaseCode})` : '';
       sentences.push(
-        `The largest vendor invoices were from ${v.vendorName} totaling ${formatDollar(v.totalAmount)} across ${v.invoiceCount} invoice${v.invoiceCount !== 1 ? 's' : ''}${caseInfo}.`
+        `${monthNote} largest vendor invoices were from ${v.vendorName} totaling ${formatDollar(v.totalAmount)} across ${v.invoiceCount} invoice${v.invoiceCount !== 1 ? 's' : ''}${caseInfo}.`
       );
     } else {
       const v1 = topVendors[0];
@@ -181,7 +183,7 @@ function generateRuleBasedSummary(input: SummaryInput): string {
       const v1Case = v1.topCaseName ? ` (${v1.topCaseName}${v1.topCaseCode ? ', ' + v1.topCaseCode : ''})` : '';
       const v2Case = v2.topCaseName ? ` (${v2.topCaseName}${v2.topCaseCode ? ', ' + v2.topCaseCode : ''})` : '';
       sentences.push(
-        `The largest vendor invoices were from ${v1.vendorName} at ${formatDollar(v1.totalAmount)}${v1Case} and ${v2.vendorName} at ${formatDollar(v2.totalAmount)}${v2Case}.`
+        `${monthNote} largest vendor invoices were from ${v1.vendorName} at ${formatDollar(v1.totalAmount)}${v1Case} and ${v2.vendorName} at ${formatDollar(v2.totalAmount)}${v2Case}.`
       );
     }
   } else if (input.topExpenses.length > 0) {
@@ -224,7 +226,8 @@ function buildPrompt(input: SummaryInput): string {
   }
 
   if (input.topVendors.length > 0) {
-    prompt += `\nTop vendors by spend:\n`;
+    const vendorMonth = input.vendorMonthLabel || 'the current period';
+    prompt += `\nTop vendors by spend (${vendorMonth} only):\n`;
     for (const v of input.topVendors.slice(0, 5)) {
       const caseInfo = v.topCaseName ? ` charged to ${v.topCaseName} (${v.topCaseCode})` : '';
       prompt += `- ${v.vendorName}: ${formatDollar(v.totalAmount)} across ${v.invoiceCount} invoices${caseInfo}\n`;
