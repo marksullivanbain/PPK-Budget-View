@@ -1,7 +1,23 @@
 import OpenAI from "openai";
+import { PORTKEY_GATEWAY_URL, createHeaders } from "portkey-ai";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function createClient() {
+  if (process.env.PORTKEY_API_KEY) {
+    console.log("Using Portkey gateway for AI summary");
+    return new OpenAI({
+      apiKey: "X",
+      baseURL: PORTKEY_GATEWAY_URL,
+      defaultHeaders: createHeaders({
+        apiKey: process.env.PORTKEY_API_KEY,
+        virtualKey: "openai---ppk-co-d2757e",
+      }),
+    });
+  }
+  console.log("Using direct OpenAI for AI summary");
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+const openai = createClient();
 
 interface SpendCategory {
   categoryName: string;
@@ -34,7 +50,7 @@ export async function generateVarianceSummary(input: SummaryInput): Promise<stri
   const prompt = buildPrompt(input);
 
   const response = await openai.chat.completions.create({
-    model: "gpt-5",
+    model: "gpt-5-mini",
     messages: [
       {
         role: "system",
