@@ -1,20 +1,28 @@
 import OpenAI from "openai";
 import { PORTKEY_GATEWAY_URL, createHeaders } from "portkey-ai";
 
-function createClient() {
-  if (process.env.PORTKEY_API_KEY) {
-    console.log("Using Portkey gateway for AI summary");
-    return new OpenAI({
-      apiKey: "X",
-      baseURL: PORTKEY_GATEWAY_URL,
-      defaultHeaders: createHeaders({
-        apiKey: process.env.PORTKEY_API_KEY,
-        virtualKey: "openai---ppk-co-d2757e",
-      }),
-    });
+function createClient(): OpenAI | null {
+  try {
+    if (process.env.PORTKEY_API_KEY) {
+      console.log("Using Portkey gateway for AI summary");
+      return new OpenAI({
+        apiKey: "X",
+        baseURL: PORTKEY_GATEWAY_URL,
+        defaultHeaders: createHeaders({
+          apiKey: process.env.PORTKEY_API_KEY,
+          virtualKey: "openai---ppk-co-d2757e",
+        }),
+      });
+    }
+    if (process.env.OPENAI_API_KEY) {
+      console.log("Using direct OpenAI for AI summary");
+      return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+  } catch (e) {
+    console.log("Failed to create AI client:", e);
   }
-  console.log("Using direct OpenAI for AI summary");
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  console.log("No AI provider configured, using rule-based summaries");
+  return null;
 }
 
 const openai = createClient();
@@ -47,9 +55,20 @@ interface SummaryInput {
 }
 
 export async function generateVarianceSummary(input: SummaryInput): Promise<string> {
+  if (openai) {
+    try {
+      return await generateAISummary(input);
+    } catch (error: any) {
+      console.log("AI summary failed, falling back to rule-based:", error?.message || error);
+    }
+  }
+  return generateRuleBasedSummary(input);
+}
+
+async function generateAISummary(input: SummaryInput): Promise<string> {
   const prompt = buildPrompt(input);
 
-  const response = await openai.chat.completions.create({
+  const response = await openai!.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {
@@ -65,6 +84,61 @@ export async function generateVarianceSummary(input: SummaryInput): Promise<stri
   });
 
   return response.choices[0].message.content || "Unable to generate summary.";
+}
+
+function generateRuleBasedSummary(input: SummaryInput): string {
+  const dir = input.isUnderBudget ? "under" : "over";
+  const varAmt = formatDollar(Math.abs(input.variance));
+  const budgetPct = input.totalBudget > 0 ? Math.round((input.totalSpend / input.totalBudget) * 100) : 0;
+
+  const overBudgetCats = input.spendTypeBreakdown
+    .filter(c => c.isOverBudget && Math.abs(c.variance) > 1000)
+    .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance));
+
+  const underBudgetCats = input.spendTypeBreakdown
+    .filter(c => !c.isOverBudget && Math.abs(c.variance) > 1000)
+    .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance));
+
+  let sentences: string[] = [];
+
+  sentences.push(
+    `${input.practiceName} has spent ${formatDollar(input.totalSpend)} through ${input.periodLabel}, which is ${varAmt} ${dir} the ${formatDollar(input.totalBudget)} budget (${budgetPct}% utilized).`
+  );
+
+  if (overBudgetCats.length > 0) {
+    const topOver = overBudgetCats.slice(0, 2);
+    const overParts = topOver.map(c =>
+      `${c.categoryName} (${formatDollar(Math.abs(c.variance))} over, ${c.percentUsed}% of budget)`
+    );
+    sentences.push(
+      `Key areas of overspend include ${overParts.join(" and ")}.`
+    );
+  }
+
+  if (underBudgetCats.length > 0 && overBudgetCats.length === 0) {
+    const topUnder = underBudgetCats.slice(0, 2);
+    const underParts = topUnder.map(c =>
+      `${c.categoryName} (${formatDollar(Math.abs(c.variance))} under budget)`
+    );
+    sentences.push(
+      `Savings are driven by ${underParts.join(" and ")}.`
+    );
+  } else if (underBudgetCats.length > 0 && overBudgetCats.length > 0) {
+    const topUnder = underBudgetCats[0];
+    sentences.push(
+      `This is partially offset by ${topUnder.categoryName} savings of ${formatDollar(Math.abs(topUnder.variance))}.`
+    );
+  }
+
+  if (input.topExpenses.length > 0) {
+    const topExp = input.topExpenses[0];
+    const expName = topExp.caseName || topExp.account;
+    sentences.push(
+      `The largest program expense is ${expName} at ${formatDollar(topExp.amount)}.`
+    );
+  }
+
+  return sentences.slice(0, 3).join(" ");
 }
 
 function buildPrompt(input: SummaryInput): string {
