@@ -1,11 +1,13 @@
 import OpenAI from "openai";
 import { PORTKEY_GATEWAY_URL, createHeaders } from "portkey-ai";
 
+const portKeyApiKey = process.env.PORTKEY_API_KEY || process.env.OPENAI_API_KEY;
+
 const openai = new OpenAI({
   apiKey: "X",
   baseURL: PORTKEY_GATEWAY_URL,
   defaultHeaders: createHeaders({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: portKeyApiKey!,
     virtualKey: "ppk-cost-dashboard",
   }),
 });
