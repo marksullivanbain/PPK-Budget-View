@@ -1,8 +1,13 @@
 import OpenAI from "openai";
+import { PORTKEY_GATEWAY_URL, createHeaders } from "portkey-ai";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_BASE_URL || "https://api.portkey.ai/v1",
+  apiKey: "X",
+  baseURL: PORTKEY_GATEWAY_URL,
+  defaultHeaders: createHeaders({
+    apiKey: process.env.OPENAI_API_KEY,
+    provider: "openai",
+  }),
 });
 
 interface SpendCategory {
