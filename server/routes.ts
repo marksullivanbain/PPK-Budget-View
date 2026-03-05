@@ -658,7 +658,7 @@ export async function registerRoutes(
         'July', 'August', 'September', 'October', 'November', 'December'];
       const periodLabel = periodMode === 'ytd'
         ? `YTD through ${monthNames[month - 1]} ${year}`
-        : `${monthNames[month - 1]} ${year}`;
+        : `in ${monthNames[month - 1]} ${year}`;
 
       const allExpenses = await storage.getExpenses(costCenterId, year);
       const periodExpenses = allExpenses.filter(e => {

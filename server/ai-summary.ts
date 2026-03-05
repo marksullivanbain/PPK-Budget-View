@@ -140,7 +140,7 @@ function generateRuleBasedSummary(input: SummaryInput): string {
   let sentences: string[] = [];
 
   sentences.push(
-    `${input.practiceName} has spent ${formatDollar(input.totalSpend)} through ${input.periodLabel}, which is ${varAmt} ${dir} the ${formatDollar(input.totalBudget)} budget (${budgetPct}% utilized).`
+    `${input.practiceName} has spent ${formatDollar(input.totalSpend)} ${input.periodLabel}, which is ${varAmt} ${dir} the ${formatDollar(input.totalBudget)} budget (${budgetPct}% utilized).`
   );
 
   if (overBudgetCats.length > 0) {
