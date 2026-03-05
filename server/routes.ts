@@ -660,6 +660,47 @@ export async function registerRoutes(
         ? `YTD through ${monthNames[month - 1]} ${year}`
         : `${monthNames[month - 1]} ${year}`;
 
+      const allExpenses = await storage.getExpenses(costCenterId, year);
+      const periodExpenses = allExpenses.filter(e => {
+        if (!e.month) return true;
+        if (periodMode === 'month') return e.month === month;
+        return e.month <= month;
+      });
+
+      const nonCompExpenses = periodExpenses.filter(
+        e => e.spendType !== 'Compensation' && e.vendorName && e.vendorName.trim() !== ''
+      );
+      const vendorMap = new Map<string, { total: number; count: number; caseAmounts: Map<string, { amount: number; caseName: string }> }>();
+      for (const exp of nonCompExpenses) {
+        const vName = exp.vendorName!.trim();
+        if (!vendorMap.has(vName)) {
+          vendorMap.set(vName, { total: 0, count: 0, caseAmounts: new Map() });
+        }
+        const entry = vendorMap.get(vName)!;
+        entry.total += exp.amount;
+        entry.count += 1;
+        const cCode = exp.caseCode || 'Unknown';
+        if (!entry.caseAmounts.has(cCode)) {
+          entry.caseAmounts.set(cCode, { amount: 0, caseName: exp.caseName || '' });
+        }
+        entry.caseAmounts.get(cCode)!.amount += exp.amount;
+      }
+
+      const topVendors = Array.from(vendorMap.entries())
+        .map(([name, data]) => {
+          const topCase = Array.from(data.caseAmounts.entries())
+            .sort((a, b) => b[1].amount - a[1].amount)[0];
+          return {
+            vendorName: name,
+            totalAmount: Math.round(data.total),
+            invoiceCount: data.count,
+            topCaseCode: topCase?.[0],
+            topCaseName: topCase?.[1]?.caseName,
+          };
+        })
+        .sort((a, b) => b.totalAmount - a.totalAmount)
+        .slice(0, 5);
+
       const summary = await generateVarianceSummary({
         practiceName: costCenter!.name,
         periodLabel,
@@ -684,6 +725,7 @@ export async function registerRoutes(
           account: c.account,
           amount: c.amount,
         })),
+        topVendors,
       });
 
       res.json({ summary });

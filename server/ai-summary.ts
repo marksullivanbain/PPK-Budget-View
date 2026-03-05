@@ -42,6 +42,14 @@ interface TopExpense {
   caseName?: string;
 }
 
+interface TopVendor {
+  vendorName: string;
+  totalAmount: number;
+  invoiceCount: number;
+  topCaseCode?: string;
+  topCaseName?: string;
+}
+
 interface SummaryInput {
   practiceName: string;
   periodLabel: string;
@@ -52,6 +60,7 @@ interface SummaryInput {
   spendTypeBreakdown: SpendCategory[];
   topExpenses: TopExpense[];
   compensationBreakdown: TopExpense[];
+  topVendors: TopVendor[];
 }
 
 export async function generateVarianceSummary(input: SummaryInput): Promise<string> {
@@ -73,14 +82,14 @@ async function generateAISummary(input: SummaryInput): Promise<string> {
     messages: [
       {
         role: "system",
-        content: "You are a concise financial analyst for an internal cost center management team. Generate a 2-3 sentence natural-language summary of a practice's budget performance. Be specific about dollar amounts (use $K or $M format), name the specific spend categories driving variances, and highlight any notable outliers. Use a professional but conversational tone. Do not use bullet points or lists — write flowing sentences."
+        content: "You are a concise financial analyst for an internal cost center management team. Generate a 3-4 sentence natural-language summary of a practice's budget performance. Be specific about dollar amounts (use $K or $M format), name the specific spend categories driving variances, and highlight any notable outliers. Include a mention of the top vendor(s) and what they were charged to. Use a professional but conversational tone. Do not use bullet points or lists — write flowing sentences."
       },
       {
         role: "user",
         content: prompt
       }
     ],
-    max_completion_tokens: 300,
+    max_completion_tokens: 400,
   });
 
   return response.choices[0].message.content || "Unable to generate summary.";
@@ -130,7 +139,24 @@ function generateRuleBasedSummary(input: SummaryInput): string {
     );
   }
 
-  if (input.topExpenses.length > 0) {
+  if (input.topVendors.length > 0) {
+    const topVendors = input.topVendors.slice(0, 2);
+    if (topVendors.length === 1) {
+      const v = topVendors[0];
+      const caseInfo = v.topCaseName ? `, charged to ${v.topCaseName} (${v.topCaseCode})` : '';
+      sentences.push(
+        `The largest vendor invoices were from ${v.vendorName} totaling ${formatDollar(v.totalAmount)} across ${v.invoiceCount} invoice${v.invoiceCount !== 1 ? 's' : ''}${caseInfo}.`
+      );
+    } else {
+      const v1 = topVendors[0];
+      const v2 = topVendors[1];
+      const v1Case = v1.topCaseName ? ` (${v1.topCaseName}${v1.topCaseCode ? ', ' + v1.topCaseCode : ''})` : '';
+      const v2Case = v2.topCaseName ? ` (${v2.topCaseName}${v2.topCaseCode ? ', ' + v2.topCaseCode : ''})` : '';
+      sentences.push(
+        `The largest vendor invoices were from ${v1.vendorName} at ${formatDollar(v1.totalAmount)}${v1Case} and ${v2.vendorName} at ${formatDollar(v2.totalAmount)}${v2Case}.`
+      );
+    }
+  } else if (input.topExpenses.length > 0) {
     const topExp = input.topExpenses[0];
     const expName = topExp.caseName || topExp.account;
     sentences.push(
@@ -138,7 +164,7 @@ function generateRuleBasedSummary(input: SummaryInput): string {
     );
   }
 
-  return sentences.slice(0, 3).join(" ");
+  return sentences.slice(0, 4).join(" ");
 }
 
 function buildPrompt(input: SummaryInput): string {
@@ -169,7 +195,15 @@ function buildPrompt(input: SummaryInput): string {
     }
   }
 
-  prompt += `\nProvide a 2-3 sentence insight about this practice's budget performance, highlighting the key drivers of variance and any notable patterns.`;
+  if (input.topVendors.length > 0) {
+    prompt += `\nTop vendors by spend:\n`;
+    for (const v of input.topVendors.slice(0, 5)) {
+      const caseInfo = v.topCaseName ? ` charged to ${v.topCaseName} (${v.topCaseCode})` : '';
+      prompt += `- ${v.vendorName}: ${formatDollar(v.totalAmount)} across ${v.invoiceCount} invoices${caseInfo}\n`;
+    }
+  }
+
+  prompt += `\nProvide a 3-4 sentence insight about this practice's budget performance, highlighting the key drivers of variance, notable vendor spend patterns, and any outliers.`;
 
   return prompt;
 }

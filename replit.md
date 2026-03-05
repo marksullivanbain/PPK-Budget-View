@@ -116,7 +116,7 @@ The following practices are consolidated for reporting:
 - `GET /api/admin-summary/expense-details?practice=X&spendType=Y&periodMode=ytd|month&month=1-12&year=2025` - Admin expense drill-down (spendType: compensation|programs|databases|bcn)
 - `GET /api/ip-teams/practices?year=2026` - Get list of practices with IP Teams data
 - `GET /api/ip-teams/data?practice=X&month=N&year=2026` - Get IP Teams investment tracking data
-- `POST /api/ai-summary` - Generate AI-powered variance summary (body: costCenterId, periodMode, month, year)
+- `POST /api/ai-summary` - Generate AI-powered variance summary with top vendor spend (body: costCenterId, periodMode, month, year). Falls back to rule-based summary if AI providers (Portkey/OpenAI) are unavailable. Includes top vendor spend data with vendor names, amounts, invoice counts, and associated case codes.
 
 ## IP Teams Investment Tracking
 - Data sources: `attached_assets/IP_data_(2025)_*.csv` and `attached_assets/IP_data_(Jan_2026)_*.csv` - Non-cash investment tracking
