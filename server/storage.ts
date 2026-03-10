@@ -1207,17 +1207,29 @@ export class MemStorage implements IStorage {
   }
 
   private loadIPTeamsData() {
-    const ipFiles: { year: number; path: string }[] = [
-      { year: 2025, path: "attached_assets/IP_data_(2025)_1769541304144.csv" },
-      { year: 2026, path: "attached_assets/IP_data_(Jan_2026)_1771435732755.csv" },
+    const ipFiles: { year: number; paths: string[] }[] = [
+      { year: 2025, paths: ["attached_assets/IP_data_(2025)_1769541304144.csv"] },
+      { year: 2026, paths: [
+        "attached_assets/IP_data_(Jan_2026)_1771435732755.csv",
+        "attached_assets/IP_data_(Feb_2026)_1773169093036.csv",
+      ]},
     ];
 
-    for (const { year, path: ipPath } of ipFiles) {
+    for (const { year, paths } of ipFiles) {
+      let allRows: IPTeamRow[] = [];
+      for (const ipPath of paths) {
+        try {
+          const rows = parseIPTeamsCSV(ipPath);
+          allRows = allRows.concat(rows);
+          console.log(`Loaded ${rows.length} IP team entries from ${ipPath}`);
+        } catch (e) {
+          console.log(`Skipping IP file ${ipPath}: not found or error`);
+        }
+      }
       try {
-        const rows = parseIPTeamsCSV(ipPath);
         const entries: IPTeamEntry[] = [];
         let id = 1;
-        for (const row of rows) {
+        for (const row of allRows) {
           entries.push({
             id: `ip-${year}-${id++}`,
             costCenter: row.costCenter,
