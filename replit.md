@@ -104,6 +104,13 @@ The following practices are consolidated for reporting:
 - Practice Area Prgrm Office → Practice Area Program Office (spelling normalization)
 - Industry Marketing (fallback) → Other Industry
 
+## Usage Tracking
+- Login events are recorded in the `login_events` PostgreSQL table (one per session)
+- Tracks: email, first name, last name, login timestamp
+- Admin-only Usage page at `/usage` showing unique users, total logins, per-user stats, and recent activity feed
+- Only visible to admins with "All Practices" access (same group as Admin Summary)
+- Link appears in dashboard nav bar next to Admin Summary button
+
 ## API Endpoints
 - `GET /api/cost-centers` - List all cost centers
 - `GET /api/dashboard/:costCenterId?periodMode=ytd|month&month=1-12&year=2025` - Get dashboard summary for a cost center with period filtering
@@ -116,6 +123,7 @@ The following practices are consolidated for reporting:
 - `GET /api/admin-summary/expense-details?practice=X&spendType=Y&periodMode=ytd|month&month=1-12&year=2025` - Admin expense drill-down (spendType: compensation|programs|databases|bcn)
 - `GET /api/ip-teams/practices?year=2026` - Get list of practices with IP Teams data
 - `GET /api/ip-teams/data?practice=X&month=N&year=2026` - Get IP Teams investment tracking data
+- `GET /api/usage` - Admin-only usage tracking data (unique users, login counts, recent activity)
 - `POST /api/ai-summary` - Generate AI-powered variance summary with top vendor spend (body: costCenterId, periodMode, month, year). Falls back to rule-based summary if AI providers (Portkey/OpenAI) are unavailable. Includes top vendor spend data with vendor names, amounts, invoice counts, and associated case codes.
 
 ## IP Teams Investment Tracking

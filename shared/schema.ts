@@ -6,6 +6,16 @@ import { z } from "zod";
 // Re-export auth models
 export * from "./models/auth";
 
+export const loginEvents = pgTable("login_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  loginAt: timestamp("login_at").defaultNow().notNull(),
+});
+
+export type LoginEvent = typeof loginEvents.$inferSelect;
+
 // Cost Centers (e.g., M&A Practice, Tax Practice, etc.)
 export const costCenters = pgTable("cost_centers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

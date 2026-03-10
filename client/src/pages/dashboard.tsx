@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Sparkles, Loader2, X } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Sparkles, Loader2, X, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useDemoMode } from "@/hooks/use-demo-mode";
 import { apiRequest } from "@/lib/queryClient";
@@ -338,12 +338,20 @@ export default function Dashboard() {
                 </Link>
               </Button>
               {userAccess?.canSeeAllPractices && (
-                <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-admin-summary">
-                  <Link href="/admin-summary">
-                    <ShieldCheck className="h-4 w-4" />
-                    Admin Summary
-                  </Link>
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-admin-summary">
+                    <Link href="/admin-summary">
+                      <ShieldCheck className="h-4 w-4" />
+                      Admin Summary
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-usage">
+                    <Link href="/usage">
+                      <Activity className="h-4 w-4" />
+                      Usage
+                    </Link>
+                  </Button>
+                </>
               )}
             </div>
             <div className="flex items-center gap-3">

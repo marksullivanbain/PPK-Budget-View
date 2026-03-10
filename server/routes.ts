@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { getPracticesForEmail, hasAccessToPractice } from "./access-control";
 import { generateVarianceSummary } from "./ai-summary";
+import { db } from "./db";
+import { loginEvents } from "../shared/schema";
+import { desc, sql } from "drizzle-orm";
 
 // Helper to get user email from request
 function getUserEmail(req: Request): string | null {
@@ -734,6 +737,46 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("AI summary error:", error?.message || error);
       res.status(500).json({ error: "Failed to generate summary" });
+    }
+  });
+
+  app.get("/api/usage", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = getUserEmail(req);
+      if (!userEmail || !hasAllPracticesAccess(userEmail)) {
+        return res.status(403).json({ error: "Access denied - requires All Practices access" });
+      }
+
+      const userStatsRows = await db.select({
+        email: loginEvents.email,
+        firstName: sql<string>`MAX(${loginEvents.firstName})`.as('first_name'),
+        lastName: sql<string>`MAX(${loginEvents.lastName})`.as('last_name'),
+        loginCount: sql<number>`COUNT(*)::int`.as('login_count'),
+        firstLogin: sql<string>`MIN(${loginEvents.loginAt})`.as('first_login'),
+        lastLogin: sql<string>`MAX(${loginEvents.loginAt})`.as('last_login'),
+      }).from(loginEvents).groupBy(loginEvents.email).orderBy(sql`MAX(${loginEvents.loginAt}) DESC`);
+
+      const totalCountResult = await db.select({
+        count: sql<number>`COUNT(*)::int`.as('count'),
+      }).from(loginEvents);
+
+      const totalLogins = totalCountResult[0]?.count || 0;
+      const uniqueUsers = userStatsRows.length;
+
+      const users = userStatsRows.map(row => ({
+        email: row.email,
+        name: [row.firstName, row.lastName].filter(Boolean).join(' ') || row.email,
+        loginCount: row.loginCount,
+        firstLogin: row.firstLogin,
+        lastLogin: row.lastLogin,
+      }));
+
+      const recentLogins = await db.select().from(loginEvents).orderBy(desc(loginEvents.loginAt)).limit(50);
+
+      res.json({ totalLogins, uniqueUsers, users, recentLogins });
+    } catch (error: any) {
+      console.error("Usage data error:", error?.message || error);
+      res.status(500).json({ error: "Failed to fetch usage data" });
     }
   });
 

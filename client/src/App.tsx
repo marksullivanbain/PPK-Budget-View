@@ -10,6 +10,7 @@ import IPTeamsPage from "@/pages/ip-teams";
 import BudgetTracking from "@/pages/budget-tracking";
 import TravelDetail from "@/pages/travel-detail";
 import AdminSummary from "@/pages/admin-summary";
+import Usage from "@/pages/usage";
 import { useAuth } from "@/hooks/use-auth";
 import { DemoModeProvider } from "@/hooks/use-demo-mode";
 import { CostCenterProvider } from "@/hooks/use-cost-center";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/budget-tracking" component={BudgetTracking} />
       <Route path="/travel-detail" component={TravelDetail} />
       <Route path="/admin-summary" component={AdminSummary} />
+      <Route path="/usage" component={Usage} />
       <Route component={NotFound} />
     </Switch>
   );
