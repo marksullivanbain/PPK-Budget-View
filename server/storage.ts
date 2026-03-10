@@ -142,7 +142,10 @@ export class MemStorage implements IStorage {
       const budgetPath2025 = "attached_assets/2025_Budget_by_Category_1769533343675.csv";
       const budgetPath2026 = "attached_assets/2026_Budget_by_Category_1771432595886.csv";
       const expensePath2025 = "attached_assets/Full_Practice_Expense_data_(2025)_1769531712720.csv";
-      const expensePath2026 = "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771432938737.csv";
+      const expensePaths2026 = [
+        "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771432938737.csv",
+        "attached_assets/Full_Practice_Expense_data_(Feb_2026)_1773168253712.csv",
+      ];
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
       const marketingMapping = parseMarketingMappingCSV(marketingMappingPath);
@@ -159,11 +162,14 @@ export class MemStorage implements IStorage {
       const expenseRows2025 = parseExpenseCSV(expensePath2025, marketingMapping);
       
       let expenseRows2026: typeof expenseRows2025 = [];
-      try {
-        expenseRows2026 = parseExpenseCSV(expensePath2026, marketingMapping);
-        console.log(`Loaded ${expenseRows2026.length} expense rows from 2026 data`);
-      } catch (e) {
-        console.log("No 2026 expense data found, skipping");
+      for (const expPath of expensePaths2026) {
+        try {
+          const rows = parseExpenseCSV(expPath, marketingMapping);
+          expenseRows2026 = expenseRows2026.concat(rows);
+          console.log(`Loaded ${rows.length} expense rows from ${expPath}`);
+        } catch (e) {
+          console.log(`Skipping ${expPath}: not found or error`);
+        }
       }
       
       const allExpenseRows = [...expenseRows2025, ...expenseRows2026];
