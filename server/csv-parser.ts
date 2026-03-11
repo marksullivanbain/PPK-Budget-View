@@ -378,6 +378,15 @@ export interface IPTeamRow {
   cy25: number;
 }
 
+function parseIpPercentage(raw: string): number {
+  if (raw === 'N/A' || raw === '' || raw === '%') return 100;
+  const hasPercent = raw.includes('%');
+  const num = parseNumber(raw.replace('%', ''));
+  if (hasPercent) return num;
+  if (num > 0 && num <= 1) return Math.round(num * 100);
+  return num;
+}
+
 export function parseIPTeamsCSV(filePath: string): IPTeamRow[] {
   try {
     const absolutePath = path.resolve(filePath);
@@ -424,7 +433,7 @@ export function parseIPTeamsCSV(filePath: string): IPTeamRow[] {
         caseCode: fields[10]?.trim() || '',
         caseName: fields[32]?.trim() || '',  // Column AG = Case Name
         level: fields[12]?.trim() || '',
-        percentage: parseNumber(fields[11]?.replace('%', '') || '100'),
+        percentage: parseIpPercentage(fields[11]?.trim() || '100'),
         monthlyAmounts,
         ytd: parseNumber(fields[27] || '0'),
         cy25: parseNumber(fields[28] || '0'),
