@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, Search, ArrowDown, ArrowUp, Filter, Check } from "lucide-react";
+import { X, Search, ArrowDown, ArrowUp, Filter, Check, Download } from "lucide-react";
 import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { ExpenseDetail } from "@shared/schema";
 
@@ -161,6 +161,43 @@ export function ExpenseDetails({
 
   const uniquePeriods = Array.from(new Set(expenses?.map(e => e.period).filter(Boolean) ?? []));
 
+  const downloadCsv = () => {
+    if (!filteredExpenses.length) return;
+    const esc = (v: string) => {
+      if (!v) return '';
+      if (v.includes(',') || v.includes('"') || v.includes('\n')) {
+        return `"${v.replace(/"/g, '""')}"`;
+      }
+      return v;
+    };
+    const headers = ["Practice", "Category", "Case Code", "Case Name", "Account Name", "Summary Account", "Period", "Line Description", "Document Description", "Vendor", "Amount"];
+    const rows = [headers.join(",")];
+    for (const exp of filteredExpenses) {
+      rows.push([
+        esc(costCenterName || ''),
+        esc(filterLabel),
+        esc(exp.caseCode || ''),
+        esc(exp.caseName || ''),
+        esc(exp.spendType || ''),
+        esc(exp.summaryAccount || ''),
+        esc(exp.period || ''),
+        esc(exp.lineDescription || ''),
+        esc(exp.documentDescription || ''),
+        esc(exp.vendorName || ''),
+        exp.amount.toString()
+      ].join(","));
+    }
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const practice = (costCenterName || 'expenses').replace(/[^a-zA-Z0-9]/g, '_');
+    const filter = filterLabel.replace(/[^a-zA-Z0-9]/g, '_');
+    a.href = url;
+    a.download = `${practice}_${filter}_expenses.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const allVisibleSelected = filteredCaseCodeOptions.length > 0 && 
     filteredCaseCodeOptions.every(cc => selectedCaseCodes.has(cc.code));
 
@@ -180,15 +217,27 @@ export function ExpenseDetails({
             </div>
           </div>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onClearFilter}
-          data-testid="button-clear-filter"
-        >
-          <X className="w-4 h-4 mr-1" />
-          Clear Filter
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={downloadCsv}
+            disabled={!filteredExpenses.length}
+            data-testid="button-download-expenses"
+          >
+            <Download className="w-4 h-4 mr-1" />
+            Download CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onClearFilter}
+            data-testid="button-clear-filter"
+          >
+            <X className="w-4 h-4 mr-1" />
+            Clear Filter
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 mb-4">
