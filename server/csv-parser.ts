@@ -378,6 +378,36 @@ export interface IPTeamRow {
   cy25: number;
 }
 
+const ipCostCenterMap: Record<string, string> = {
+  'AIS': 'AIS Practice',
+  'AMS': 'AMS Practice',
+  'CP': 'CP Practice',
+  'Customer': 'Customer Practice',
+  'ENR': 'ENR Practice',
+  'ET': 'ET Practice',
+  'FS': 'FS Practice',
+  'Further': 'Further Practice',
+  'HLS': 'HLS Practice',
+  'M&A': 'M&A Practice',
+  'MTG': 'MTG Practice',
+  'Org': 'Organization Practice',
+  'Org Practice': 'Organization Practice',
+  'PEG': 'PEG Practice',
+  'PI': 'PI Practice',
+  'Retail': 'Retail Practice',
+  'S&T': 'S&T Practice',
+  'TMT': 'TMT Practice',
+  'Central': 'Practice Area Program Office',
+  'PIT': 'PI Practice',
+  'CIT/Software': 'ET Practice',
+};
+
+function normalizeIPCostCenter(raw: string): string {
+  if (ipCostCenterMap[raw]) return ipCostCenterMap[raw];
+  if (raw.endsWith(' Practice')) return raw;
+  return raw + ' Practice';
+}
+
 function parseIpPercentage(raw: string): number {
   if (raw === 'N/A' || raw === '' || raw === '%') return 100;
   const hasPercent = raw.includes('%');
@@ -401,7 +431,13 @@ export function parseIPTeamsCSV(filePath: string): IPTeamRow[] {
       const fields = parseCSVLine(lines[i]);
       if (fields.length < 28) continue;
       
-      const costCenter = fields[0]?.trim() || '';
+      let costCenter = fields[0]?.trim() || '';
+      const costCenterNameCol = fields[34]?.trim() || '';
+      if (costCenterNameCol && costCenterNameCol.includes('Practice')) {
+        costCenter = costCenterNameCol.replace(/\s*-\s*\d+$/, '').trim();
+      } else {
+        costCenter = normalizeIPCostCenter(costCenter);
+      }
       const typeRaw = fields[4]?.trim() || '';
       
       // Validate type

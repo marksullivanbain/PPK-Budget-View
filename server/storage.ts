@@ -1284,7 +1284,7 @@ export class MemStorage implements IStorage {
       }
       // Check if any of the practice columns match allowed practices
       return allowedPractices.some(ap => 
-        entry.costCenter === ap ||
+        practiceMatches(entry.costCenter, ap) ||
         practiceMatches(entry.interlock1, ap) ||
         practiceMatches(entry.interlock2, ap) ||
         practiceMatches(entry.interlock3, ap)
