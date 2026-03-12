@@ -397,7 +397,7 @@ export function ExpenseDetails({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[1fr_120px_90px_120px_120px_60px_80px_60px] gap-3 py-2 border-b border-border text-sm font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_150px_90px_120px_120px_60px_80px_60px] gap-3 py-2 border-b border-border text-sm font-medium text-muted-foreground">
             <span>Line Description</span>
             <span>Summary Account</span>
             <span>Case Code</span>
@@ -429,7 +429,7 @@ export function ExpenseDetails({
                 filteredExpenses.map((expense) => (
                   <div 
                     key={expense.id}
-                    className="grid grid-cols-[1fr_120px_90px_120px_120px_60px_80px_60px] gap-3 py-3 border-b border-border text-sm hover-elevate rounded-md"
+                    className="grid grid-cols-[1fr_150px_90px_120px_120px_60px_80px_60px] gap-3 py-3 border-b border-border text-sm hover-elevate rounded-md"
                     data-testid={`row-expense-${expense.id}`}
                   >
                     <span className={`text-foreground font-medium truncate ${bc}`} title={blur ? '' : expense.lineDescription}>
