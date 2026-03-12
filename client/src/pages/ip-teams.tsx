@@ -155,7 +155,7 @@ function IPTeamTable({ entries, type, month, selectedCaseCode, onSelectProject }
                 <TableCell className="text-muted-foreground">{project.caseName}</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
                   <TableCell key={i} className="text-right text-muted-foreground">
-                    {project.monthlyAmounts[i] > 0 ? formatCurrency(project.monthlyAmounts[i]) : '-'}
+                    {project.monthlyAmounts[i] !== 0 ? formatCurrency(project.monthlyAmounts[i]) : '-'}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
@@ -210,7 +210,7 @@ function PersonDetailTable({ entries, month }: { entries: IPTeamEntry[]; month: 
                 <TableCell className="text-muted-foreground">{entry.percentage}%</TableCell>
                 {MONTH_NAMES.slice(0, month).map((_, i) => (
                   <TableCell key={i} className="text-right text-muted-foreground">
-                    {entry.monthlyAmounts[i] > 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
+                    {entry.monthlyAmounts[i] !== 0 ? formatCurrency(entry.monthlyAmounts[i]) : '-'}
                   </TableCell>
                 ))}
                 <TableCell className="text-right font-medium">{formatCurrency(ytd)}</TableCell>
