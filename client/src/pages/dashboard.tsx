@@ -503,7 +503,7 @@ export default function Dashboard() {
               <KeyVariances periodMode={periodMode} month={selectedMonth} year={selectedYear} />
             ) : (
               <>
-                {selectedSpendCategory && getSelectedSpendCategoryInfo() && (
+                {selectedSpendCategory && getSelectedSpendCategoryInfo() ? (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
                     costCenterName={selectedCostCenter?.name}
@@ -514,9 +514,7 @@ export default function Dashboard() {
                     onClearFilter={clearFilter}
                     year={selectedYear}
                   />
-                )}
-
-                {selectedProgramCategory && getSelectedProgramInfo() && (
+                ) : selectedProgramCategory && getSelectedProgramInfo() ? (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
                     costCenterName={selectedCostCenter?.name}
@@ -527,9 +525,7 @@ export default function Dashboard() {
                     onClearFilter={clearFilter}
                     year={selectedYear}
                   />
-                )}
-                
-                {selectedAccount && (
+                ) : selectedAccount ? (
                   <ExpenseDetails
                     costCenterId={selectedCostCenterId}
                     costCenterName={selectedCostCenter?.name}
@@ -541,6 +537,19 @@ export default function Dashboard() {
                     periodMode={periodMode}
                     month={selectedMonth}
                     caseGroup={selectedCaseGroup || undefined}
+                    year={selectedYear}
+                  />
+                ) : (
+                  <ExpenseDetails
+                    costCenterId={selectedCostCenterId}
+                    costCenterName={selectedCostCenter?.name}
+                    filterType="allPrograms"
+                    filterValue=""
+                    filterLabel="All Program Expenses"
+                    filterColor="#10B981"
+                    onClearFilter={() => {}}
+                    periodMode={periodMode}
+                    month={selectedMonth}
                     year={selectedYear}
                   />
                 )}

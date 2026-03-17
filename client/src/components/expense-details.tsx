@@ -15,7 +15,7 @@ import type { ExpenseDetail } from "@shared/schema";
 interface ExpenseDetailsProps {
   costCenterId: string;
   costCenterName?: string;
-  filterType: 'category' | 'program' | 'account' | 'caseCode';
+  filterType: 'category' | 'program' | 'account' | 'caseCode' | 'allPrograms';
   filterValue: string;
   filterLabel: string;
   filterColor?: string;
@@ -70,7 +70,7 @@ export function ExpenseDetails({
       if (!response.ok) throw new Error('Failed to fetch expense details');
       return response.json();
     },
-    enabled: !!costCenterId && !!filterValue,
+    enabled: !!costCenterId && (!!filterValue || filterType === 'allPrograms'),
   });
 
   const uniqueCaseCodes = useMemo(() => {
@@ -228,15 +228,17 @@ export function ExpenseDetails({
             <Download className="w-4 h-4 mr-1" />
             Download CSV
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onClearFilter}
-            data-testid="button-clear-filter"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Clear Filter
-          </Button>
+          {filterType !== 'allPrograms' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onClearFilter}
+              data-testid="button-clear-filter"
+            >
+              <X className="w-4 h-4 mr-1" />
+              Clear Filter
+            </Button>
+          )}
         </div>
       </div>
 

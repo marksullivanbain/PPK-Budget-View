@@ -175,18 +175,18 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied to this practice" });
       }
       
-      if (!filterType || !filterValue) {
+      if (!filterType || (!filterValue && filterType !== 'allPrograms')) {
         return res.status(400).json({ error: "filterType and filterValue are required" });
       }
       
-      if (filterType !== 'category' && filterType !== 'program' && filterType !== 'account' && filterType !== 'caseCode') {
-        return res.status(400).json({ error: "filterType must be 'category', 'program', 'account', or 'caseCode'" });
+      if (filterType !== 'category' && filterType !== 'program' && filterType !== 'account' && filterType !== 'caseCode' && filterType !== 'allPrograms') {
+        return res.status(400).json({ error: "filterType must be 'category', 'program', 'account', 'caseCode', or 'allPrograms'" });
       }
       
       const details = await storage.getExpenseDetails(
         costCenterId, 
-        filterType as 'category' | 'program' | 'account' | 'caseCode', 
-        filterValue as string,
+        filterType as 'category' | 'program' | 'account' | 'caseCode' | 'allPrograms', 
+        (filterValue as string) || '',
         periodMode as 'ytd' | 'month' | undefined,
         month ? parseInt(month as string) : undefined,
         caseGroup as string | undefined,

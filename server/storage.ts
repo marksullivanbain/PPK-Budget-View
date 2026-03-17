@@ -58,7 +58,7 @@ export interface IStorage {
   
   getDashboardSummary(costCenterId: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string, year?: number): Promise<DashboardSummary>;
   
-  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account' | 'caseCode', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string, year?: number): Promise<ExpenseDetail[]>;
+  getExpenseDetails(costCenterId: string, filterType: 'category' | 'program' | 'account' | 'caseCode' | 'allPrograms', filterValue: string, periodMode?: 'ytd' | 'month', month?: number, caseGroupFilter?: string, year?: number): Promise<ExpenseDetail[]>;
   
   getMonthlyTrends(costCenterId: string, year?: number): Promise<MonthlyTrendData[]>;
   
@@ -750,7 +750,7 @@ export class MemStorage implements IStorage {
 
   async getExpenseDetails(
     costCenterId: string, 
-    filterType: 'category' | 'program' | 'account' | 'caseCode', 
+    filterType: 'category' | 'program' | 'account' | 'caseCode' | 'allPrograms', 
     filterValue: string,
     periodMode?: 'ytd' | 'month',
     month?: number,
@@ -786,7 +786,12 @@ export class MemStorage implements IStorage {
       expenses = expenses.filter(e => caseGroupCategoryIds.includes(e.categoryId));
     }
     
-    if (filterType === 'category') {
+    if (filterType === 'allPrograms') {
+      filtered = expenses.filter(exp => {
+        const category = Array.from(this.spendCategories.values()).find(c => c.id === exp.categoryId);
+        return category ? category.name !== 'Compensation' : exp.spendType !== 'Comp';
+      });
+    } else if (filterType === 'category') {
       if (costCenterId === "all") {
         // For "all" view, filterValue is the category name
         const categoryIds = Array.from(this.spendCategories.values())
