@@ -183,6 +183,27 @@ export default function AdminSummary() {
       p.budget.compensation, p.budget.programs, p.budget.databases, p.budget.bcn, p.budget.total,
       p.variance.compensation, p.variance.programs, p.variance.databases, p.variance.bcn, p.variance.total, `${p.variance.percentVariance}%`
     ]);
+    const commOps = summaryData.practices.find(p => p.practice === 'Commercial Operations');
+    const memoRow = [
+      'MEMO: Total PPK excl. Comm. Ops', '',
+      summaryData.totals.actuals.compensation - (commOps?.actuals.compensation || 0),
+      summaryData.totals.actuals.programs - (commOps?.actuals.programs || 0),
+      summaryData.totals.actuals.databases - (commOps?.actuals.databases || 0),
+      summaryData.totals.actuals.bcn - (commOps?.actuals.bcn || 0),
+      summaryData.totals.actuals.total - (commOps?.actuals.total || 0),
+      summaryData.totals.budget.compensation - (commOps?.budget.compensation || 0),
+      summaryData.totals.budget.programs - (commOps?.budget.programs || 0),
+      summaryData.totals.budget.databases - (commOps?.budget.databases || 0),
+      summaryData.totals.budget.bcn - (commOps?.budget.bcn || 0),
+      summaryData.totals.budget.total - (commOps?.budget.total || 0),
+      summaryData.totals.variance.compensation - (commOps?.variance.compensation || 0),
+      summaryData.totals.variance.programs - (commOps?.variance.programs || 0),
+      summaryData.totals.variance.databases - (commOps?.variance.databases || 0),
+      summaryData.totals.variance.bcn - (commOps?.variance.bcn || 0),
+      summaryData.totals.variance.total - (commOps?.variance.total || 0),
+      ''
+    ];
+    rows.push(memoRow as any);
     const t = summaryData.totals;
     rows.push([
       'TOTAL', '',
@@ -471,6 +492,61 @@ export default function AdminSummary() {
                     </Fragment>
                   );
                 })}
+                {(() => {
+                  const commOps = summaryData.practices.find(p => p.practice === 'Commercial Operations');
+                  const memo = {
+                    actuals: {
+                      compensation: summaryData.totals.actuals.compensation - (commOps?.actuals.compensation || 0),
+                      programs: summaryData.totals.actuals.programs - (commOps?.actuals.programs || 0),
+                      databases: summaryData.totals.actuals.databases - (commOps?.actuals.databases || 0),
+                      bcn: summaryData.totals.actuals.bcn - (commOps?.actuals.bcn || 0),
+                      total: summaryData.totals.actuals.total - (commOps?.actuals.total || 0),
+                    },
+                    budget: {
+                      compensation: summaryData.totals.budget.compensation - (commOps?.budget.compensation || 0),
+                      programs: summaryData.totals.budget.programs - (commOps?.budget.programs || 0),
+                      databases: summaryData.totals.budget.databases - (commOps?.budget.databases || 0),
+                      bcn: summaryData.totals.budget.bcn - (commOps?.budget.bcn || 0),
+                      total: summaryData.totals.budget.total - (commOps?.budget.total || 0),
+                    },
+                    variance: {
+                      compensation: summaryData.totals.variance.compensation - (commOps?.variance.compensation || 0),
+                      programs: summaryData.totals.variance.programs - (commOps?.variance.programs || 0),
+                      databases: summaryData.totals.variance.databases - (commOps?.variance.databases || 0),
+                      bcn: summaryData.totals.variance.bcn - (commOps?.variance.bcn || 0),
+                      total: summaryData.totals.variance.total - (commOps?.variance.total || 0),
+                    },
+                  };
+                  const memoVarPct = memo.budget.total !== 0 ? Math.round((memo.variance.total / memo.budget.total) * 100) : 0;
+                  return (
+                    <tr className="bg-muted/60 border-t border-border/50 text-muted-foreground italic" data-testid="row-memo">
+                      <td className="p-1.5 pl-3 sticky left-0 bg-muted/60 z-10 text-xs">Memo: Total PPK excl. Comm. Ops</td>
+                      <td className="text-right p-1.5 border-l border-border"><NumCell value={memo.actuals.compensation} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.actuals.programs} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.actuals.databases} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.actuals.bcn} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.actuals.total} isBold /></td>
+                      <td className="text-right p-1.5 border-l border-border"><NumCell value={memo.budget.compensation} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.budget.programs} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.budget.databases} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.budget.bcn} isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.budget.total} isBold /></td>
+                      <td className="text-right p-1.5 border-l border-border"><NumCell value={memo.variance.compensation} isVariance isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.variance.programs} isVariance isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.variance.databases} isVariance isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.variance.bcn} isVariance isBold /></td>
+                      <td className="text-right p-1.5"><NumCell value={memo.variance.total} isVariance isBold /></td>
+                      <td className="text-right p-1.5">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums ${varianceBg(memo.variance.total)}`}>
+                            {memoVarPct !== 0 ? `${memoVarPct > 0 ? '-' : '+'}${Math.abs(memoVarPct)}%` : '-'}
+                          </span>
+                          <VarianceIndicator value={memo.variance.total} />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })()}
                 <tr className="bg-muted border-t-2 border-foreground/30 font-bold" data-testid="row-total">
                   <td className="p-2 pl-3 text-foreground sticky left-0 bg-muted z-10">Total Cost Center PPK</td>
                   <td className="text-right p-1.5 border-l border-border"><NumCell value={summaryData.totals.actuals.compensation} isBold /></td>
