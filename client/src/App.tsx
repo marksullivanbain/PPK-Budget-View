@@ -10,7 +10,6 @@ import IPTeamsPage from "@/pages/ip-teams";
 import BudgetTracking from "@/pages/budget-tracking";
 import TravelDetail from "@/pages/travel-detail";
 import AdminSummary from "@/pages/admin-summary";
-import AdminComparison from "@/pages/admin-comparison";
 import Usage from "@/pages/usage";
 import { useAuth } from "@/hooks/use-auth";
 import { DemoModeProvider } from "@/hooks/use-demo-mode";
@@ -63,7 +62,6 @@ function Router() {
       <Route path="/budget-tracking" component={BudgetTracking} />
       <Route path="/travel-detail" component={TravelDetail} />
       <Route path="/admin-summary" component={AdminSummary} />
-      <Route path="/admin-comparison" component={AdminComparison} />
       <Route path="/usage" component={Usage} />
       <Route component={NotFound} />
     </Switch>
