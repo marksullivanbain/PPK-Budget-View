@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Download, X, Search, ArrowDown, ArrowUp } from "lucide-react";
+import { LogOut, Calendar, LayoutDashboard, TrendingUp, Users, Wallet, Plane, ShieldCheck, Download, X, Search, ArrowDown, ArrowUp, GitCompareArrows } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useDemoMode } from "@/hooks/use-demo-mode";
 import type { AdminSummaryData, ExpenseDetail } from "@shared/schema";
@@ -308,6 +308,12 @@ export default function AdminSummary() {
               <Button variant="default" size="sm" className="gap-1.5" data-testid="link-admin-summary-active">
                 <ShieldCheck className="h-4 w-4" />
                 Admin Summary
+              </Button>
+              <Button variant="outline" size="sm" asChild className="gap-1.5" data-testid="link-comparison">
+                <Link href="/admin-comparison">
+                  <GitCompareArrows className="h-4 w-4" />
+                  Period Comparison
+                </Link>
               </Button>
             </nav>
             <div className="flex items-center gap-3">

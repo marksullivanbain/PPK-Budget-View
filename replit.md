@@ -119,6 +119,7 @@ The following practices are consolidated for reporting:
 - `GET /api/cost-centers/:costCenterId/expense-details?filterType=category|program&filterValue=value&year=2025` - Get expense line items for drill-down
 - `GET /api/cost-centers/:costCenterId/trends?year=2025` - Get monthly trend data for charts
 - `GET /api/key-variances?periodMode=ytd|month&month=1-12&limit=N&year=2025` - Get key variances for All Practices view
+- `GET /api/admin-comparison` - Admin-only Q4 2025 vs Jan-Feb 2026 comparison (computes Q4 as YTD Dec minus YTD Sep)
 - `GET /api/admin-summary?periodMode=ytd|month&month=1-12&year=2025` - Admin-only practice summary with actuals/budget/variance by spend type
 - `GET /api/admin-summary/expense-details?practice=X&spendType=Y&periodMode=ytd|month&month=1-12&year=2025` - Admin expense drill-down (spendType: compensation|programs|databases|bcn)
 - `GET /api/ip-teams/practices?year=2026` - Get list of practices with IP Teams data
