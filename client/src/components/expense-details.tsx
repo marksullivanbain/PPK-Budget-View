@@ -53,6 +53,7 @@ export function ExpenseDetails({
   const blur = isDemoPractice(costCenterName || '');
   const bc = blur ? 'blur-sm select-none' : '';
   const [searchTerm, setSearchTerm] = useState("");
+  const [caseGroupFilter, setCaseGroupFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("all");
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('desc');
   const [selectedCaseCodes, setSelectedCaseCodes] = useState<Set<string>>(new Set());
@@ -108,10 +109,13 @@ export function ExpenseDetails({
     const matchesPeriod = periodFilter === "all" || 
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
 
+    const matchesCaseGroup = caseGroupFilter === "all" ||
+      exp.caseName === caseGroupFilter;
+
     const matchesCaseCode = selectedCaseCodes.size === 0 || 
       (exp.caseCode && selectedCaseCodes.has(exp.caseCode));
     
-    return matchesSearch && matchesPeriod && matchesCaseCode;
+    return matchesSearch && matchesCaseGroup && matchesPeriod && matchesCaseCode;
   }) ?? []).sort((a, b) => {
     return sortDirection === 'desc' 
       ? Math.abs(b.amount) - Math.abs(a.amount)
@@ -158,6 +162,15 @@ export function ExpenseDetails({
       return next;
     });
   };
+
+  const uniqueCaseGroups = useMemo(() => {
+    if (!expenses) return [];
+    const groups = new Set<string>();
+    for (const exp of expenses) {
+      if (exp.caseName) groups.add(exp.caseName);
+    }
+    return Array.from(groups).sort();
+  }, [expenses]);
 
   const uniquePeriods = Array.from(new Set(expenses?.map(e => e.period).filter(Boolean) ?? []));
 
@@ -261,6 +274,20 @@ export function ExpenseDetails({
                   data-testid="input-expense-search"
                 />
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Case Group:</span>
+              <Select value={caseGroupFilter} onValueChange={setCaseGroupFilter}>
+                <SelectTrigger className="w-48" data-testid="select-case-group-filter">
+                  <SelectValue placeholder="All Case Groups" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Case Groups</SelectItem>
+                  {uniqueCaseGroups.map(group => (
+                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Period:</span>
