@@ -57,6 +57,7 @@ export interface ExpenseRow {
   caseCode: string;
   caseName: string;
   caseGroupCode: string;
+  caseGroupName: string;
   documentDescription: string;
   postedBy: string;
   vendorName: string;
@@ -227,6 +228,7 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
       const spendType = getSpendTypeFromAccountType(accountType);
       // Case Group Code: Column 13 (Case Group)
       const caseGroupCode = fields[13]?.trim() || '';
+      const caseGroupName = fields[14]?.trim() || '';
       const caseCode = fields[15]?.trim() || '';
       const caseName = fields[16]?.trim() || '';
       const summaryAccount = fields[20]?.trim() || '';
@@ -280,6 +282,7 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
           caseCode,
           caseName,
           caseGroupCode,
+          caseGroupName,
           documentDescription,
           postedBy,
           vendorName,

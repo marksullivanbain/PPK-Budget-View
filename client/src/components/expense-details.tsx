@@ -110,7 +110,7 @@ export function ExpenseDetails({
       exp.period?.toLowerCase().includes(periodFilter.toLowerCase());
 
     const matchesCaseGroup = caseGroupFilter === "all" ||
-      exp.caseName === caseGroupFilter;
+      exp.caseGroupName === caseGroupFilter;
 
     const matchesCaseCode = selectedCaseCodes.size === 0 || 
       (exp.caseCode && selectedCaseCodes.has(exp.caseCode));
@@ -167,7 +167,7 @@ export function ExpenseDetails({
     if (!expenses) return [];
     const groups = new Set<string>();
     for (const exp of expenses) {
-      if (exp.caseName) groups.add(exp.caseName);
+      if (exp.caseGroupName) groups.add(exp.caseGroupName);
     }
     return Array.from(groups).sort();
   }, [expenses]);
