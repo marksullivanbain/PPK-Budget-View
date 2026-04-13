@@ -145,6 +145,7 @@ export class MemStorage implements IStorage {
       const expensePaths2026 = [
         "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771432938737.csv",
         "attached_assets/Full_Practice_Expense_data_(Feb_2026)_1773168253712.csv",
+        "attached_assets/Full_Practice_Expense_data_(Mar_2026)_1776093941557.csv",
       ];
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
