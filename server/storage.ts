@@ -34,7 +34,7 @@ import {
   caseCodeMappings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, aggregateData, parseIPTeamsCSV, type IPTeamRow } from "./csv-parser";
+import { parseBudgetCSV, parseExpenseCSV, parseMarketingMappingCSV, parseConsolidatedCompCSV, aggregateData, parseIPTeamsCSV, type IPTeamRow } from "./csv-parser";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
@@ -166,10 +166,26 @@ export class MemStorage implements IStorage {
       for (const expPath of expensePaths2026) {
         try {
           const rows = parseExpenseCSV(expPath, marketingMapping);
-          expenseRows2026 = expenseRows2026.concat(rows);
-          console.log(`Loaded ${rows.length} expense rows from ${expPath}`);
+          // Drop line-item compensation rows; consolidated comp file replaces them
+          const nonCompRows = rows.filter(r => r.normalizedSpendType !== 'Compensation');
+          expenseRows2026 = expenseRows2026.concat(nonCompRows);
+          console.log(`Loaded ${nonCompRows.length} non-comp expense rows from ${expPath} (filtered ${rows.length - nonCompRows.length} comp rows)`);
         } catch (e) {
           console.log(`Skipping ${expPath}: not found or error`);
+        }
+      }
+
+      // Load consolidated compensation data for 2026
+      const consolidatedCompPaths2026 = [
+        "attached_assets/Practice_Consolidated_Comp_data_(Jan-Mar_2026)_1776961078413.csv",
+      ];
+      for (const compPath of consolidatedCompPaths2026) {
+        try {
+          const compRows = parseConsolidatedCompCSV(compPath, 2026);
+          expenseRows2026 = expenseRows2026.concat(compRows);
+          console.log(`Loaded ${compRows.length} consolidated comp rows from ${compPath}`);
+        } catch (e) {
+          console.log(`Skipping consolidated comp file ${compPath}: not found or error`);
         }
       }
       
@@ -847,7 +863,7 @@ export class MemStorage implements IStorage {
         caseCode: '',
         caseName: '',
         caseGroupName: '',
-        documentDescription: `${data.count} line items`,
+        documentDescription: '',
         period: '',
         amount: Math.round(data.amount),
         vendorName: '',

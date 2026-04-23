@@ -302,6 +302,57 @@ export function parseExpenseCSV(filePath: string, marketingMapping?: Map<string,
   return rows;
 }
 
+export function parseConsolidatedCompCSV(filePath: string, year: number): ExpenseRow[] {
+  const absolutePath = path.resolve(filePath);
+  const content = fs.readFileSync(absolutePath, 'utf-8');
+  const cleanContent = content.replace(/^\uFEFF/, '');
+  const lines = cleanContent.split('\n').filter(line => line.trim());
+
+  const rows: ExpenseRow[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const fields = parseCSVLine(lines[i]);
+    if (fields.length < 4) continue;
+
+    let practice = fields[0]?.trim() || '';
+    const summaryAccount = fields[1]?.trim() || '';
+    const periodStr = fields[2]?.trim() || '';
+    const amount = parseNumber(fields[3]);
+
+    if (!practice || !summaryAccount) continue;
+
+    practice = normalizePracticeName(practice);
+
+    const monthNum = parseInt(periodStr);
+    const period = !isNaN(monthNum) && monthNum >= 1 && monthNum <= 12 ? String(monthNum) : '';
+
+    rows.push({
+      practice,
+      spendType: 'Comp',
+      normalizedSpendType: 'Compensation',
+      coreProgram: null,
+      amount,
+      year,
+      lineDescription: summaryAccount,
+      summaryAccount,
+      accountName: summaryAccount,
+      caseCode: '',
+      caseName: '',
+      caseGroupCode: '',
+      caseGroupName: '',
+      documentDescription: '',
+      postedBy: '',
+      vendorName: '',
+      period,
+      sapInvoiceDocUrl: '',
+      teeEmployeeName: '',
+      teeAttachment: '',
+    });
+  }
+
+  return rows;
+}
+
 export interface AggregatedData {
   costCenters: Map<string, { name: string; description: string }>;
   categoryBudgets: Map<string, Map<string, number[]>>;  // Monthly amounts array per category
