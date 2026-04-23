@@ -160,7 +160,23 @@ export class MemStorage implements IStorage {
         console.log("No 2026 budget data found, skipping");
       }
       
-      const expenseRows2025 = parseExpenseCSV(expensePath2025, marketingMapping);
+      const expenseRows2025Raw = parseExpenseCSV(expensePath2025, marketingMapping);
+      // Defensive: ensure no comp line items make it through (file should already be scrubbed)
+      let expenseRows2025 = expenseRows2025Raw.filter(r => r.normalizedSpendType !== 'Compensation');
+
+      // Load consolidated compensation data for 2025
+      const consolidatedCompPaths2025 = [
+        "attached_assets/Practice_Consolidated_Comp_data_(2025)_1776963095545.csv",
+      ];
+      for (const compPath of consolidatedCompPaths2025) {
+        try {
+          const compRows = parseConsolidatedCompCSV(compPath, 2025);
+          expenseRows2025 = expenseRows2025.concat(compRows);
+          console.log(`Loaded ${compRows.length} consolidated comp rows from ${compPath}`);
+        } catch (e) {
+          console.log(`Skipping consolidated comp file ${compPath}: not found or error`);
+        }
+      }
       
       let expenseRows2026: typeof expenseRows2025 = [];
       for (const expPath of expensePaths2026) {
