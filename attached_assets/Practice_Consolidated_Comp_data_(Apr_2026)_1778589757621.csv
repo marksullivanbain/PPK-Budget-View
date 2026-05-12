@@ -1,0 +1,309 @@
+﻿Cost Center Name,Summary Account,Period,Sum of USD Current Year Rate
+AIS Practice,Bonus (Firm Perf.),4,"9,773"
+AIS Practice,Bonus (Individual Perf.),4,"77,483"
+AIS Practice,Bonus (Signing),4,450
+AIS Practice,Fringe / Benefits,4,"63,239"
+AIS Practice,Salary,4,"139,668"
+AMS Practice,Bonus (Firm Perf.),4,"17,933"
+AMS Practice,Bonus (Individual Perf.),4,"80,841"
+AMS Practice,Bonus (Signing),4,198
+AMS Practice,Fringe / Benefits,4,"125,240"
+AMS Practice,Salary,4,"214,510"
+Commercial Operations,Bonus (Firm Perf.),4,"32,987"
+Commercial Operations,Bonus (Individual Perf.),4,"57,078"
+Commercial Operations,Bonus (Signing),4,307
+Commercial Operations,Fringe / Benefits,4,"65,983"
+Commercial Operations,Salary,4,"201,388"
+CP Practice,Bonus (Firm Perf.),4,"14,916"
+CP Practice,Bonus (Individual Perf.),4,"53,694"
+CP Practice,Bonus (Signing),4,373
+CP Practice,Fringe / Benefits,4,"75,634"
+CP Practice,Salary,4,"191,579"
+Customer Practice,Bonus (Firm Perf.),4,"20,594"
+Customer Practice,Bonus (Individual Perf.),4,"67,466"
+Customer Practice,Bonus (Signing),4,296
+Customer Practice,Fringe / Benefits,4,"146,372"
+Customer Practice,Salary,4,"277,179"
+ENR Practice,Bonus (Firm Perf.),4,"13,276"
+ENR Practice,Bonus (Individual Perf.),4,"70,122"
+ENR Practice,Bonus (Signing),4,176
+ENR Practice,Fringe / Benefits,4,"74,961"
+ENR Practice,Other Compensation,4,"-6,542"
+ENR Practice,Salary,4,"178,539"
+ET Practice,Bonus (Firm Perf.),4,"8,370"
+ET Practice,Bonus (Individual Perf.),4,"25,199"
+ET Practice,Bonus (Signing),4,198
+ET Practice,Fringe / Benefits,4,"61,725"
+ET Practice,Salary,4,"145,192"
+FS Practice,Bonus (Firm Perf.),4,"12,640"
+FS Practice,Bonus (Individual Perf.),4,"79,610"
+FS Practice,Bonus (Signing),4,615
+FS Practice,Fringe / Benefits,4,"48,710"
+FS Practice,Salary,4,"187,046"
+Further Practice,Bonus (Firm Perf.),4,"17,689"
+Further Practice,Bonus (Individual Perf.),4,"15,273"
+Further Practice,Bonus (Signing),4,263
+Further Practice,Fringe / Benefits,4,"91,807"
+Further Practice,Other Compensation,4,"-21,466"
+Further Practice,Salary,4,"228,119"
+HLS Practice,Bonus (Firm Perf.),4,"5,638"
+HLS Practice,Bonus (Individual Perf.),4,"29,464"
+HLS Practice,Bonus (Signing),4,263
+HLS Practice,Fringe / Benefits,4,"55,614"
+HLS Practice,Salary,4,"119,598"
+M&A Practice,Bonus (Firm Perf.),4,"10,204"
+M&A Practice,Bonus (Individual Perf.),4,"45,634"
+M&A Practice,Bonus (Signing),4,110
+M&A Practice,Fringe / Benefits,4,"48,156"
+M&A Practice,Salary,4,"112,473"
+MTG Practice,Bonus (Firm Perf.),4,"9,904"
+MTG Practice,Bonus (Individual Perf.),4,"49,751"
+MTG Practice,Fringe / Benefits,4,"39,646"
+MTG Practice,Salary,4,"114,266"
+Organization Practice,Bonus (Firm Perf.),4,"11,116"
+Organization Practice,Bonus (Individual Perf.),4,"58,634"
+Organization Practice,Bonus (Signing),4,99
+Organization Practice,Fringe / Benefits,4,"54,805"
+Organization Practice,Salary,4,"136,831"
+PEG Practice,Bonus (Firm Perf.),4,"46,507"
+PEG Practice,Bonus (Individual Perf.),4,"470,457"
+PEG Practice,Bonus (Signing),4,527
+PEG Practice,Fringe / Benefits,4,"211,203"
+PEG Practice,Other Compensation,4,0
+PEG Practice,Salary,4,"656,178"
+PI Practice,Bonus (Firm Perf.),4,"35,522"
+PI Practice,Bonus (Individual Perf.),4,"168,903"
+PI Practice,Bonus (Signing),4,"1,239"
+PI Practice,Fringe / Benefits,4,"142,364"
+PI Practice,Salary,4,"486,715"
+Practice Area Prgrm Office,Bonus (Firm Perf.),4,"15,124"
+Practice Area Prgrm Office,Bonus (Individual Perf.),4,"361,051"
+Practice Area Prgrm Office,Bonus (Signing),4,823
+Practice Area Prgrm Office,Fringe / Benefits,4,"111,036"
+Practice Area Prgrm Office,Other Compensation,4,"-35,744"
+Practice Area Prgrm Office,Salary,4,"358,751"
+Retail Practice,Bonus (Firm Perf.),4,"14,495"
+Retail Practice,Bonus (Individual Perf.),4,"-6,616"
+Retail Practice,Bonus (Signing),4,198
+Retail Practice,Fringe / Benefits,4,"119,999"
+Retail Practice,Salary,4,"188,915"
+Strategy & Transformation Practice,Bonus (Firm Perf.),4,"38,472"
+Strategy & Transformation Practice,Bonus (Individual Perf.),4,"201,098"
+Strategy & Transformation Practice,Bonus (Signing),4,373
+Strategy & Transformation Practice,Fringe / Benefits,4,"147,041"
+Strategy & Transformation Practice,Other Compensation,4,"-18,348"
+Strategy & Transformation Practice,Salary,4,"370,404"
+TMT Practice,Bonus (Firm Perf.),4,"10,845"
+TMT Practice,Bonus (Individual Perf.),4,"56,798"
+TMT Practice,Bonus (Signing),4,285
+TMT Practice,Fringe / Benefits,4,"73,761"
+TMT Practice,Salary,4,"171,032"
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,
+,,,

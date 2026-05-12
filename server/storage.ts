@@ -146,6 +146,7 @@ export class MemStorage implements IStorage {
         "attached_assets/Full_Practice_Expense_data_(Jan_2026)_1771432938737.csv",
         "attached_assets/Full_Practice_Expense_data_(Feb_2026)_1773168253712.csv",
         "attached_assets/Full_Practice_Expense_data_(Mar_2026)_1776093941557.csv",
+        "attached_assets/Practice_Program_Expense_data_(Apr_2026)_1778589757621.csv",
       ];
       const marketingMappingPath = "attached_assets/Replit_Marketing_Mapping_Table_1769530429336.csv";
       
@@ -194,6 +195,7 @@ export class MemStorage implements IStorage {
       // Load consolidated compensation data for 2026
       const consolidatedCompPaths2026 = [
         "attached_assets/Practice_Consolidated_Comp_data_(Jan-Mar_2026)_1776961078413.csv",
+        "attached_assets/Practice_Consolidated_Comp_data_(Apr_2026)_1778589757621.csv",
       ];
       for (const compPath of consolidatedCompPaths2026) {
         try {
